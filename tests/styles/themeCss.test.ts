@@ -1,6 +1,6 @@
 import { sourcePillIcon, sourcePillLook } from '../../src/styles/sourcePill';
 import { describe, expect, it } from 'vitest';
-import { buildAccentCss, buildCleanCss, buildDownloadCss, buildLaunchCss, buildThemeCss, buildUnifideckCss, launchTargets, ThemeClasses } from '../../src/styles/themeCss';
+import { buildAccentCss, buildArrivingCss, buildCleanCss, buildDownloadCss, buildLaunchCss, buildThemeCss, buildUnifideckCss, launchTargets, ThemeClasses } from '../../src/styles/themeCss';
 import { PAGE_LAYOUT, PAGE_SCRIM_LAYERS, PAGE_SCRIMS, pageDUnit, STEAM_LEGEND_PX } from '../../src/styles/themeCss';
 
 const full: ThemeClasses = {
@@ -602,7 +602,7 @@ describe('buildThemeCss restyle (Spotlight Home on)', () => {
         expect(stacked).not.toContain('> .gg-title');
         expect(stacked).toContain('.gg-title {');
 
-        // (display: only Steam's download bar is hidden)
+        // (display: only Steam's download bar is hidden; object-position: the hero's crop, which moves the picture, not the box)
         // Never layout: on Steam's elements the restyle sets colours, shadows, the scrim, the accent and the
         // logo's visibility (its box stays), plus the Play row's side padding (the handoff's 56 px insets).
         const steamRules = [...extra(steam).matchAll(/^\s*([^{}\n]+)\{([^}]*)\}/gm)]
@@ -611,7 +611,7 @@ describe('buildThemeCss restyle (Spotlight Home on)', () => {
         for (const [, selector, body] of steamRules) {
             const props = body.split(';').map((d) => d.split(':')[0].trim()).filter(Boolean);
             for (const prop of props) {
-                expect([selector, prop]).toEqual([selector, expect.stringMatching(/^(--gg-accent|--gg-play-top|--gg-row-h|--gg-ok|--gg-warn|--gg-bad|--gg-off|transition|color|background|border|filter|box-shadow|visibility|padding-left|padding-right|padding-top|padding-bottom|font-size|font-weight|width|height|margin-right|top|min-width|flex|padding|backdrop-filter|display)$/)]);
+                expect([selector, prop]).toEqual([selector, expect.stringMatching(/^(--gg-accent|--gg-play-top|--gg-row-h|--gg-ok|--gg-warn|--gg-bad|--gg-off|transition|color|background|border|filter|box-shadow|visibility|padding-left|padding-right|padding-top|padding-bottom|font-size|font-weight|width|height|margin-right|top|min-width|flex|padding|backdrop-filter|display|object-position)$/)]);
             }
         }
         // (100vh only in the Play row's anchor variable, which the 1.1.1 layout rules read: the default and the TV's)
@@ -691,5 +691,40 @@ describe('the page layout constants', () => {
         expect(css).toContain(`--gg-play-top: calc(100vh - calc(${PAGE_LAYOUT.playTop.spotlight} * var(--gg-d)))`);
         for (const layer of PAGE_SCRIM_LAYERS) expect(css).toContain(layer);
         expect(PAGE_SCRIMS).toBe(PAGE_SCRIM_LAYERS.join(', '));
+    });
+});
+
+describe('the page arriving after the open transition', () => {
+    const play = full.play as Record<string, string>;
+    it("'parts' hides only what Home had no counterpart for (Spotlight)", () => {
+        const css = buildArrivingCss(full, 'spotlight', 'parts');
+        for (const sel of ['.gg-desc', '.gg-hltb > .gg-label', '.gg-hltb [data-stat="mainExtras"]', '.gg-hltb [data-stat="completionist"]', '.gg-caption', '.gg-muted', '.gg-hltb .gg-bar', '.gg-family', `.${play.CloudStatusRow}`, '[data-stat="size"]']) {
+            expect(css, sel).toContain(sel);
+        }
+        expect(css).toContain('opacity: 0 !important');
+        expect(css).not.toContain('.gg-titleblock');
+    });
+    it("'parts' on Clean: the size column, family pill, cloud and the bars", () => {
+        const css = buildArrivingCss(full, 'clean', 'parts');
+        for (const sel of ['[data-stat="size"]', '.gg-family', `.${play.CloudStatusRow}`, '.gg-clean-info .gg-bar']) expect(css, sel).toContain(sel);
+        expect(css).not.toContain('.gg-desc');
+    });
+    it("'all' hides the whole page but the art, lowered by the rise", () => {
+        const css = buildArrivingCss(full, 'spotlight', 'all');
+        for (const sel of ['.gg-titleblock', '.gg-hero', '.rt_Play']) expect(css, sel).toContain(sel);
+        expect(css).toContain('transform: translateY(14px) !important');
+    });
+    it('revealed: the same elements fade back in over the reveal time', () => {
+        const css = buildArrivingCss(full, 'spotlight', 'all', true);
+        expect(css).toContain('opacity: 1 !important');
+        expect(css).toContain('transform: none !important');
+        expect(css).toContain('transition: opacity 200ms ease, transform 200ms');
+    });
+    it('is empty without the layout classes', () => {
+        expect(buildArrivingCss({ ...full, header: {} }, 'spotlight', 'parts')).toBe('');
+    });
+    it("pins the page's hero to Home's crop (50% 30%) with the restyled layout", () => {
+        expect(buildThemeCss(full, { restyle: true })).toContain('.hd_Top img { object-position: 50% 30% !important; }');
+        expect(buildThemeCss(full)).not.toContain('object-position: 50% 30%');
     });
 });

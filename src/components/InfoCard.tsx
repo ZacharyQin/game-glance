@@ -18,17 +18,17 @@ export function InfoCard({ game, locale, description, size = null }: Props) {
         <div className="gg-card">
             <div className="gg-stats">
                 {size && (
-                    <div>
+                    <div data-stat="size">
                         <div className="gg-label">{size.label}</div>
                         <div className="gg-value">{size.value}</div>
                     </div>
                 )}
-                <div>
+                <div data-stat="played">
                     <div className="gg-label">{tr('played')}</div>
                     <div className="gg-value">{formatHours(minutesToHours(game.playedMinutes), locale)}</div>
                 </div>
                 {game.achievements && (
-                    <div>
+                    <div data-stat="achievements">
                         <div className="gg-label">{tr('achievements')}</div>
                         <div className="gg-value">{game.achievements.achieved}/{game.achievements.total}</div>
                     </div>

@@ -11,6 +11,9 @@ interface Props {
     restyle?: boolean;
 }
 
+/** A column's key for the open transition (data-stat): Main is `hltb`, as Home's chip and the Clean look's stat. */
+const statKey = (tier: Tier) => (tier === 'main' ? 'hltb' : tier);
+
 const COLUMNS: Array<{ tier: Tier; label: string }> = [
     { tier: 'main', label: 'Main' },
     { tier: 'mainExtras', label: '+ Extras' },
@@ -26,7 +29,7 @@ export function HltbCard({ result, playedMinutes, locale, restyle = false }: Pro
                 {header}
                 <div className="gg-stats">
                     {COLUMNS.map((c) => (
-                        <div key={c.tier}>
+                        <div key={c.tier} data-stat={statKey(c.tier)}>
                             <div className="gg-label">{c.label}</div>
                             <div className="gg-value"><span className="gg-skeleton" /></div>
                         </div>
@@ -69,7 +72,7 @@ export function HltbCard({ result, playedMinutes, locale, restyle = false }: Pro
                 {COLUMNS.map((c) => {
                     const hours = result.times[c.tier];
                     return (
-                        <div key={c.tier} className={c.tier === goalTier ? 'gg-goal' : undefined}>
+                        <div key={c.tier} className={c.tier === goalTier ? 'gg-goal' : undefined} data-stat={statKey(c.tier)}>
                             <div className="gg-label">{c.label}</div>
                             <div className="gg-value">{hours === null ? '—' : formatHours(hours, locale)}</div>
                         </div>

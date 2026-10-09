@@ -1,6 +1,7 @@
 import { appDetailsClasses, appDetailsHeaderClasses, findClassModule, playSectionClasses } from '@decky/ui';
 import { LOG_PREFIX } from '../constants';
-import { buildAccentCss, buildCleanCss, buildDownloadCss, buildLaunchCss, buildThemeCss, buildUnifideckCss, ClassMap, launchTargets, ThemeClasses, ThemeOptions } from './themeCss';
+import { arrivalSelectors, buildAccentCss, buildArrivingCss, buildCleanCss, buildDownloadCss, buildLaunchCss, buildThemeCss, buildUnifideckCss, ClassMap, launchTargets, ThemeClasses, ThemeOptions } from './themeCss';
+import type { ReadySelectors } from './pageReady';
 
 let classes: ThemeClasses | null = null;
 
@@ -61,4 +62,14 @@ export function unifideckCss(options?: ThemeOptions): string {
 /** The Game Glance page's Clean look (themeCss.buildCleanCss); '' without the layout's classes. */
 export function cleanCss(): string {
     return buildCleanCss(themeClasses());
+}
+
+/** The page arriving after Spotlight Home's open transition (themeCss.buildArrivingCss); '' without the layout's classes. */
+export function arrivingCss(look: 'spotlight' | 'clean', mode: 'parts' | 'all', revealed = false): string {
+    return buildArrivingCss(themeClasses(), look, mode, revealed);
+}
+
+/** What the page's ready check reads (themeCss.arrivalSelectors). */
+export function pageArrivalSelectors(): ReadySelectors {
+    return arrivalSelectors(themeClasses());
 }

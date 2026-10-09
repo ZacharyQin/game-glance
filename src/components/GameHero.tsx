@@ -24,7 +24,8 @@ import { heroicStoreLabel } from '../logic/heroic';
 import { sizeStat } from '../logic/sizeStat';
 import { useDownload } from '../home/useDownload';
 import { useLaunchOverlay } from '../styles/launchOverlay';
-import { accentCss, cleanCss, downloadCss, launchCss, launchSelectors, themeCss, unifideckCss } from '../styles/theme';
+import { useOpenArrival } from '../hooks/useOpenArrival';
+import { accentCss, arrivingCss, cleanCss, downloadCss, launchCss, launchSelectors, themeCss, unifideckCss } from '../styles/theme';
 import { CleanInfo } from './CleanInfo';
 import { ErrorBoundary } from './ErrorBoundary';
 import { GameStatusBar } from './GameStatusBar';
@@ -112,6 +113,8 @@ function Hero({ overview, details, restyle, clean }: Props & { restyle: boolean;
     // Play on Home (data/launchIntent) the page starts that way, so it never shows before the launch screen.
     const { overlay, hide } = launchSelectors();
     const launching = useLaunchOverlay(heroRef, overlay, hide, game.appId);
+    // Opened from Spotlight Home's open transition: the page's new parts (or the whole page) arrive once it is ready.
+    const arrival = useOpenArrival(heroRef, game.appId);
 
     useEffect(() => {
         setCurrentGame(game, hltb);
@@ -144,6 +147,7 @@ function Hero({ overview, details, restyle, clean }: Props & { restyle: boolean;
                 {launching && <style>{launchCss()}</style>}
                 {accent && <style>{accentCss(accent)}</style>}
                 {fillCss && <style>{fillCss}</style>}
+                {arrival && restyle && <style>{arrivingCss(clean ? 'clean' : 'spotlight', arrival.intent.mode, arrival.revealed)}</style>}
                 {source && (
                     <SourcePill label={source}>
                         {/* A game from the family library (Steam's line under Play is hidden): with the restyled look only. */}

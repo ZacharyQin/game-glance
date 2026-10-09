@@ -505,6 +505,9 @@ function restyleRules({ header, details, root, play, shared }: ThemeClasses, lay
 
     if (layout) {
         rules.push(
+            // Steam's header crops the hero at 50% 50%, Home at 50% 30%: the same image then sits the same on both screens,
+            // so the open transition's hand-over shows no jump (identical for standard heroes; taller custom art differs).
+            rule(topCapsule && `${topCapsule} img`, ` object-position: 50% 30% !important; `),
             // The title (or logo) and the eyebrow under it, at the left inset, their bottom the row-to-cards gap (36) above the
             // Play row on every screen (the row sits lower on a TV, --gg-play-top's media query): title, eyebrow, row and
             // cards stay one stack, the eyebrow always the same distance above the row, and a longer title grows upward.
@@ -527,6 +530,41 @@ function restyleRules({ header, details, root, play, shared }: ThemeClasses, lay
         );
     }
     return rules;
+}
+
+/** The page's new parts' fade-in after the open transition (motion.OPEN_TIMINGS.reveal, rise feedRise). */
+const ARRIVE_MS = 200;
+const ARRIVE_RISE_PX = 14;
+
+/**
+ * The game page arriving after Spotlight Home's open transition (data/openIntent). 'parts': Home morphed into the page,
+ * so only what Home had no counterpart for is hidden (Spotlight: the description, the HowLongToBeat title, its other
+ * tiers, caption and bar; both looks: a size column, the family pill, the cloud button; Clean: the bars). 'all': the
+ * whole page but its art (our title block and cards, Steam's Play row), lowered by the rise. `revealed`: the same
+ * elements back to visible over ARRIVE_MS. Its own stylesheet, only with the full-screen layout; '' otherwise.
+ */
+export function buildArrivingCss(classes: ThemeClasses, look: 'spotlight' | 'clean', mode: 'parts' | 'all', revealed = false): string {
+    const { header, details, root, play } = classes;
+    if (!(cls(header, 'TopCapsule') && cls(details, 'InnerContainer') && cls(details, 'AppDetailsOverviewPanel') && cls(root, 'AppDetailsContainer'))) return '';
+    const cloud = cls(play, 'CloudStatusRow');
+    const shared = present(['[data-stat="size"]', '.gg-family', cloud]);
+    const parts = look === 'spotlight'
+        ? ['.gg-desc', '.gg-hltb > .gg-label', '.gg-hltb [data-stat="mainExtras"]', '.gg-hltb [data-stat="completionist"]', '.gg-caption', '.gg-muted', '.gg-hltb .gg-bar', ...shared]
+        : [...shared, '.gg-clean-info .gg-bar'];
+    const all = present(['.gg-titleblock', '.gg-hero', cls(root, 'PlaySection')]);
+    const list = mode === 'all' ? all : parts;
+    const body = revealed
+        ? ` opacity: 1 !important; transform: none !important; transition: opacity ${ARRIVE_MS}ms ease, transform ${ARRIVE_MS}ms cubic-bezier(.2,.8,.2,1) !important; `
+        : mode === 'all'
+            ? ` opacity: 0 !important; transform: translateY(${ARRIVE_RISE_PX}px) !important; `
+            : ' opacity: 0 !important; ';
+    return rule(list, body);
+}
+
+/** What the page's "ready" check reads (styles/pageReady): Steam's hero image (not its blurred placeholder), our title block, Steam's Play row. */
+export function arrivalSelectors({ header, root }: ThemeClasses): { headerImg: string | null; titleblock: string; play: string | null } {
+    const topCapsule = cls(header, 'TopCapsule');
+    return { headerImg: topCapsule && `${topCapsule} img:not([src*="_blur"])`, titleblock: '.gg-titleblock', play: cls(root, 'PlaySection') };
 }
 
 /** The game's accent on Steam's page container (Play and our elements both inherit it); nothing for a non-#rrggbb value. */
