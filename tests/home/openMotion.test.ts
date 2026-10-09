@@ -1,0 +1,157 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { describe, expect, it } from 'vitest';
+import { HomeRects, MotionVar, openMotion } from '../../src/home/openMotion';
+import type { Box, PageTargets } from '../../src/home/openTargets';
+import { MORPH_EASE, OPEN_TIMINGS } from '../../src/home/motion';
+
+const raw = JSON.parse(readFileSync(resolve(__dirname, 'fixtures/openLayout/home-1500x844.json'), 'utf8')) as { canvasScale: number; rects: Record<string, Box> };
+const r = raw.rects;
+const s = raw.canvasScale;
+// Captured before data-chip existed: the chips by order (device notes).
+const homeRects = (): HomeRects => ({
+    canvas: { x: 0, y: 0, w: 1440 * s, h: 810 * s },
+    titleSlot: r.titleSlot,
+    eyebrow: r.eyebrow,
+    play: r.pill,
+    circles: [r.circle0, r.circle1, r.circle2, r.circle3],
+    infoCircle: 2,
+    store: r.store,
+    chips: [
+        { key: 'played', shell: r['chip:chip0'], label: r['chip:chip0:label'], value: r['chip:chip0:value'], bar: null },
+        { key: 'achievements', shell: r['chip:chip1'], label: r['chip:chip1:label'], value: r['chip:chip1:value'], bar: r['chip:chip1:bar'] },
+        { key: 'hltb', shell: r['chip:chip2'], label: r['chip:chip2:label'], value: r['chip:chip2:value'], bar: r['chip:chip2:bar'] },
+    ],
+});
+const box = (x: number, y: number, w: number, h: number): Box => ({ x, y, w, h });
+const spotlight = (): PageTargets => ({
+    titleBottomLeft: { x: 25, y: 426 },
+    eyebrowBottomLeft: { x: 25, y: 455.6 },
+    play: box(25, 493.1, 354.2, 62.5),
+    circles: [box(393.7, 493.1, 62.5, 62.5), box(470.8, 493.1, 62.5, 62.5), box(547.9, 493.1, 62.5, 62.5), box(625, 493.1, 62.5, 62.5)],
+    store: box(1372.1, 507.7, 102.9, 33.3),
+    shells: [box(25, 593.1, 749.7, 185.4), box(793.4, 593.1, 681.6, 185.4)],
+    stats: {
+        played: { label: box(50.8, 614.7, 77.5, 17.2), value: box(50.8, 636.1, 77.5, 37.5) },
+        achievements: { label: box(169.9, 614.7, 113.8, 17.2), value: box(169.9, 636.1, 113.8, 37.5) },
+        hltb: { label: box(819.2, 642.3, 74.9, 17.2), value: box(819.2, 663.7, 74.9, 37.5) },
+    },
+});
+
+const vars = (list: MotionVar[]) => Object.fromEntries(list.map((v) => [v.name, v.value]));
+/** translate(x, y) [scale(a[, b])] from a transform value. */
+function parse(t: string | undefined) {
+    expect(t, 'transform var').toBeDefined();
+    const m = /^translate\((-?[\d.]+)px, (-?[\d.]+)px\)(?: scale\((-?[\d.]+)(?:, (-?[\d.]+))?\))?$/.exec(t!);
+    expect(m, `parseable: ${t}`).not.toBeNull();
+    const sx = m![3] === undefined ? 1 : Number(m![3]);
+    return { tx: Number(m![1]), ty: Number(m![2]), sx, sy: m![4] === undefined ? sx : Number(m![4]) };
+}
+
+describe('openMotion', () => {
+    it('the title block moves by its bottom-left corner, in canvas px', () => {
+        const v = vars(openMotion(homeRects(), spotlight(), 'spotlight', s));
+        const t = parse(v['--gho-title']);
+        const home = homeRects().titleSlot;
+        expect(t.tx).toBeCloseTo((25 - home.x) / s, 1);
+        expect(t.ty).toBeCloseTo((426 - (home.y + home.h)) / s, 1);
+        const e = parse(v['--gho-eyebrow']);
+        expect(e.ty).toBeCloseTo((455.6 - (r.eyebrow.y + r.eyebrow.h)) / s, 1);
+    });
+
+    it('a taller title (a logo, three lines) still lands with the same bottom', () => {
+        const tall = homeRects();
+        tall.titleSlot = { ...tall.titleSlot, y: tall.titleSlot.y - 80, h: tall.titleSlot.h + 80 };
+        const a = vars(openMotion(homeRects(), spotlight(), 'spotlight', s));
+        const b = vars(openMotion(tall, spotlight(), 'spotlight', s));
+        expect(b['--gho-title']).toBe(a['--gho-title']);
+    });
+
+    it('one shell per card, placed at the card and scaled down onto the chips that merge into it', () => {
+        const v = vars(openMotion(homeRects(), spotlight(), 'spotlight', s));
+        // The info card's shell sits at the card (canvas px) ...
+        expect(Number(v['--gho-shell-0-x'])).toBeCloseTo(25 / s, 1);
+        expect(Number(v['--gho-shell-0-w'])).toBeCloseTo(749.7 / s, 1);
+        // ... and starts on the union of the played and achievements chips.
+        const from = parse(v['--gho-shell-0-from']);
+        const union = { x: r['chip:chip0'].x, y: r['chip:chip0'].y, w: r['chip:chip1'].x + r['chip:chip1'].w - r['chip:chip0'].x, h: r['chip:chip0'].h };
+        expect(from.tx).toBeCloseTo((union.x - 25) / s, 1);
+        expect(from.ty).toBeCloseTo((union.y - 593.1) / s, 1);
+        expect(from.sx).toBeCloseTo(union.w / 749.7, 3);
+        expect(from.sy).toBeCloseTo(union.h / 185.4, 3);
+        // The HowLongToBeat card's shell starts on the HLTB chip alone.
+        expect(parse(v['--gho-shell-1-from']).sx).toBeCloseTo(r['chip:chip2'].w / 681.6, 3);
+        expect(v['--gho-shell-0-o0']).toBe('1');
+        expect(v['--gho-shell-count']).toBe('2');
+    });
+
+    it('chip texts move to their page stat and grow to the page type size', () => {
+        const v = vars(openMotion(homeRects(), spotlight(), 'spotlight', s));
+        const value = parse(v['--gho-chip-2-value']);
+        expect(value.sx).toBeCloseTo(30 / 20, 3);
+        expect(value.tx).toBeCloseTo((819.2 - r['chip:chip2:value'].x) / s, 1);
+        expect(value.ty).toBeCloseTo((663.7 - r['chip:chip2:value'].y) / s, 1);
+        // Labels: Home's line is 1.2, the page's 1.5, so the glyphs line up 0.15 em lower in the page's box.
+        const label = parse(v['--gho-chip-0-label']);
+        expect(label.sx).toBeCloseTo(11 / 10, 3);
+        expect(label.ty).toBeCloseTo((614.7 + 0.15 * 11 * (1500 / 1440) - r['chip:chip0:label'].y) / s, 1);
+        expect(v['--gho-chip-0-o']).toBe('1');
+    });
+
+    it('Clean values grow to the Clean type size', () => {
+        const page = spotlight();
+        page.shells = [box(1073.9, 693.3, 401.1, 90)];
+        const v = vars(openMotion(homeRects(), page, 'clean', s));
+        expect(parse(v['--gho-chip-0-value']).sx).toBeCloseTo(22 / 20, 3);
+        expect(v['--gho-shell-count']).toBe('1');
+    });
+
+    it('a chip without a page stat fades and does not move', () => {
+        const home = homeRects();
+        home.chips[0] = { ...home.chips[0], key: 'added' };
+        const v = vars(openMotion(home, spotlight(), 'spotlight', s));
+        expect(v['--gho-chip-0-o']).toBe('0');
+        expect(v['--gho-chip-0-label']).toBeUndefined();
+        expect(v['--gho-chip-0-value']).toBeUndefined();
+    });
+
+    it('a shell no chip merges into fades in at its card', () => {
+        const home = homeRects();
+        home.chips = home.chips.slice(0, 2); // no HLTB chip
+        const v = vars(openMotion(home, spotlight(), 'spotlight', s));
+        expect(v['--gho-shell-1-o0']).toBe('0');
+        expect(parse(v['--gho-shell-1-from']).sx).toBeCloseTo(1, 3);
+    });
+
+    it('the info circle is skipped: the others map to the page circles in order', () => {
+        const v = vars(openMotion(homeRects(), spotlight(), 'spotlight', s));
+        const cloud = parse(v['--gho-circle-3']);
+        expect(cloud.tx).toBeCloseTo((547.9 - r.circle3.x) / s, 1);
+        expect(cloud.sx).toBeCloseTo(62.5 / r.circle3.w, 3);
+        expect(parse(v['--gho-circle-1']).tx).toBeCloseTo((470.8 - r.circle1.x) / s, 1);
+        expect(v['--gho-circle-2']).toBeUndefined();
+    });
+
+    it('the Play pill: its background maps onto the page pill, its content only moves', () => {
+        const v = vars(openMotion(homeRects(), spotlight(), 'spotlight', s));
+        const bg = parse(v['--gho-play-bg']);
+        expect(bg.sx).toBeCloseTo(354.2 / r.pill.w, 3);
+        expect(bg.sy).toBeCloseTo(62.5 / r.pill.h, 3);
+        const fg = parse(v['--gho-play-fg']);
+        expect(fg.sx).toBe(1);
+        expect(fg.ty).toBeCloseTo((493.1 + 62.5 / 2 - (r.pill.y + r.pill.h / 2)) / s, 1);
+        expect(parse(v['--gho-store']).ty).toBeCloseTo((507.7 - r.store.y) / s, 1);
+    });
+
+    it('the output is stable: sorted by name', () => {
+        const list = openMotion(homeRects(), spotlight(), 'spotlight', s);
+        expect(list.map((x) => x.name)).toEqual([...list.map((x) => x.name)].sort());
+    });
+});
+
+describe('open timings', () => {
+    it('match the spec', () => {
+        expect(OPEN_TIMINGS).toEqual({ leave: 220, infoFade: 180, morph: 360, feedHero: 300, feedUi: 220, bridgeFade: 120, readyCap: 500, revealDelay: 60, reveal: 200, leaveDrop: 70, feedRise: 14 });
+        expect(MORPH_EASE).toBe('cubic-bezier(.2,.8,.2,1)');
+    });
+});

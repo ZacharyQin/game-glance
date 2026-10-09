@@ -38,3 +38,27 @@ export const FEED_SCROLL = `${FEED_SCROLL_MS}ms ${SHEET_EASE}`;
 export const HERO_PRELOAD_RADIUS = 2;
 /** Pre-loading waits this long after a selection settles, so a fast run of L1/R1 does not queue loads for every game. */
 export const HERO_PRELOAD_DELAY_MS = 150;
+
+/**
+ * The open transition (Home to the game page; spec docs/superpowers/specs/2026-10-09-open-transition-design.md), ms
+ * unless noted. leave: the game cards row drops `leaveDrop` canvas px and fades; infoFade: the info button fades;
+ * morph: Home's elements move to the page's places; feedHero / feedUi: a feed card's game's hero fades in over Home
+ * and Home's UI fades out; bridgeFade: the frozen copy of Home fades off the page; readyCap: the longest the copy
+ * waits for the page; revealDelay / reveal: the page's new parts fade in (rising `feedRise` css px when the whole
+ * page arrives).
+ */
+export const OPEN_TIMINGS = {
+    leave: 220,
+    infoFade: 180,
+    morph: 360,
+    feedHero: 300,
+    feedUi: 220,
+    bridgeFade: 120,
+    readyCap: 500,
+    revealDelay: 60,
+    reveal: 200,
+    leaveDrop: 70,
+    feedRise: 14,
+} as const;
+/** The morph's easing (the prototype's; SLIDE_EASE's family). */
+export const MORPH_EASE = 'cubic-bezier(.2,.8,.2,1)';
