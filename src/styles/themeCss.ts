@@ -72,13 +72,15 @@ export const PAGE_LAYOUT = {
     rowH: 96,
     /** Play row top: H - spotlight; on a TV H - legend - (rowH + tvCards + tvGap). */
     playTop: { spotlight: 386, tvCards: 178, tvGap: 24 },
-    /** The Clean look: the row ends max(bottom, minBelowRow px - (rowH - icon)) above the bottom; title gap above the row. */
-    clean: { bottom: 36, minBelowRow: 61, gap: 28 },
+    /** The Clean look: the row ends max(bottom, minBelowRow px - (rowH - icon)) above the bottom; title and store pill gaps above the row. */
+    clean: { bottom: 36, minBelowRow: 61, gap: 28, storeGap: 20 },
     /** The title block's bottom above the Play row (Spotlight look). */
     titleGap: 36,
     cards: { gridGap: 18, padX: 24, padY: 20, colGap: 12, hltbGap: 10, split: [1.1, 1] as const },
     stats: { label: 11, value: 30, colGapInfo: 40, colGapHltb: 36, rowGap: 4 },
-    cleanInfo: { padX: 24, padY: 14, colGap: 28, value: 22, barW: 96 },
+    /** The title block: the gap between title and eyebrow, and the eyebrow's type size. */
+    titleBlock: { gap: 14, eyebrow: 12 },
+    cleanInfo: { padX: 24, padY: 14, colGap: 28, value: 22, barW: 96, barH: 4, barTop: 2 },
     /** The store pill's top above the cards block (.gg-hero), Spotlight look. */
     storePillTop: 82,
 } as const;
@@ -347,9 +349,9 @@ export function buildCleanCss({ header, details, root }: ThemeClasses): string {
             backdrop-filter: blur(${d(16)}); color: #fff; }`,
         `.gg-clean-info > div { display: flex; flex-direction: column; gap: ${d(PAGE_LAYOUT.stats.rowGap)}; }`,
         `.gg-clean-info .gg-value { font-size: ${d(PAGE_LAYOUT.cleanInfo.value)}; line-height: 1.2; }`,
-        `.gg-clean-info .gg-bar { width: ${d(PAGE_LAYOUT.cleanInfo.barW)}; height: ${d(4)}; margin-top: ${d(2)}; }`,
+        `.gg-clean-info .gg-bar { width: ${d(PAGE_LAYOUT.cleanInfo.barW)}; height: ${d(PAGE_LAYOUT.cleanInfo.barH)}; margin-top: ${d(PAGE_LAYOUT.cleanInfo.barTop)}; }`,
         // The store pill above the row, at its right edge.
-        `.gg-pill { top: auto; bottom: calc(100% + ${d(CLEAN_GAP - 8)}); }`,
+        `.gg-pill { top: auto; bottom: calc(100% + ${d(PAGE_LAYOUT.clean.storeGap)}); }`,
         // The eyebrow and title just above the row, at the left (their bottom CLEAN_GAP above the Play pill).
         rule(`${inner} > .gg-titleblock`, ` top: calc(var(--gg-play-top) - ${d(CLEAN_GAP)}) !important; transform: translateY(-100%); `),
     ].filter((r) => r.length > 0).join('\n');
@@ -460,8 +462,8 @@ function restyleRules({ header, details, root, play, shared }: ThemeClasses, lay
 
         // Eyebrow ("Last played · Today", accent) and the 64px/800 title, at most two lines. Hidden unless the
         // full-screen layout applies (below): all-or-nothing, like the rest of the layout.
-        `.gg-titleblock { display: none; flex-direction: column; gap: ${d(14)}; max-width: ${d(640)}; margin: 1vh var(--gg-side); color: #fff; font-family: inherit; }`,
-        `.gg-eyebrow { font-size: ${d(12)}; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; line-height: 1.2; color: var(--glance-accent-text); }`,
+        `.gg-titleblock { display: none; flex-direction: column; gap: ${d(PAGE_LAYOUT.titleBlock.gap)}; max-width: ${d(640)}; margin: 1vh var(--gg-side); color: #fff; font-family: inherit; }`,
+        `.gg-eyebrow { font-size: ${d(PAGE_LAYOUT.titleBlock.eyebrow)}; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; line-height: 1.2; color: var(--glance-accent-text); }`,
         // The clip gets a bleed for descenders and the shadow; equal negative margins keep the box at two lines.
         `.gg-title { margin: calc(-1 * ${d(16)}); padding: ${d(16)}; font-size: ${d(64)}; line-height: 1; font-weight: 800; letter-spacing: -0.02em;
             text-wrap: balance; text-shadow: 0 ${d(4)} ${d(30)} rgba(0, 0, 0, 0.4); overflow-wrap: anywhere;
