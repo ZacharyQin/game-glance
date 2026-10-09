@@ -1,7 +1,7 @@
 import { sourcePillIcon, sourcePillLook } from '../../src/styles/sourcePill';
 import { describe, expect, it } from 'vitest';
 import { buildAccentCss, buildCleanCss, buildDownloadCss, buildLaunchCss, buildThemeCss, buildUnifideckCss, launchTargets, ThemeClasses } from '../../src/styles/themeCss';
-import { STEAM_LEGEND_PX } from '../../src/styles/themeCss';
+import { PAGE_LAYOUT, PAGE_SCRIM_LAYERS, PAGE_SCRIMS, pageDUnit, STEAM_LEGEND_PX } from '../../src/styles/themeCss';
 
 const full: ThemeClasses = {
     header: { TopCapsule: 'hd_Top', BoxSizer: 'hd_Box' },
@@ -677,5 +677,19 @@ describe('buildDownloadCss (restyled Play pill fill)', () => {
         expect(buildThemeCss(full, { restyle: true })).toContain('.rt_PlayBtn [role="progressbar"] { display: none !important; }');
         expect(buildThemeCss(full)).not.toContain('progressbar');
         expect(buildThemeCss({ ...full, root: undefined }, { restyle: true })).not.toContain('progressbar');
+    });
+});
+
+describe('the page layout constants', () => {
+    it('pageDUnit follows --gg-d: a 1440 wide canvas on 16:9, 1280 on 16:10 and narrower', () => {
+        expect(pageDUnit(1500, 844)).toBeCloseTo(1500 / 1440);
+        expect(pageDUnit(1280, 800)).toBeCloseTo(1);
+        expect(pageDUnit(828, 466)).toBeCloseTo(828 / 1440);
+    });
+    it('the restyled theme is built from them', () => {
+        const css = buildThemeCss(full, { restyle: true });
+        expect(css).toContain(`--gg-play-top: calc(100vh - calc(${PAGE_LAYOUT.playTop.spotlight} * var(--gg-d)))`);
+        for (const layer of PAGE_SCRIM_LAYERS) expect(css).toContain(layer);
+        expect(PAGE_SCRIMS).toBe(PAGE_SCRIM_LAYERS.join(', '));
     });
 });
