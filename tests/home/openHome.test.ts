@@ -1,5 +1,6 @@
-import { describe, expect, it } from 'vitest';
-import { applyOpening, measureHome, openVariant } from '../../src/home/openHome';
+import { describe, expect, it, vi } from 'vitest';
+import { applyOpening, measureHome, openVariant, pageStatsFromChips } from '../../src/home/openHome';
+import { mountOpenBridge } from '../../src/home/openBridge';
 
 describe('openVariant', () => {
     it('morphs only the selected game with its full hero art onto the restyled page', () => {
@@ -109,5 +110,75 @@ describe('applyOpening', () => {
         f.frames.splice(0).forEach((cb) => cb());
         expect(f.props.size).toBe(0);
         expect(f.attrs.size).toBe(0);
+    });
+});
+
+describe('pageStatsFromChips', () => {
+    const chips = [
+        { key: 'played', label: 'Play Time', value: '1.9 h', bar: false },
+        { key: 'achievements', label: 'Achievements', value: '0 / 49', bar: true },
+        { key: 'hltb', label: 'HLTB main', value: '9.1 h', bar: true },
+    ];
+    it("Spotlight: the info card's stats, then HowLongToBeat's Main; achievements written as the card writes them", () => {
+        expect(pageStatsFromChips(chips, 'spotlight')).toEqual([
+            { key: 'played', label: 'Play Time', value: '1.9 h', bar: false },
+            { key: 'achievements', label: 'Achievements', value: '0/49', bar: false },
+            { key: 'hltb', label: 'Main', value: '9.1 h', bar: false },
+        ]);
+    });
+    it('Clean: the same order with bars where Home had them', () => {
+        expect(pageStatsFromChips(chips, 'clean').map((s) => [s.key, s.label, s.value, s.bar])).toEqual([
+            ['played', 'Play Time', '1.9 h', false], ['achievements', 'Achievements', '0 / 49', true], ['hltb', 'HLTB main', '9.1 h', true],
+        ]);
+    });
+    it("a new game's Added chip: the page still shows Play time (0 h), and nothing else of Home's is invented", () => {
+        const stats = pageStatsFromChips([{ key: 'added', label: 'Added', value: 'Today', bar: false }, chips[2]], 'clean');
+        expect(stats.map((s) => s.key)).toEqual(['played', 'hltb']);
+        expect(stats[0].value).toBe('0 h');
+    });
+});
+
+describe('mountOpenBridge', () => {
+    function fakeDom() {
+        const appended: Array<{ style: Record<string, string>; children: unknown[]; remove(): void }> = [];
+        const make = () => {
+            const node = {
+                style: {} as Record<string, string>,
+                children: [] as unknown[],
+                className: '',
+                attrs: {} as Record<string, string>,
+                setAttribute(n: string, v: string) { node.attrs[n] = v; },
+                appendChild(c: unknown) { node.children.push(c); },
+                remove: vi.fn(),
+            };
+            return node;
+        };
+        const clone = { ...make(), classList: { add: vi.fn() } };
+        const doc = { body: { appendChild: (c: never) => appended.push(c) }, createElement: () => make() };
+        const root = {
+            ownerDocument: doc,
+            getBoundingClientRect: () => ({ left: 0, top: 0, width: 1500, height: 844 }),
+            cloneNode: vi.fn(() => clone),
+        };
+        return { root: root as unknown as HTMLElement, appended, clone };
+    }
+    it("puts a frozen copy of Home over Home's box, then fades and removes it", () => {
+        const f = fakeDom();
+        const bridge = mountOpenBridge(f.root);
+        expect(f.appended).toHaveLength(1);
+        const box = f.appended[0];
+        expect(box.style).toMatchObject({ position: 'fixed', left: '0px', top: '0px', width: '1500px', height: '844px', pointerEvents: 'none' });
+        expect(box.children).toEqual([f.clone]);
+        expect(f.clone.classList.add).toHaveBeenCalledWith('gh-bridge');
+        bridge.fadeOut(120);
+        expect(box.style.opacity).toBe('0');
+        expect(box.style.transition).toBe('opacity 120ms ease');
+        bridge.remove();
+        expect(box.remove).toHaveBeenCalled();
+    });
+    it('throws when Home has no usable box (the controller then opens the page without it)', () => {
+        const f = fakeDom();
+        (f.root as unknown as { getBoundingClientRect: () => unknown }).getBoundingClientRect = () => ({ left: 0, top: 0, width: 0, height: 0 });
+        expect(() => mountOpenBridge(f.root)).toThrow();
     });
 });

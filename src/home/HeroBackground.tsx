@@ -6,7 +6,7 @@ import { HeroLayer, nextHeroLayers } from './heroLayers';
 import { heroSources, shouldMemoArt } from './homeView';
 import { HERO_FADE_MS, HERO_PRELOAD_DELAY_MS } from './motion';
 
-type Art = { mode: 'full'; url: string } | { mode: 'fallback'; url: string } | { mode: 'none' };
+export type Art = { mode: 'full'; url: string } | { mode: 'fallback'; url: string } | { mode: 'none' };
 
 const LOAD_TIMEOUT_MS = 4000;
 /** Games whose resolved art is kept (more than any recents row). */
@@ -86,6 +86,20 @@ async function lookupArt(appId: number): Promise<Art> {
     }
 }
 
+/** The game whose art Home shows now, and that art (the open transition morphs only over a game's own full hero). */
+let shownNow: { appId: number; art: Art } | null = null;
+
+/** The game Home's hero shows now, or null. */
+export function heroShownApp(): number | null {
+    return shownNow?.appId ?? null;
+}
+
+/** A game's hero art as Home shows or last resolved it (null when unknown); never loads anything. */
+export function heroArtFor(appId: number): Art | null {
+    if (shownNow?.appId === appId) return shownNow.art;
+    return artMemo.get(appId) ?? null;
+}
+
 const sameArt = (a: Art | undefined, b: Art) =>
     a !== undefined && a.mode === b.mode && (a.mode === 'none' || (b.mode !== 'none' && a.url === b.url));
 
@@ -126,13 +140,16 @@ export function HeroBackground({ appId, detailsVersion, neighbours = [] }: { app
     useEffect(() => {
         if (appId === null) {
             shown.current = undefined;
+            shownNow = null;
             setLayers([]);
             return undefined;
         }
         let active = true;
         let prune: ReturnType<typeof setTimeout> | undefined;
         resolveArt(appId).then((art) => {
-            if (!active || sameArt(shown.current, art)) return; // re-resolved to what is already up
+            if (!active) return;
+            shownNow = { appId, art };
+            if (sameArt(shown.current, art)) return; // re-resolved to what is already up
             shown.current = art;
             const id = ++nextId.current;
             setLayers((current) => nextHeroLayers(current, { id, art }, Date.now(), HERO_FADE_MS));

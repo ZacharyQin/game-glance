@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-    FEED_SHEET, hexAlpha, homeCss, MAX_STACK_SHIFT, openOverlayCss, sourcePillTop, stackShift, TITLE_BLOCK, titleBlockBottom, titleBlockLayout,
+    FEED_SHEET, hexAlpha, homeCss, MAX_STACK_SHIFT, sourcePillTop, stackShift, TITLE_BLOCK, titleBlockBottom, titleBlockLayout,
 } from '../../src/home/homeCss';
 import { sourcePillLook } from '../../src/styles/sourcePill';
 import { PAGE_SCRIMS } from '../../src/styles/themeCss';
@@ -337,22 +337,6 @@ describe('homeCss', () => {
         expect(css).toMatch(/\.gh-card-friend \{[^}]*border-radius: 3px !important[^}]*box-shadow: 0 0 0 2px/);
         expect(css).not.toMatch(/\.gh-(avatar|card-friend)[^{]*\{[^}]*border-radius: 50%/);
     });
-    it('homeCss fades Home out over 300 ms while the open overlay is up', () => {
-        expect(homeCss()).toMatch(/\.gh-root\[data-gh-leaving\]\s*\{[^}]*opacity:\s*0\s*!important[^}]*transition:\s*opacity 300ms/);
-    });
-    it('openOverlayCss expands over 480 ms and fades from 520 ms over 450 ms, over an ink base, gh- classes only', () => {
-        const css = openOverlayCss();
-        const list = selectors(css);
-        expect(list.length).toBeGreaterThan(1);
-        for (const sel of list) expect(sel.startsWith('.gh-'), sel).toBe(true);
-        expect(css).toMatch(/\.gh-open\s*\{[^}]*position:\s*fixed\s*!important[^}]*pointer-events:\s*none/);
-        expect(css).toMatch(/gh-open-expand 480ms cubic-bezier\(\.6,0,\.2,1\) both/);
-        expect(css).toMatch(/gh-open-fade 450ms ease 520ms forwards/);
-        expect(css).toMatch(/\.gh-open-clone\s*\{[^}]*background-color:\s*#07090c/);
-        // Animated properties must not be set !important in a rule, or the animation could not move them.
-        expect(css).not.toMatch(/\.gh-open-clone\s*\{[^}]*(?:[;{]\s*)(?:left|top|width|height|border-radius|opacity):/);
-        expect(css).toMatch(/@keyframes gh-open-expand\s*\{\s*from\s*\{[^}]*var\(--gh-from-w\)[^}]*\}\s*to\s*\{[^}]*width:\s*100%[^}]*border-radius:\s*0/);
-    });
     it('the Friends tab count: faded with nobody online, the online green (not the accent) with anyone connected', () => {
         const css = homeCss();
         expect(css).toMatch(/\.gh-tab-count \{[^}]*color: rgba\(255,255,255,\.4\) !important/);
@@ -413,5 +397,11 @@ describe('homeCss open transition', () => {
         const all = rules(css);
         expect(all.find(([sel]) => sel === '.gh-open-shell')?.[1]).toContain('display: none');
         expect(all.some(([sel]) => sel.includes('[data-gh-shells="2"]') && sel.includes('.gh-open-shell[data-i="1"]'))).toBe(true);
+    });
+});
+
+describe('homeCss bridge', () => {
+    it('nothing inside the bridge animates again (the hero layer would replay its fade-in)', () => {
+        expect(homeCss()).toContain('.gh-root.gh-bridge, .gh-root.gh-bridge * { animation: none !important; transition: none !important; }');
     });
 });

@@ -37,22 +37,6 @@ export function wideArt(landscape: string[], hero: string[], capsule: string[]):
     return layers.length > 0 ? layers : null;
 }
 
-/**
- * Art for the open transition's clone: the wide card's layers (`wide`, from wideArt), then the capsule as the
- * last resort (the handoff: wide || hero || cover). Empty when nothing is known; the clone is then ink only.
- */
-export function openArtLayers(wide: string[] | null, capsule: string[]): string[] {
-    return [...new Set([...(wide ?? []), ...capsule])].filter((u) => typeof u === 'string' && u.length > 0);
-}
-
-/** Urls as one CSS background-image value, stacked (the first that loads paints on top); '' without urls. */
-export function cssLayers(list: string[]): string {
-    return list
-        .filter((u) => typeof u === 'string' && u.length > 0)
-        .map((u) => `url("${u.replace(/"/g, '%22')}")`)
-        .join(', ');
-}
-
 /** Steam's RunGame takes the 64-bit game id for non-Steam shortcuts, the app id otherwise. */
 export function runGameId(appId: number, gameId: string | undefined): string {
     return typeof gameId === 'string' && /^\d+$/.test(gameId) ? gameId : String(appId);

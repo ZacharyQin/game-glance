@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { cssLayers, eyebrowText, fillMissing, openArtLayers, heroSources, playAction, runGameId, shouldMemoArt, showEmptyMessage, usableSize, wideArt } from '../../src/home/homeView';
+import { eyebrowText, fillMissing, heroSources, playAction, runGameId, shouldMemoArt, showEmptyMessage, usableSize, wideArt } from '../../src/home/homeView';
 
 describe('eyebrowText', () => {
     it('says continue playing with the last-played label', () => {
@@ -183,27 +183,3 @@ describe('fillMissing', () => {
     });
 });
 
-describe('openArtLayers', () => {
-    const A = 'https://steamloopback.host/assets/1';
-    it('puts the wide art first and the capsule last, once each', () => {
-        expect(openArtLayers([`${A}/wide.jpg`, `${A}/header.jpg`], [`${A}/cap.jpg`, `${A}/header.jpg`])).toEqual([
-            `${A}/wide.jpg`,
-            `${A}/header.jpg`,
-            `${A}/cap.jpg`,
-        ]);
-    });
-    it('falls back to the capsule without wide art, and to nothing at all', () => {
-        expect(openArtLayers(null, [`${A}/cap.jpg`])).toEqual([`${A}/cap.jpg`]);
-        expect(openArtLayers(null, [])).toEqual([]);
-    });
-});
-
-describe('cssLayers', () => {
-    it('stacks urls as one background-image value with quotes escaped', () => {
-        expect(cssLayers(['https://a/1.jpg', 'https://a/"2".jpg'])).toBe('url("https://a/1.jpg"), url("https://a/%222%22.jpg")');
-    });
-    it('is empty without urls and skips blanks', () => {
-        expect(cssLayers([])).toBe('');
-        expect(cssLayers(['', 'https://a/1.jpg'])).toBe('url("https://a/1.jpg")');
-    });
-});

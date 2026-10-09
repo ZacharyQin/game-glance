@@ -1,11 +1,18 @@
 import { Navigation } from '@decky/ui';
 import { LOG_PREFIX } from '../constants';
-import { browserStores, capsuleUrls, heroUrls, landscapeUrls } from './artwork';
+import { browserStores, heroUrls } from './artwork';
 import { markLeaving } from './homeMemory';
-import { cssLayers, openArtLayers, wideArt } from './homeView';
-import { mountOpenOverlay } from './OpenOverlay';
 import { takeSteamFocus } from './steamFocus';
-import { createOpenTransition, DOMRectLike, OpenTransition } from './openTransition';
+import { createOpenTransition, OpenTransition } from './openTransition';
+import { applyOpening, canvasMeasure, OpenVariant, openVariant, pageStatsFromChips, readChipTexts, measureHome } from './openHome';
+import { openMotion } from './openMotion';
+import { pageTargets, PageLook } from './openTargets';
+import { mountOpenBridge } from './openBridge';
+import { heroArtFor, heroShownApp } from './HeroBackground';
+import { homeMode } from './mode';
+import { settings } from '../data/settings';
+import { clearOpen, markOpen, onOpenReady, OpenIntent } from '../data/openIntent';
+import { pageArrivalSelectors } from '../styles/theme';
 
 /** Opens a game's page directly, without the transition (Play pill fallbacks, Steam call fallbacks). */
 export function openPage(appId: number) {
@@ -149,25 +156,69 @@ function urls(read: () => string[]): string[] {
     }
 }
 
-/** A game's clone art: the expanded recents card's wide layers, then its capsule (homeView.openArtLayers). */
-export function gameOpenArt(appId: number): string[] {
-    const cover = urls(() => capsuleUrls(appId, browserStores));
-    const wide = wideArt(urls(() => landscapeUrls(appId, browserStores)), urls(() => heroUrls(appId, browserStores)), cover);
-    return openArtLayers(wide, cover);
-}
-
-/** Home's root for the open being started; read synchronously by `mount` inside `open`. */
-let leavingHome: HTMLElement | null = null;
+/** The open being started (set by openGame); the controller's hooks take a copy when Home starts moving. */
+interface OpenContext { root: HTMLElement | null; appId: number; variant: OpenVariant; look: PageLook; intent: OpenIntent; heroUrl: string | null }
+let next: OpenContext | null = null;
+let active: OpenContext | null = null;
 /** One controller for the session: it must outlive Home, which Steam unmounts once the game page opens. */
 let transition: OpenTransition | null = null;
+
+/** Puts Home in its opening state for `c` (morph: measured and aimed at the page's layout; else a fade). */
+function startHome(c: OpenContext): (() => void) | null {
+    const root = c.root;
+    if (!root) return null;
+    if (c.variant === 'morph') {
+        try {
+            const home = measureHome(root);
+            const canvasEl = root.querySelector('.gh-canvas') as HTMLElement | null;
+            const win = root.ownerDocument?.defaultView;
+            const scale = home && canvasEl && canvasEl.offsetWidth > 0 ? home.canvas.w / canvasEl.offsetWidth : 0;
+            const screen = { width: win?.innerWidth ?? 0, height: win?.innerHeight ?? 0 };
+            if (home && scale > 0 && screen.width > 0 && screen.height > 0) {
+                const stats = pageStatsFromChips(readChipTexts(root), c.look);
+                const store = home.store ?? { x: 0, y: 0, w: 0, h: 0 };
+                const page = pageTargets(c.look, screen, stats, canvasMeasure(root), { w: store.w, h: store.h });
+                return applyOpening(root, 'morph', openMotion(home, page, c.look, scale), null);
+            }
+        } catch (error) {
+            console.warn(`${LOG_PREFIX} Home: could not set up the morph`, error);
+        }
+        // Home could not be measured: the page still gets a calm fade, and arrives whole.
+        c.intent = { ...c.intent, mode: 'all' };
+        return applyOpening(root, 'fade', [], null);
+    }
+    return applyOpening(root, c.variant, [], c.variant === 'heroFade' ? c.heroUrl : null);
+}
+
+/** Calls `cb` when the opened page is ready: the Game Glance page reports it (openIntent); Steam's own page is ready when its hero has loaded. */
+function whenReady(c: OpenContext, cb: () => void): () => void {
+    if (c.intent.look !== 'steam') return onOpenReady((id) => id === c.appId && cb());
+    const doc = c.root?.ownerDocument;
+    const img = pageArrivalSelectors().headerImg;
+    const timer = setInterval(() => {
+        try {
+            const el = img ? (doc?.querySelector(img) as HTMLImageElement | null) : null;
+            if (el?.complete && el.naturalWidth > 0) cb();
+        } catch {
+            // the transition's cap reveals the page anyway
+        }
+    }, 16);
+    return () => clearInterval(timer);
+}
 
 function controller(): OpenTransition {
     transition ??= createOpenTransition({
         navigate: (path) => Navigation.Navigate(path),
-        mount: (rect, art) => {
-            if (!leavingHome) throw new Error('no Home root');
-            return mountOpenOverlay(leavingHome, rect, art);
+        startHome: () => {
+            active = next;
+            next = null;
+            return active ? startHome(active) : null;
         },
+        mountBridge: () => (active?.root ? mountOpenBridge(active.root) : null),
+        markOpen: () => {
+            if (active) markOpen(active.appId, active.intent);
+        },
+        onReady: (cb) => (active ? whenReady(active, cb) : () => undefined),
         setTimer: (fn, ms) => setTimeout(fn, ms),
         clearTimer: (id) => clearTimeout(id as ReturnType<typeof setTimeout>),
         warn: (message, error) => console.warn(`${LOG_PREFIX} Home: ${message}`, error),
@@ -176,40 +227,36 @@ function controller(): OpenTransition {
 }
 
 /**
- * Opens a game's page with the open-to-details transition, expanding from `source` (the pressed feed card, or the
- * selected capsule for the info button) with `art` (urls, stacked). The single entry point for every A
- * that opens a game from Home. Anything wrong with the overlay (no source, a 0-size rect, no Home root, a
- * throwing mount) still opens the page, without motion; a press while a transition runs is ignored.
+ * Opens a game's page with the open transition (spec docs/superpowers/specs/2026-10-09-open-transition-design.md):
+ * the selected game's Home morphs into its page over the steady hero; a feed card's game gets its hero faded in over
+ * Home; with fallback art or Steam's own page Home's UI fades. `source` is the pressed element (inside Home). The
+ * single entry point for every A that opens a game from Home. Anything that cannot be set up still opens the page,
+ * without motion; a press while a transition runs is ignored.
  */
-export function openGame(appId: number, source: HTMLElement | null | undefined, art: string[]) {
+export function openGame(appId: number, source?: HTMLElement | null) {
     markLeaving();
-    let rect: DOMRectLike | null = null;
     try {
-        leavingHome = (source?.closest?.('.gh-root') as HTMLElement | null) ?? null;
-        if (source && leavingHome) {
-            const r = source.getBoundingClientRect();
-            rect = { left: r.left, top: r.top, width: r.width, height: r.height };
-        }
-    } catch (error) {
-        console.warn(`${LOG_PREFIX} Home: could not measure the open source`, error);
-        rect = null;
-    }
-    try {
-        // A null rect makes the controller open the page at once, still respecting a transition already running.
-        controller().open(appId, rect, cssLayers(art));
+        const root = (source?.closest?.('.gh-root') as HTMLElement | null) ?? null;
+        const mode = homeMode(settings.get());
+        const look: PageLook = mode.cleanDetails ? 'clean' : 'spotlight';
+        const art = heroArtFor(appId);
+        const pageRestyled = mode.gamePage && mode.restyleDetails;
+        const variant = openVariant({ sameGame: heroShownApp() === appId, heroMode: art?.mode ?? 'none', pageRestyled });
+        const heroUrl = art?.mode === 'full' ? art.url : (urls(() => heroUrls(appId, browserStores))[0] ?? null);
+        next = { root, appId, variant, look, heroUrl, intent: { look: pageRestyled ? look : 'steam', mode: variant === 'morph' ? 'parts' : 'all' } };
+        controller().open(appId, variant);
     } catch (error) {
         // Not reached in practice (the controller never throws); the page must open regardless.
         console.warn(`${LOG_PREFIX} Home: open transition failed`, error);
         openPage(appId);
-    } finally {
-        leavingHome = null;
     }
 }
 
-/** Drops a running transition: removes the overlay, restores Home, cancels the pending navigation. */
+/** Drops a running transition: Home's opening state or the bridge go, a pending navigation never happens, the page's intent ends. */
 export function cancelOpen() {
     try {
         transition?.cancel();
+        clearOpen();
     } catch (error) {
         console.warn(`${LOG_PREFIX} Home: could not cancel the open transition`, error);
     }

@@ -9,7 +9,7 @@ import { opensGameMenu, PREFERRED_CHILD } from './focusZones';
 import { openGameMenu } from './gameMenu';
 import { pressCloud, steamCloudIcon } from './steamCloud';
 import { readSteamPill } from './steamPill';
-import { gameOpenArt, openGame, openLibrary, openPage } from './homeNav';
+import { openGame, openLibrary, openPage } from './homeNav';
 import type { DownloadState } from './downloadProgress';
 import { playAction, runGameId } from './homeView';
 import type { HomeGame } from './useHomeData';
@@ -66,15 +66,6 @@ function toggleDownload(action: 'pause' | 'resume', appId: number) {
         console.warn(`${LOG_PREFIX} Home: ${action} download failed`, error);
     }
     openPage(appId);
-}
-
-/** The expanded recents capsule (the selected game's card), the info button's transition source. */
-function focusedCapsule(from: HTMLElement | null): HTMLElement | null {
-    try {
-        return (from?.closest('.gh-root')?.querySelector('.gh-cap-wide') as HTMLElement | null) ?? null;
-    } catch {
-        return null;
-    }
 }
 
 function ActionButton({ className, label, onPress, preferredFocus, fill, setRef, action, children }: {
@@ -175,8 +166,8 @@ export function LibraryActionRow({ preferred }: { preferred?: boolean }) {
  * in Steam's own icon and, on a sync problem, A opens Steam's conflict or retry dialog, as the page's status does.
  * The gear (and View/Select or Menu anywhere on the row) opens Steam's game context menu for the selected game, as
  * the game page's gear does (gameMenu; Properties if Steam's menu is unavailable).
- * The info circle opens the game page with the open transition, expanding from the selected capsule (the handoff's
- * clone of the focused card; the button itself if that is not found). The Play pill's page fallbacks (Resume,
+ * The info circle opens the game page with the open transition (homeNav.openGame: Home morphs into the page). The
+ * Play pill's page fallbacks (Resume,
  * Install, missing Steam calls) open it directly. For the running game the pill reads Resume and opens its page
  * rather than launching it again. While Steam installs, updates or downloads the game the pill fills left to right
  * with the progress and reads the state and percent (downloadProgress).
@@ -283,7 +274,7 @@ export function ActionRow({ game, running = false, download = null, preferred, b
                 className="gh-btn-circle"
                 label={tr('gameDetails')}
                 action="info"
-                onPress={(el) => openGame(appId, focusedCapsule(el) ?? el, gameOpenArt(appId))}
+                onPress={(el) => openGame(appId, el)}
             >
                 <span className="gh-btn-icon"><IoInformationCircleOutline /></span>
             </ActionButton>

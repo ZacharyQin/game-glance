@@ -5,7 +5,7 @@ import { FeedSheet } from './FeedSheet';
 import { feedSpace, feedViewportInset } from './feedLayout';
 import { pillInset, rowInset, sideInset } from './insets';
 import { isTvScreen } from '../styles/screenScale';
-import { focusElement, focusElementSettled, gameOpenArt, openGame, openLibrary } from './homeNav';
+import { focusElement, focusElementSettled, openGame, openLibrary } from './homeNav';
 import { LOG_PREFIX } from '../constants';
 import { useSettings } from '../data/settings';
 import { recentsButton, repeatStep, RepeatState, selectionForButton, type Zone } from './focusZones';
@@ -231,7 +231,7 @@ export function SpotlightHome() {
         lastOpen.current = now;
         try {
             if (onLibrary || !data.focused) return openLibrary();
-            openGame(data.focused.appId, selectedCard(), gameOpenArt(data.focused.appId));
+            openGame(data.focused.appId, selectedCard());
         } catch (error) {
             console.warn(`${LOG_PREFIX} Home: opening the selected game failed`, error);
         }

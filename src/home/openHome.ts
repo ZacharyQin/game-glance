@@ -1,5 +1,6 @@
 import type { HomeRects, MotionVar } from './openMotion';
-import type { Box, Measure } from './openTargets';
+import type { Box, Measure, PageLook, PageStat, StatKey } from './openTargets';
+import { tr } from '../i18n/steamText';
 
 /**
  * Spotlight Home's side of the open transition: which variant runs (openVariant), Home's boxes (measureHome), the
@@ -113,4 +114,37 @@ export function canvasMeasure(root: Element): Measure {
         const shown = label ? text.toUpperCase() : text;
         return ctx.measureText(shown).width + (label ? shown.length * 0.18 * fontPx : 0);
     };
+}
+
+/** A chip as Home shows it (its key, texts, and whether it has a progress bar). */
+export interface ChipText { key: string; label: string; value: string; bar: boolean }
+
+/**
+ * The page's stat columns, as Home can know them from its chips (the same Steam words and numbers): Spotlight writes
+ * achievements "0/49" in its card and calls HowLongToBeat's column "Main"; Clean keeps Home's texts and bars. A new
+ * game's Added chip stands for the page's Play time of 0 h. Only these three; a Unifideck size column is not known
+ * here (its column then makes the page's others sit a little further right, which the hand-over's fade covers). Pure.
+ */
+export function pageStatsFromChips(chips: ChipText[], look: PageLook): PageStat[] {
+    const byKey = new Map(chips.map((c) => [c.key, c]));
+    const out: PageStat[] = [];
+    const played = byKey.get('played');
+    if (played) out.push({ key: 'played', label: played.label, value: played.value, bar: look === 'clean' && played.bar });
+    else if (byKey.has('added')) out.push({ key: 'played', label: tr('played'), value: '0 h', bar: false });
+    const add = (key: StatKey, label: string, value: string, bar: boolean) => out.push({ key, label, value, bar: look === 'clean' && bar });
+    const ach = byKey.get('achievements');
+    if (ach) add('achievements', ach.label, look === 'spotlight' ? ach.value.replace(/\s*\/\s*/g, '/') : ach.value, ach.bar);
+    const hltb = byKey.get('hltb');
+    if (hltb) add('hltb', look === 'spotlight' ? 'Main' : hltb.label, hltb.value, hltb.bar);
+    return out;
+}
+
+/** Home's chips as shown (data-chip, label, value, bar), for pageStatsFromChips. */
+export function readChipTexts(root: Element): ChipText[] {
+    return [...root.querySelectorAll('.gh-chip')].map((chip) => ({
+        key: chip.getAttribute('data-chip') ?? '',
+        label: chip.querySelector('.gh-chip-label')?.textContent?.trim() ?? '',
+        value: chip.querySelector('.gh-chip-value')?.textContent?.trim() ?? '',
+        bar: chip.querySelector('.gh-chip-bar') !== null,
+    }));
 }

@@ -1,0 +1,47 @@
+import type { OpenBridge } from './openTransition';
+
+/**
+ * The open transition's bridge: a frozen copy of Spotlight Home's root, in its final (page-shaped) state, placed over
+ * Home's box in the document body. Steam unmounts Home as soon as the game page's route opens (probed on the Ally), so
+ * the copy is what covers the moment the page draws behind it; it fades away once the page is ready. Plain DOM, not
+ * rendered by React. The copy carries `gh-bridge` (homeCss: no animations or transitions inside it, so nothing replays,
+ * e.g. the hero layer's fade-in); the fade is on its own container, which no stylesheet touches. Geometry is Home's
+ * measured box, never the window size (SharedJSContext's window is 1x1). Throws when there is nowhere to put it.
+ */
+export function mountOpenBridge(root: HTMLElement): OpenBridge {
+    const doc = root.ownerDocument;
+    const parent = doc?.body;
+    if (!doc || !parent) throw new Error('Home has no document');
+    const r = root.getBoundingClientRect();
+    if (![r.left, r.top, r.width, r.height].every(Number.isFinite) || r.width <= 0 || r.height <= 0) throw new Error('Home has no usable size');
+    const box = doc.createElement('div');
+    Object.assign(box.style, {
+        position: 'fixed',
+        left: `${r.left}px`,
+        top: `${r.top}px`,
+        width: `${r.width}px`,
+        height: `${r.height}px`,
+        overflow: 'hidden',
+        zIndex: '99999',
+        pointerEvents: 'none',
+        margin: '0',
+        padding: '0',
+    });
+    box.setAttribute('aria-hidden', 'true');
+    const copy = root.cloneNode(true) as HTMLElement;
+    copy.classList.add('gh-bridge');
+    box.appendChild(copy);
+    parent.appendChild(box);
+    let removed = false;
+    return {
+        fadeOut(ms: number) {
+            box.style.transition = `opacity ${ms}ms ease`;
+            box.style.opacity = '0';
+        },
+        remove() {
+            if (removed) return;
+            removed = true;
+            box.remove();
+        },
+    };
+}

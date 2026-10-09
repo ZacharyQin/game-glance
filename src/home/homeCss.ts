@@ -7,7 +7,6 @@ import { FEED_ROW2_HEADER } from './feedLayout';
 import { PERSONA_DOT, PERSONA_DOT_COLOURS, PersonaDot, STATUS_BAR, STATUS_FADE_MS } from './statusItems';
 import { ACCENT_MS, CAP_ART_FADE_MS, CAP_STATE_MS, FEED_ART_FADE_MS, FEED_SCROLL, HERO_FADE_MS, MORPH_EASE, OPEN_TIMINGS, SHEET, SHEET_MS, SLIDE } from './motion';
 import { PAGE_SCRIMS } from '../styles/themeCss';
-import { TIMINGS } from './openTransition';
 import { CARD_SCALE_HANDHELD, GLOW as CAP_GLOW, RECENTS_BOTTOM, recentsGeometry } from './recentsLayout';
 import { LOGO_BOX } from '../styles/logoBox';
 import { PILL_INSET, ROW_OFFSET, SIDE_INSET } from './insets';
@@ -205,8 +204,6 @@ export function homeCss(cardScale: number = CARD_SCALE_HANDHELD): string {
             position: absolute; inset: 0; overflow: hidden; overflow: clip; z-index: 0; background: var(--gh-ink); color: #fff;
             font-family: inherit; text-align: left; line-height: normal; letter-spacing: normal; text-transform: none`),
         rule('.gh-root *', 'box-sizing: border-box'),
-        // Open transition: Home fades out under the overlay (attribute set and cleared by OpenOverlay).
-        rule('.gh-root[data-gh-leaving]', `opacity: 0; pointer-events: none; transition: opacity ${TIMINGS.homeFade}ms ease`),
 
         // Hero art: full-bleed on the real screen (not the scaled canvas). Each new art fades in over the last.
         rule('.gh-hero', 'position: absolute; inset: 0; overflow: hidden; pointer-events: none'),
@@ -471,6 +468,8 @@ export function openingRules(): string[] {
         rule('.gh-hero-open', 'position: absolute; inset: 0; pointer-events: none; background-image: var(--gho-hero, none); background-size: cover; background-position: center 30%; background-repeat: no-repeat; opacity: 0'),
         rule('.gh-open-shell', 'display: none; position: absolute; left: 0; top: 0; margin: 0; padding: 0; pointer-events: none; transform-origin: 0 0; border-radius: 16px; background: rgba(12,16,22,.55); border: 1px solid rgba(255,255,255,.12)'),
         rule(O, 'pointer-events: none'),
+        // The bridge (openBridge): a frozen copy of Home in its final state; nothing inside it may animate again.
+        rule('.gh-root.gh-bridge, .gh-root.gh-bridge *', 'animation: none; transition: none'),
 
         // Scrims: Home's give way to the page's.
         rule([`${MT} .gh-scrim-dim`, `${MT} .gh-scrim-v`, `${MT} .gh-scrim-l`].join(', '), `opacity: 0; transition: opacity ${T.morph}ms ease`),
@@ -511,25 +510,3 @@ export function openingRules(): string[] {
     ];
 }
 
-/**
- * The open transition's overlay stylesheet (OpenOverlay injects it inside the overlay, which lives in the
- * document body so it outlives Home: Steam unmounts Home when the game page opens). The clone is placed over
- * the source (`--gh-from-*`, inline, relative to the overlay) and expands to the whole overlay with the radius
- * going to 0, then fades from `navigateAt`. Its z-index only has to clear Steam's UI root (BasicUI, z-index 5,
- * the body's only layer; probed on the Ally), so it covers Steam's bars too for the second it is up. Left, top, size, radius and opacity are animated only, never set in a
- * rule: `!important` declarations would beat the animation. Ink under the art, so failed art still animates.
- * The clone starts with the capsule's corner radius at `cardScale` (the rect itself is measured, so it follows any scale).
- */
-export function openOverlayCss(cardScale: number = CARD_SCALE_HANDHELD): string {
-    const { expand, navigateAt, overlayFade } = TIMINGS;
-    const k = recentsGeometry(cardScale).fine;
-    return [
-        `@keyframes gh-open-expand { from { left: var(--gh-from-l); top: var(--gh-from-t); width: var(--gh-from-w); height: var(--gh-from-h); border-radius: ${k(8)}px; } `
-            + 'to { left: 0; top: 0; width: 100%; height: 100%; border-radius: 0; } }',
-        '@keyframes gh-open-fade { from { opacity: 1; } to { opacity: 0; } }',
-        rule('.gh-open', 'position: fixed; z-index: 99999; margin: 0; padding: 0; overflow: hidden; pointer-events: none; background: transparent'),
-        rule('.gh-open-clone', `position: absolute; margin: 0; padding: 0; background-color: #07090c; background-size: cover; background-position: center 30%;
-            background-repeat: no-repeat; box-shadow: 0 0 0 1px var(--glance-accent), 0 20px 60px -10px var(--glance-accent);
-            animation: gh-open-expand ${expand}ms cubic-bezier(.6,0,.2,1) both, gh-open-fade ${overlayFade}ms ease ${navigateAt}ms forwards`),
-    ].join('\n');
-}

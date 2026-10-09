@@ -1,6 +1,6 @@
 /**
  * Home's motion timings in one place (ms). Switching games (L1/R1) must feel immediate, so every per-switch
- * transition is short; the feed sheet's raise and the open-to-details transition (openTransition.TIMINGS) keep their
+ * transition is short; the feed sheet's raise and the open-to-details transition (OPEN_TIMINGS) keep their
  * own, longer timings. Pure constants.
  *
  * Measured on the Ally, docked, 120 Hz (C12): the old switch missed about 21 of 65 frames in its first 800 ms, with
