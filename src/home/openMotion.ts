@@ -56,7 +56,9 @@ export function openMotion(home: HomeRects, page: PageTargets, look: PageLook, c
     out['--gho-title'] = translate((page.titleBottomLeft.x - home.titleSlot.x) / s, (page.titleBottomLeft.y - (home.titleSlot.y + home.titleSlot.h)) / s);
     out['--gho-eyebrow'] = translate((page.eyebrowBottomLeft.x - home.eyebrow.x) / s, (page.eyebrowBottomLeft.y - (home.eyebrow.y + home.eyebrow.h)) / s);
 
-    out['--gho-play-bg'] = mapBox(home.play, page.play, s);
+    // The pill itself only moves (by its left edge and centre line); its background layer, inside it, grows to the page
+    // pill's size about that centre line, so the label never stretches.
+    out['--gho-play-bg'] = `${translate(0, (home.play.h - page.play.h) / 2 / s)} scale(${k(page.play.w / home.play.w)}, ${k(page.play.h / home.play.h)})`;
     out['--gho-play-fg'] = translate((page.play.x - home.play.x) / s, (page.play.y + page.play.h / 2 - (home.play.y + home.play.h / 2)) / s);
     let slot = 0;
     home.circles.forEach((circle, i) => {

@@ -5,7 +5,8 @@ import { CLOUD_COLOURS, CloudTone } from './cloud';
 import { FRIEND_COLOURS } from './friends';
 import { FEED_ROW2_HEADER } from './feedLayout';
 import { PERSONA_DOT, PERSONA_DOT_COLOURS, PersonaDot, STATUS_BAR, STATUS_FADE_MS } from './statusItems';
-import { ACCENT_MS, CAP_ART_FADE_MS, CAP_STATE_MS, FEED_ART_FADE_MS, FEED_SCROLL, HERO_FADE_MS, SHEET, SHEET_MS, SLIDE } from './motion';
+import { ACCENT_MS, CAP_ART_FADE_MS, CAP_STATE_MS, FEED_ART_FADE_MS, FEED_SCROLL, HERO_FADE_MS, MORPH_EASE, OPEN_TIMINGS, SHEET, SHEET_MS, SLIDE } from './motion';
+import { PAGE_SCRIMS } from '../styles/themeCss';
 import { TIMINGS } from './openTransition';
 import { CARD_SCALE_HANDHELD, GLOW as CAP_GLOW, RECENTS_BOTTOM, recentsGeometry } from './recentsLayout';
 import { LOGO_BOX } from '../styles/logoBox';
@@ -272,6 +273,7 @@ export function homeCss(cardScale: number = CARD_SCALE_HANDHELD): string {
             margin: 0; border-radius: 999px; border: 1px solid; color: #fff; line-height: 1; white-space: nowrap; ${sourcePillLook(px)}`),
         rule('.gh-family-icon', `flex: 0 0 auto; ${sourcePillIcon(px)}`),
         ...statusRules(),
+        ...openingRules(),
         // Actions: Play pill 250x54 and three 54px circles, gap 12, margin-top 8.
         rule('.gh-actions', `display: flex; gap: 12px; align-items: center; margin: ${t.actionsMargin}px 0 0 0; padding: 0`),
         rule('.gh-btn', `height: ${t.button}px; min-width: 0; margin: 0; padding: 0; border-radius: var(--gh-r-pill); display: flex; align-items: center; justify-content: center; gap: 12px;
@@ -439,6 +441,74 @@ export function homeCss(cardScale: number = CARD_SCALE_HANDHELD): string {
         rule('.gh-empty', 'position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; padding: 0 56px; text-align: center; font-size: 22px; font-weight: 700; letter-spacing: .02em; color: rgba(255,255,255,.72)'),
         rule('.gh-empty .gh-actions', 'margin: 0'),
     ].join('\n');
+}
+
+/**
+ * The open transition's states on Home (openHome.applyOpening sets them, openMotion's variables drive them):
+ * `data-gh-opening` = morph | heroFade | fade, `data-gh-phase` = from (the start frame: the glass panels appear on the
+ * chips, the page's scrim and the opened game's hero are ready, all still) then to (the motion). Only transform and
+ * opacity animate (motion.ts: anything else costs whole frames on the Ally). The morph's element list mirrors
+ * openMotion's variables: title, eyebrow, Play pill (its background grows in a layer inside it), circles by position
+ * in the row (the info button, which the page has not, fades), store pill, chip texts by position; the chips' glass
+ * gives way to one panel per page card (.gh-open-shell, Michael's choice on the device).
+ */
+export function openingRules(): string[] {
+    const T = OPEN_TIMINGS;
+    const O = '.gh-root[data-gh-opening]';
+    const M = '.gh-root[data-gh-opening="morph"]';
+    const MT = `${M}[data-gh-phase="to"]`;
+    const FADES = ['heroFade', 'fade'].map((v) => `.gh-root[data-gh-opening="${v}"][data-gh-phase="to"]`);
+    const move = `transform ${T.morph}ms ${MORPH_EASE}`;
+    const play = '.gh-actions > .gh-btn[data-action="play"]';
+    const shell = (i: number) => [
+        rule(`${M}${i === 1 ? '[data-gh-shells="2"]' : ''} .gh-open-shell[data-i="${i}"]`, `display: block; left: calc(var(--gho-shell-${i}-x) * 1px); top: calc(var(--gho-shell-${i}-y) * 1px);
+            width: calc(var(--gho-shell-${i}-w) * 1px); height: calc(var(--gho-shell-${i}-h) * 1px); transform: var(--gho-shell-${i}-from); opacity: var(--gho-shell-${i}-o0)`),
+        rule(`${MT}${i === 1 ? '[data-gh-shells="2"]' : ''} .gh-open-shell[data-i="${i}"]`, `transform: none; opacity: 1; transition: ${move}, opacity ${T.morph}ms ease`),
+    ];
+    return [
+        // Always there, hidden: the page's scrims over Home's, the opened game's hero (heroFade), the glass panels.
+        rule('.gh-scrim-page', `background: ${PAGE_SCRIMS}; opacity: 0`),
+        rule('.gh-hero-open', 'position: absolute; inset: 0; pointer-events: none; background-image: var(--gho-hero, none); background-size: cover; background-position: center 30%; background-repeat: no-repeat; opacity: 0'),
+        rule('.gh-open-shell', 'display: none; position: absolute; left: 0; top: 0; margin: 0; padding: 0; pointer-events: none; transform-origin: 0 0; border-radius: 16px; background: rgba(12,16,22,.55); border: 1px solid rgba(255,255,255,.12)'),
+        rule(O, 'pointer-events: none'),
+
+        // Scrims: Home's give way to the page's.
+        rule([`${MT} .gh-scrim-dim`, `${MT} .gh-scrim-v`, `${MT} .gh-scrim-l`].join(', '), `opacity: 0; transition: opacity ${T.morph}ms ease`),
+        rule(`${MT} .gh-scrim-page`, `opacity: 1; transition: opacity ${T.morph}ms ease`),
+        rule(FADES.flatMap((f) => [`${f} .gh-scrim-dim`, `${f} .gh-scrim-v`, `${f} .gh-scrim-l`]).join(', '), `opacity: 0; transition: opacity ${T.feedHero}ms ease`),
+        rule(FADES.map((f) => `${f} .gh-scrim-page`).join(', '), `opacity: 1; transition: opacity ${T.feedHero}ms ease`),
+
+        // Leave: the game cards row and the tabs drop and fade; the info button fades.
+        rule([`${MT} .gh-recents`, `${MT} .gh-tabs`].join(', '), `transform: translateY(${T.leaveDrop}px); opacity: 0; transition: transform ${T.leave}ms cubic-bezier(.4,0,1,1), opacity ${T.leave}ms cubic-bezier(.4,0,1,1)`),
+        rule(`${MT} .gh-actions > .gh-btn[data-action="info"]`, `opacity: 0; transition: opacity ${T.infoFade}ms ease`),
+
+        // Morph: the movers, from their own place (origin top-left, as openMotion computes).
+        rule([`${M} .gh-title-slot`, `${M} .gh-eyebrow`, `${M} .gh-source`, `${M} .gh-actions > .gh-btn`, `${M} .gh-chip-label`, `${M} .gh-chip-value`].join(', '), 'transform-origin: 0 0'),
+        rule(`${MT} .gh-title-slot`, `transform: var(--gho-title); transition: ${move}`),
+        rule(`${MT} .gh-eyebrow`, `transform: var(--gho-eyebrow); transition: ${move}`),
+        rule(`${MT} .gh-source`, `transform: var(--gho-store); transition: ${move}`),
+        // The Play pill moves; its accent background becomes a layer inside it that grows to the page pill (the pill
+        // stops clipping it, and keeps its focus ring on that layer).
+        rule(`${M} ${play}`, 'overflow: visible; background: transparent; border-color: transparent; box-shadow: none'),
+        rule(`${M} ${play}::before`, "content: ''; position: absolute; left: 0; top: 0; width: 100%; height: 100%; border-radius: 999px; background: var(--glance-accent); transform-origin: 0 0; pointer-events: none"),
+        rule(`${M} ${play}.gh-focus::before`, 'box-shadow: 0 0 0 2px rgba(255,255,255,.9), 0 14px 40px -8px var(--glance-accent)'),
+        rule(`${MT} ${play}`, `transform: var(--gho-play-fg); transition: ${move}`),
+        rule(`${MT} ${play}::before`, `transform: var(--gho-play-bg); transition: ${move}`),
+        ...[0, 1, 2, 3].map((i) => rule(`${MT} .gh-actions > .gh-btn:nth-child(${i + 2})`, `transform: var(--gho-circle-${i}, none); transition: ${move}`)),
+        // Chips: their glass gives way to the panels at once; texts move and grow; the bars and unmatched chips fade.
+        rule(`${M} .gh-chip`, 'background: transparent; border-color: transparent; backdrop-filter: none; box-shadow: none'),
+        ...[0, 1, 2, 3].flatMap((i) => [
+            rule(`${MT} .gh-chip:nth-child(${i + 1}) .gh-chip-label`, `transform: var(--gho-chip-${i}-label, none); opacity: var(--gho-chip-${i}-o, 0); transition: ${move}, opacity ${T.infoFade}ms ease`),
+            rule(`${MT} .gh-chip:nth-child(${i + 1}) .gh-chip-value`, `transform: var(--gho-chip-${i}-value, none); opacity: var(--gho-chip-${i}-o, 0); transition: ${move}, opacity ${T.infoFade}ms ease`),
+        ]),
+        rule(`${MT} .gh-chip-bar`, `opacity: 0; transition: opacity ${T.infoFade}ms ease`),
+        ...shell(0),
+        ...shell(1),
+
+        // heroFade and fade: the opened game's hero over Home's (heroFade), Home's UI fading as one.
+        rule('.gh-root[data-gh-opening="heroFade"][data-gh-phase="to"] .gh-hero-open', `opacity: 1; transition: opacity ${T.feedHero}ms ease`),
+        rule(FADES.map((f) => `${f} .gh-page`).join(', '), `opacity: 0; transition: opacity ${T.feedUi}ms ease`),
+    ];
 }
 
 /**

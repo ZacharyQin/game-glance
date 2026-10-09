@@ -132,11 +132,14 @@ describe('openMotion', () => {
         expect(v['--gho-circle-2']).toBeUndefined();
     });
 
-    it('the Play pill: its background maps onto the page pill, its content only moves', () => {
+    it('the Play pill moves by its left edge and centre; its background layer, inside it, grows onto the page pill', () => {
         const v = vars(openMotion(homeRects(), spotlight(), 'spotlight', s));
         const bg = parse(v['--gho-play-bg']);
         expect(bg.sx).toBeCloseTo(354.2 / r.pill.w, 3);
         expect(bg.sy).toBeCloseTo(62.5 / r.pill.h, 3);
+        // Relative to the moved pill: no horizontal shift, and up by half the height it gains (it grows about its centre line).
+        expect(bg.tx).toBe(0);
+        expect(bg.ty).toBeCloseTo((r.pill.h - 62.5) / 2 / s, 1);
         const fg = parse(v['--gho-play-fg']);
         expect(fg.sx).toBe(1);
         expect(fg.ty).toBeCloseTo((493.1 + 62.5 / 2 - (r.pill.y + r.pill.h / 2)) / s, 1);

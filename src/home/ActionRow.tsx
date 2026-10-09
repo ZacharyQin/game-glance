@@ -77,8 +77,10 @@ function focusedCapsule(from: HTMLElement | null): HTMLElement | null {
     }
 }
 
-function ActionButton({ className, label, onPress, preferredFocus, fill, setRef, children }: {
+function ActionButton({ className, label, onPress, preferredFocus, fill, setRef, action, children }: {
     className: string;
+    /** What the button is (play, controller, menu, info, cloud, library): the open transition finds the buttons by it. */
+    action?: string;
     /** Receives the button element (the gear: the game menu's anchor for View/Select). */
     setRef?(el: HTMLElement | null): void;
     label: string;
@@ -116,6 +118,7 @@ function ActionButton({ className, label, onPress, preferredFocus, fill, setRef,
             onClick={press}
             role="button"
             aria-label={label}
+            data-action={action}
         >
             {typeof fill === 'number' && <span className="gh-btn-fill" style={{ width: `${Math.min(100, Math.max(0, fill))}%` }} />}
             {children}
@@ -156,7 +159,7 @@ function backHandler(onBack: (() => void) | undefined) {
 export function LibraryActionRow({ preferred }: { preferred?: boolean }) {
     return (
         <Focusable className="gh-actions" flow-children="row">
-            <ActionButton className="gh-btn-library" label={tr('library')} onPress={openLibrary} preferredFocus={preferred}>
+            <ActionButton className="gh-btn-library" label={tr('library')} onPress={openLibrary} preferredFocus={preferred} action="library">
                 <span className="gh-btn-icon"><IoGrid /></span>
                 <span>{tr('library')}</span>
             </ActionButton>
@@ -197,7 +200,7 @@ export function ActionRow({ game, running = false, download = null, preferred, b
     if (!game) {
         return (
             <Focusable {...row}>
-                <ActionButton key="primary" className="gh-btn-library" label={tr('library')} onPress={openLibrary} preferredFocus={preferred}>
+                <ActionButton key="primary" className="gh-btn-library" label={tr('library')} onPress={openLibrary} preferredFocus={preferred} action="library">
                     <span className="gh-btn-icon"><IoGrid /></span>
                     <span>{tr('library')}</span>
                 </ActionButton>
@@ -236,6 +239,7 @@ export function ActionRow({ game, running = false, download = null, preferred, b
                 label={pillWord(steamPill?.label ?? play.label)}
                 fill={fill}
                 preferredFocus={preferred}
+                action="play"
                 onPress={(el) => {
                     if (steamPill) {
                         try {
@@ -263,6 +267,7 @@ export function ActionRow({ game, running = false, download = null, preferred, b
             <ActionButton
                 className="gh-btn-circle"
                 label={tr('controllerSettings')}
+                action="controller"
                 onPress={() => steamOr('controller settings', appId, (api) => {
                     if (!api.ShowControllerConfigurator) return false;
                     api.ShowControllerConfigurator(appId);
@@ -271,12 +276,13 @@ export function ActionRow({ game, running = false, download = null, preferred, b
             >
                 <span className="gh-btn-icon"><IoGameControllerOutline /></span>
             </ActionButton>
-            <ActionButton className="gh-btn-circle" label={tr('manage')} setRef={(el) => { gear.current = el; }} onPress={(el) => openMenu(el)}>
+            <ActionButton className="gh-btn-circle" label={tr('manage')} action="menu" setRef={(el) => { gear.current = el; }} onPress={(el) => openMenu(el)}>
                 <span className="gh-btn-icon"><IoSettingsOutline /></span>
             </ActionButton>
             <ActionButton
                 className="gh-btn-circle"
                 label={tr('gameDetails')}
+                action="info"
                 onPress={(el) => openGame(appId, focusedCapsule(el) ?? el, gameOpenArt(appId))}
             >
                 <span className="gh-btn-icon"><IoInformationCircleOutline /></span>
@@ -286,6 +292,7 @@ export function ActionRow({ game, running = false, download = null, preferred, b
                     key="cloud"
                     className={`gh-btn-circle gh-btn-cloud gh-cloud-${cloud.tone}`}
                     label={cloud.label}
+                    action="cloud"
                     onPress={(el) => pressCloud(cloud, appId, el?.ownerDocument?.defaultView ?? window)}
                 >
                     <span className="gh-btn-icon"><CloudIcon cloud={cloud} /></span>

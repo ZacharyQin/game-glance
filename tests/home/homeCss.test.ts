@@ -3,6 +3,7 @@ import {
     FEED_SHEET, hexAlpha, homeCss, MAX_STACK_SHIFT, openOverlayCss, sourcePillTop, stackShift, TITLE_BLOCK, titleBlockBottom, titleBlockLayout,
 } from '../../src/home/homeCss';
 import { sourcePillLook } from '../../src/styles/sourcePill';
+import { PAGE_SCRIMS } from '../../src/styles/themeCss';
 import { ACCENT_MS, CAP_ART_FADE_MS, CAP_STATE_MS, HERO_FADE_MS, SHEET_MS, SLIDE_MS } from '../../src/home/motion';
 import { CARD_SCALE_DOCKED, CARD_SCALE_HANDHELD, recentsGeometry, recentsGlowTop } from '../../src/home/recentsLayout';
 
@@ -374,5 +375,43 @@ describe('family pill on Home', () => {
         expect(rule).toMatch(/position: absolute !important; right: calc\(100% \+ 10px\) !important; top: 50% !important; transform: translateY\(-50%\) !important/);
         expect(rule).toContain(sourcePillLook((n) => `${n}px`).split(';')[0]);
         expect(css).toMatch(/\.gh-family-icon\s*\{/);
+    });
+});
+
+describe('homeCss open transition', () => {
+    /** Each rule as [selector list, body]. */
+    const rules = (css: string): Array<[string, string]> => {
+        const out: Array<[string, string]> = [];
+        const re = /([^{}]+)\{([^{}]*)\}/g;
+        let m: RegExpExecArray | null;
+        const flat = css.replace(/@keyframes[^{]*\{(?:[^{}]*\{[^{}]*\})*[^{}]*\}/g, '');
+        while ((m = re.exec(flat)) !== null) out.push([m[1].trim(), m[2]]);
+        return out;
+    };
+    const css = homeCss();
+
+    it('moves the title block by its variable once the motion starts', () => {
+        const title = rules(css).find(([sel]) => sel.includes('[data-gh-opening="morph"][data-gh-phase="to"] .gh-title-slot'));
+        expect(title?.[1]).toContain('transform: var(--gho-title)');
+    });
+    it('animates only transform and opacity while opening', () => {
+        const opening = rules(css).filter(([sel]) => sel.includes('data-gh-opening'));
+        expect(opening.length).toBeGreaterThan(10);
+        for (const [sel, body] of opening) {
+            for (const m of body.matchAll(/transition:\s*([^;]+)/g)) {
+                const props = m[1].split(/,(?![^(]*\))/).map((p) => p.trim().split(/\s+/)[0]);
+                for (const p of props) expect(['transform', 'opacity', 'none'], `${sel}: ${m[1]}`).toContain(p);
+            }
+        }
+    });
+    it("the page's scrims are drawn by Home, hidden until opening", () => {
+        const page = rules(css).find(([sel]) => sel === '.gh-scrim-page');
+        expect(page?.[1]).toContain(`background: ${PAGE_SCRIMS}`);
+        expect(page?.[1]).toContain('opacity: 0');
+    });
+    it('the glass panels are hidden until opening, and the second only when there are two', () => {
+        const all = rules(css);
+        expect(all.find(([sel]) => sel === '.gh-open-shell')?.[1]).toContain('display: none');
+        expect(all.some(([sel]) => sel.includes('[data-gh-shells="2"]') && sel.includes('.gh-open-shell[data-i="1"]'))).toBe(true);
     });
 });

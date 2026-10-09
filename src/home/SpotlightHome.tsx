@@ -339,9 +339,12 @@ export function SpotlightHome() {
         <div ref={rootRef} className="gh-root" style={{ '--glance-accent': data.accent, '--glance-accent-text': legibleAccent(data.accent), '--gh-dim': sheetUp ? DIM_SHEET : DIM_REST, '--gh-side': `${side}px`, '--gh-row': `${rowInset(side, tv)}px`, '--gh-pill': `${pillInset(tv)}px`, '--gh-bottom': `${legend}px`, '--gh-shift': `${stackShift(logicalHeight, legend, false)}px`, '--gh-raise': `${FEED_SHEET.raise + raiseDelta}px` } as CSSProperties}>
             <style>{css}</style>
             <HeroBackground appId={game?.appId ?? null} detailsVersion={data.detailsVersion} neighbours={heroNeighbours} />
+            {/* Open transition (homeCss.openingRules): the opened game's hero (a feed card's game) and the page's scrims. */}
+            <div className="gh-hero-open" />
             <div className="gh-scrim gh-scrim-dim" />
             <div className="gh-scrim gh-scrim-v" />
             <div className="gh-scrim gh-scrim-l" />
+            <div className="gh-scrim gh-scrim-page" />
             <div
                 className="gh-canvas"
                 style={{
@@ -355,6 +358,9 @@ export function SpotlightHome() {
                 {/* In Steam's top strip, above the safe area: clock, battery, connection and your online status. */}
                 {/* The status bar is drawn above Steam's menu layers, outside this root (components/GameStatusBar): the menus blur everything under them. */}
                 {homeStatusBar && contentUp && <GameStatusBar hidden={sheetUp} />}
+                {/* Open transition: the glass panels the chips grow into, one per page card (hidden until opening). */}
+                <div className="gh-open-shell" data-i="0" />
+                <div className="gh-open-shell" data-i="1" />
                 {/* Between Steam's top bar (52) and button legend (46); Home draws neither. */}
                 <div className="gh-safe">
                     {/* The page container: moved down by the stack shift (homeCss.stackShift); raised while focus is in the tabs or feed. */}

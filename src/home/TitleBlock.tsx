@@ -4,7 +4,7 @@ import type { Chip } from './chips';
 function ChipView({ chip }: { chip: Chip }) {
     const progress = chip.progress;
     return (
-        <div className="gh-chip">
+        <div className="gh-chip" data-chip={chip.key}>
             <div className="gh-chip-label">{chip.label}</div>
             <div className="gh-chip-value">{chip.value}</div>
             {progress !== undefined && Number.isFinite(progress) && (
