@@ -12,7 +12,7 @@ import { heroArtFor, heroShownApp } from './HeroBackground';
 import { homeMode } from './mode';
 import { settings } from '../data/settings';
 import { clearOpen, markOpen, onOpenReady, OpenIntent } from '../data/openIntent';
-import { pageArrivalSelectors } from '../styles/theme';
+import { pageArrivalSelectors, steamEnterOffCss } from '../styles/theme';
 
 /** Opens a game's page directly, without the transition (Play pill fallbacks, Steam call fallbacks). */
 export function openPage(appId: number) {
@@ -214,7 +214,7 @@ function controller(): OpenTransition {
             next = null;
             return active ? startHome(active) : null;
         },
-        mountBridge: () => (active?.root ? mountOpenBridge(active.root) : null),
+        mountBridge: () => (active?.root ? mountOpenBridge(active.root, steamEnterOffCss()) : null),
         markOpen: () => {
             if (active) markOpen(active.appId, active.intent);
         },

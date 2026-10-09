@@ -176,6 +176,12 @@ describe('mountOpenBridge', () => {
         bridge.remove();
         expect(box.remove).toHaveBeenCalled();
     });
+    it("carries the given stylesheet while it is up (Steam's page-enter fade switched off)", () => {
+        const f = fakeDom();
+        mountOpenBridge(f.root, '.x { opacity: 1 }');
+        const box = f.appended[0] as unknown as { children: Array<{ textContent?: string }> };
+        expect(box.children.some((c) => c.textContent === '.x { opacity: 1 }')).toBe(true);
+    });
     it('throws when Home has no usable box (the controller then opens the page without it)', () => {
         const f = fakeDom();
         (f.root as unknown as { getBoundingClientRect: () => unknown }).getBoundingClientRect = () => ({ left: 0, top: 0, width: 0, height: 0 });

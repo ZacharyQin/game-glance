@@ -16,6 +16,7 @@ export interface ThemeClasses {
     play: ClassMap; // playSectionClasses: StatusAndStats, MenuButton, CloudStatus*, OfflineMode
     launch?: ClassMap; // Steam's launch overlay module: Container, ConfigurationHeader, ControlOverviewContainer, LaunchStatus
     shared?: ClassMap; // the Play section's family library line module: Row, SharedLibrary
+    transition?: ClassMap; // Steam's top-level page transition module: TopLevelTransition, Enter, EnterActive (its page-enter fade)
 }
 
 function cls(map: ClassMap, key: string): string | null {
@@ -553,12 +554,28 @@ export function buildArrivingCss(classes: ThemeClasses, look: 'spotlight' | 'cle
         : [...shared, '.gg-clean-info .gg-bar'];
     const all = present(['.gg-titleblock', '.gg-hero', cls(root, 'PlaySection')]);
     const list = mode === 'all' ? all : parts;
+    // Steam fades every page in by itself (TopLevelTransition: 200 ms delay, then 600 ms; probed on the Ally). Under the
+    // open transition's bridge that fade would show black; the arriving page is shown at once instead.
+    const steamFade = buildSteamEnterOffCss(classes);
     const body = revealed
         ? ` opacity: 1 !important; transform: none !important; transition: opacity ${ARRIVE_MS}ms ease, transform ${ARRIVE_MS}ms cubic-bezier(.2,.8,.2,1) !important; `
         : mode === 'all'
             ? ` opacity: 0 !important; transform: translateY(${ARRIVE_RISE_PX}px) !important; `
             : ' opacity: 0 !important; ';
-    return rule(list, body);
+    return [steamFade, rule(list, body)].filter((r) => r.length > 0).join('\n');
+}
+
+/**
+ * Steam's own page-enter fade switched off (TopLevelTransition Enter/EnterActive: a 200 ms delay, then 600 ms of
+ * opacity and transform; probed on the Ally). The open transition's bridge carries it while it is up (so Steam's own
+ * page, too, is there at once under it) and the arriving Game Glance page repeats it; '' when the classes are unknown.
+ */
+export function buildSteamEnterOffCss({ transition }: ThemeClasses): string {
+    const top = cls(transition, 'TopLevelTransition');
+    const enter = cls(transition, 'Enter');
+    const enterActive = cls(transition, 'EnterActive');
+    if (!top || !enter || !enterActive) return '';
+    return rule([`${top}${enter}`, `${top}${enterActive}`], ' opacity: 1 !important; transform: none !important; transition: none !important; ');
 }
 
 /** What the page's "ready" check reads (styles/pageReady): Steam's hero image (not its blurred placeholder), our title block, Steam's Play row. */

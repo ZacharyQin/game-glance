@@ -22,3 +22,12 @@ describe('pageReady', () => {
         expect(pageReady(doc({ '.gg-titleblock': shown(), '.play': shown() }), { ...sel, headerImg: null })).toBe(false);
     });
 });
+
+describe('pageReady and what is on screen', () => {
+    it('waits until the hero is actually shown (Steam reveals its wrapper on the load event, a frame after complete)', () => {
+        const img = shown({ complete: true, naturalWidth: 1920 });
+        const d = doc({ [sel.headerImg]: img, '.gg-titleblock': shown(), '.play': shown() });
+        expect(pageReady(d, sel, () => false)).toBe(false);
+        expect(pageReady(d, sel, (el) => el === img)).toBe(true);
+    });
+});

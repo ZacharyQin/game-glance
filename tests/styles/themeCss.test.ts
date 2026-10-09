@@ -1,6 +1,6 @@
 import { sourcePillIcon, sourcePillLook } from '../../src/styles/sourcePill';
 import { describe, expect, it } from 'vitest';
-import { buildAccentCss, buildArrivingCss, buildCleanCss, buildDownloadCss, buildLaunchCss, buildThemeCss, buildUnifideckCss, launchTargets, ThemeClasses } from '../../src/styles/themeCss';
+import { buildAccentCss, buildArrivingCss, buildCleanCss, buildSteamEnterOffCss, buildDownloadCss, buildLaunchCss, buildThemeCss, buildUnifideckCss, launchTargets, ThemeClasses } from '../../src/styles/themeCss';
 import { PAGE_LAYOUT, PAGE_SCRIM_LAYERS, PAGE_SCRIMS, pageDUnit, STEAM_LEGEND_PX } from '../../src/styles/themeCss';
 
 const full: ThemeClasses = {
@@ -726,5 +726,26 @@ describe('the page arriving after the open transition', () => {
     it("pins the page's hero to Home's crop (50% 30%) with the restyled layout", () => {
         expect(buildThemeCss(full, { restyle: true })).toContain('.hd_Top img { object-position: 50% 30% !important; }');
         expect(buildThemeCss(full)).not.toContain('object-position: 50% 30%');
+    });
+});
+
+describe("Steam's own page-enter fade while the page arrives", () => {
+    const withTransition = { ...full, transition: { TopLevelTransition: 'tl_Top', Enter: 'tl_Enter', EnterActive: 'tl_EnterActive' } };
+    const rule = '.tl_Top.tl_Enter, .tl_Top.tl_EnterActive { opacity: 1 !important; transform: none !important; transition: none !important; }';
+    it('is switched off in every arriving state, so the bridge never fades over a page Steam is still fading in', () => {
+        for (const mode of ['parts', 'all'] as const) {
+            for (const revealed of [false, true]) expect(buildArrivingCss(withTransition, 'spotlight', mode, revealed)).toContain(rule);
+        }
+    });
+    it('is left alone when Steam’s transition classes are unknown', () => {
+        expect(buildArrivingCss(full, 'spotlight', 'parts')).not.toContain('tl_');
+    });
+});
+
+describe('buildSteamEnterOffCss', () => {
+    it("is the page-enter switch-off alone (the open transition's bridge carries it, for Steam's own page too)", () => {
+        expect(buildSteamEnterOffCss({ ...full, transition: { TopLevelTransition: 'a', Enter: 'b', EnterActive: 'c' } }))
+            .toBe('.a.b, .a.c { opacity: 1 !important; transform: none !important; transition: none !important; }');
+        expect(buildSteamEnterOffCss(full)).toBe('');
     });
 });

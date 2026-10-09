@@ -6,9 +6,10 @@ import type { OpenBridge } from './openTransition';
  * the copy is what covers the moment the page draws behind it; it fades away once the page is ready. Plain DOM, not
  * rendered by React. The copy carries `gh-bridge` (homeCss: no animations or transitions inside it, so nothing replays,
  * e.g. the hero layer's fade-in); the fade is on its own container, which no stylesheet touches. Geometry is Home's
- * measured box, never the window size (SharedJSContext's window is 1x1). Throws when there is nowhere to put it.
+ * measured box, never the window size (SharedJSContext's window is 1x1). `css`: a stylesheet that applies while the
+ * bridge is up. Throws when there is nowhere to put it.
  */
-export function mountOpenBridge(root: HTMLElement): OpenBridge {
+export function mountOpenBridge(root: HTMLElement, css = ''): OpenBridge {
     const doc = root.ownerDocument;
     const parent = doc?.body;
     if (!doc || !parent) throw new Error('Home has no document');
@@ -28,6 +29,12 @@ export function mountOpenBridge(root: HTMLElement): OpenBridge {
         padding: '0',
     });
     box.setAttribute('aria-hidden', 'true');
+    // A stylesheet that applies while the bridge is up (Steam's page-enter fade switched off: theme.steamEnterOffCss).
+    if (css) {
+        const style = doc.createElement('style');
+        style.textContent = css;
+        box.appendChild(style);
+    }
     const copy = root.cloneNode(true) as HTMLElement;
     copy.classList.add('gh-bridge');
     box.appendChild(copy);

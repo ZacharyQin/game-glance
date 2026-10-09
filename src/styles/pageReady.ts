@@ -20,11 +20,29 @@ export interface ReadySelectors {
     play: string | null;
 }
 
-export function pageReady(doc: Doc | null | undefined, sel: ReadySelectors): boolean {
+/**
+ * Whether `el` is actually drawn: neither it nor an ancestor is at opacity 0 (Steam reveals the hero's wrapper on the
+ * image's load event, a frame after `complete`). True when the element cannot be inspected.
+ */
+export function shownOnScreen(el: unknown): boolean {
+    try {
+        const node = el as { ownerDocument?: { defaultView?: { getComputedStyle(e: unknown): { opacity: string } } }; parentElement?: unknown };
+        const view = node.ownerDocument?.defaultView;
+        if (!view) return true;
+        for (let p: unknown = el; p; p = (p as { parentElement?: unknown }).parentElement) {
+            if (Number(view.getComputedStyle(p).opacity) < 0.99) return false;
+        }
+        return true;
+    } catch {
+        return true;
+    }
+}
+
+export function pageReady(doc: Doc | null | undefined, sel: ReadySelectors, shown: (el: Found) => boolean = shownOnScreen): boolean {
     if (!doc || !sel.headerImg) return false;
     try {
         const img = doc.querySelector(sel.headerImg);
-        if (!img || img.complete !== true || !(Number(img.naturalWidth) > 0)) return false;
+        if (!img || img.complete !== true || !(Number(img.naturalWidth) > 0) || !shown(img)) return false;
         const laidOut = (selector: string | null) => {
             const el = selector ? doc.querySelector(selector) : null;
             return !!el && el.getClientRects().length > 0;
