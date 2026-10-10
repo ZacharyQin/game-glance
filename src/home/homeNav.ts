@@ -264,7 +264,9 @@ export function openGame(appId: number, source?: HTMLElement | null) {
         // Clean: the chips whose bar the morph moves onto the panel's (openMotion), so the page's do not fade in again.
         const homeBars = variant === 'morph' && look === 'clean' && root ? readChipTexts(root).filter((c) => c.bar).map((c) => c.key) : undefined;
         // Spotlight: the description and the HowLongToBeat card's rest Home draws as it turns into the page (OpenExtras).
-        const extras = variant === 'morph' && look === 'spotlight' && root ? root.querySelector('.gh-open-extras')?.getAttribute('data-parts') ?? '' : '';
+        // (The Clean look shows neither, only the store pill.)
+        const drawn = variant === 'morph' && root ? root.querySelector('.gh-open-extras')?.getAttribute('data-parts') ?? '' : '';
+        const extras = look === 'spotlight' ? drawn : drawn.split(' ').filter((p) => p === 'pills').join(' ');
         // The family library pill moves in with Home's store pill: the page's must not arrive again (it blinked).
         const homeFamily = variant === 'morph' && root ? root.querySelector('.gh-family') !== null : undefined;
         // The page's stat columns Home showed no chip for (a new game's Play time) arrive instead of popping in.

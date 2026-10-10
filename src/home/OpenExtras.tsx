@@ -1,21 +1,26 @@
 import type { HltbResult } from '../data/hltb';
 import { HLTB_TITLE, hltbFoundView } from '../logic/hltbCardView';
 import { extrasParts } from './openHome';
+import { FamilyPill, SourcePill } from '../components/SourcePill';
 
 interface Props {
     description: string | null;
     hltb: HltbResult | undefined;
     playedMinutes: number;
     locale: string;
+    /** The store's name (the store pill) and the family library pill's words, when known. */
+    source?: string;
+    family?: string | null;
 }
 
 /**
  * The page's parts Spotlight Home draws as it turns into the page's Spotlight look (the open transition): the description
- * and the HowLongToBeat card's title, columns, bar and caption, as the page's card shows them (logic/hltbCardView).
+ * and the HowLongToBeat card's title, columns, bar and caption, as the page's card shows them (logic/hltbCardView), and
+ * the page's store pill (the family pill in it) at the page's own size.
  * Hidden until opening (homeCss.openingRules); openMotion places it; the page then shows the same at once (intent).
  */
-export function OpenExtras({ description, hltb, playedMinutes, locale }: Props) {
-    const parts = extrasParts(description, hltb);
+export function OpenExtras({ description, hltb, playedMinutes, locale, source, family }: Props) {
+    const parts = extrasParts(description, hltb, source);
     const view = parts.includes('hltb') && hltb?.status === 'found' ? hltbFoundView(hltb.times, playedMinutes, locale, true) : null;
     return (
         <div className="gh-open-extras" data-parts={parts}>
@@ -34,6 +39,11 @@ export function OpenExtras({ description, hltb, playedMinutes, locale }: Props) 
                     {view.bar !== null && <div className="gh-x-bar"><div style={{ width: `${view.bar}%` }} /></div>}
                     {view.caption !== null && <div className="gh-x-caption">{view.caption}</div>}
                 </div>
+            )}
+            {source && (
+                <SourcePill label={source} className="gh-x-pill" iconClassName="gh-x-pill-icon">
+                    {family && <FamilyPill label={family} className="gh-x-family" iconClassName="gh-x-family-icon" />}
+                </SourcePill>
             )}
         </div>
     );

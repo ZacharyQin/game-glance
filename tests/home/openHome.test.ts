@@ -157,6 +157,11 @@ describe('extrasParts', () => {
     it('no Main time: no card (the page\'s "—" there would have nothing of Home\'s under it)', () => {
         expect(extrasParts(null, found(null))).toBe('');
     });
+    it("the page's own store pill (and family pill in it) when Home knows the store: drawn at the page's size, it hands over unchanged", () => {
+        expect(extrasParts(null, undefined, 'Steam')).toBe('pills');
+        expect(extrasParts('Text', found(9), 'GOG')).toBe('desc hltb pills');
+        expect(extrasParts(null, undefined, '')).toBe('');
+    });
 });
 
 describe('extrasFlags', () => {

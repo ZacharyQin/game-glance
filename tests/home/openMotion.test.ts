@@ -91,8 +91,14 @@ describe('openMotion', () => {
         expect([v['--gho-x-hltb-x'], v['--gho-x-hltb-y'], v['--gho-x-hltb-w']]).toEqual(['809.2px', '594.7px', '630px']);
     });
 
+    it("the store pill's place in the extras layer, for both looks: its right edge and top on the page, in the root's px", () => {
+        const v = vars(openMotion({ ...homeRects(), root: box(10, 20, 1500, 844) }, spotlight(), 'spotlight', s));
+        expect([v['--gho-x-pill-x'], v['--gho-x-pill-y']]).toEqual([`${Math.round((1372.1 + 102.9 - 10) * 100) / 100}px`, `${Math.round((507.7 - 20) * 100) / 100}px`]);
+        expect(v['--gho-x-d']).toBe(String(Math.round(s * 10000) / 10000));
+    });
+
     it('without extras on the page targets (or no root measured): the extras sit in window px, or there are none', () => {
-        expect(Object.keys(vars(openMotion(homeRects(), spotlight(), 'spotlight', s))).filter((n) => n.startsWith('--gho-x-'))).toEqual([]);
+        expect(Object.keys(vars(openMotion(homeRects(), spotlight(), 'spotlight', s))).filter((n) => /^--gho-x-(desc|hltb)/.test(n))).toEqual([]);
         const page: PageTargets = { ...spotlight(), extras: { desc: box(50, 600, 700, 70), hltbTitle: box(800, 600, 600, 17), columns: {}, caption: box(800, 700, 600, 22) } };
         expect(vars(openMotion(homeRects(), page, 'spotlight', s))['--gho-x-desc-x']).toBe('50px');
     });
@@ -205,10 +211,11 @@ describe('openMotion', () => {
         const v = vars(openMotion(homeRects(), spotlight(), 'spotlight', s));
         const icon = parse(v['--gho-play-icon']);
         // The page's glyph starts 24 in (Home's 22) and is 20 (Home's 18); its label starts after a 14 gap (Home's 13).
-        expect(icon.tx).toBeCloseTo(24 * f - 22, 4);
+        // (Home's glyph and label sit inside the pill's 1 px border; the page's pill has none.)
+        expect(icon.tx).toBeCloseTo(24 * f - (22 + 1), 4);
         expect(icon.sx).toBeCloseTo((20 * f) / 18, 3);
         const label = parse(v['--gho-play-label']);
-        expect(label.tx).toBeCloseTo((24 + 20 + 14) * f - (22 + 18 + 13), 4);
+        expect(label.tx).toBeCloseTo((24 + 20 + 14) * f - (1 + 22 + 18 + 13), 4);
         expect(label.sx).toBeCloseTo((22 * f) / 19, 3);
     });
 

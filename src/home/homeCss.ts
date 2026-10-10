@@ -36,7 +36,8 @@ const GLOW = '0 0 0 1px var(--glance-accent), 0 16px 40px -12px var(--glance-acc
  * past titleBlockBottom().
  */
 /** Inside the Play pill: the glyph's inset, the glyph, the gap to the label, the label's type size (canvas px). */
-export const HOME_PILL = { padX: 22, icon: 18, gap: 13, font: 19 } as const;
+/** Home's Play pill in canvas px: its padding, glyph, gap and type, and the 1 px border all .gh-btn have (its content sits inside it). */
+export const HOME_PILL = { padX: 22, icon: 18, gap: 13, font: 19, border: 1 } as const;
 
 export const TITLE_BLOCK = {
     top: 118,
@@ -545,6 +546,16 @@ export function openingRules(): string[] {
         rule('.gh-root[data-gh-extras~="desc"] .gh-x-desc', 'display: -webkit-box'),
         rule(`${X} .gh-x-hltb`, `display: none; position: absolute; ${at('hltb')}; flex-direction: column; gap: ${dd(L.cards.hltbGap)}`),
         rule('.gh-root[data-gh-extras~="hltb"] .gh-x-hltb', 'display: flex'),
+        // The page's store pill (and family pill in it), right-aligned where the page draws it, as themeCss draws .gg-pill
+        // and .gg-family; Home's own (moving, scaled) fades out as it fades in.
+        rule(`${X} .gh-x-pill`, `display: none; position: absolute; left: var(--gho-x-pill-x); top: var(--gho-x-pill-y); transform: translateX(-100%); align-items: center;
+            border-radius: 999px; border: 1px solid; color: #fff; white-space: nowrap; ${sourcePillLook(dd)}`),
+        rule('.gh-root[data-gh-extras~="pills"] .gh-x-pill', 'display: inline-flex'),
+        rule(`${X} .gh-x-pill-icon`, `flex: 0 0 auto; ${sourcePillIcon(dd)}`),
+        rule(`${X} .gh-x-family`, `position: absolute; right: calc(100% + ${dd(10)}); top: 50%; transform: translateY(-50%); display: inline-flex; align-items: center;
+            margin: 0; border-radius: 999px; border: 1px solid; color: #fff; line-height: 1; white-space: nowrap; ${sourcePillLook(dd)}`),
+        rule(`${X} .gh-x-family-icon`, `flex: 0 0 auto; ${sourcePillIcon(dd)}`),
+        rule(`${MT}[data-gh-extras~="pills"] .gh-source`, `opacity: 0; transition: ${move}, opacity ${T.extras}ms ease-in ${T.morph - T.extras}ms`),
         rule(`${X} .gh-x-label`, `font-size: ${dd(L.stats.label)}; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; line-height: ${PAGE_LINES.label}; white-space: nowrap; color: rgba(255,255,255,.62)`),
         rule(`${X} .gh-x-stats`, `display: flex; gap: ${dd(L.stats.colGapHltb)}`),
         rule(`${X} .gh-x-stats > div`, `display: flex; flex-direction: column; gap: ${dd(L.stats.rowGap)}`),

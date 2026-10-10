@@ -78,8 +78,10 @@ export function openMotion(home: HomeRects, page: PageTargets, look: PageLook, c
     // Inside it (origin: its left edge and centre line), the glyph and the label grow to the page's and move to its insets
     // (scaled with the focused pill).
     const pill = PAGE_LAYOUT.pill;
-    out['--gho-play-icon'] = `${translate(pill.padX * f - HOME_PILL.padX, 0)} scale(${k((pill.icon * f) / HOME_PILL.icon)})`;
-    out['--gho-play-label'] = `${translate((pill.padX + pill.icon + pill.iconGap) * f - (HOME_PILL.padX + HOME_PILL.icon + HOME_PILL.gap), 0)} scale(${k((pill.font * f) / HOME_PILL.font)})`;
+    // (Home's sit inside its 1 px border; the page's pill has none.)
+    const homeInset = HOME_PILL.border + HOME_PILL.padX;
+    out['--gho-play-icon'] = `${translate(pill.padX * f - homeInset, 0)} scale(${k((pill.icon * f) / HOME_PILL.icon)})`;
+    out['--gho-play-label'] = `${translate((pill.padX + pill.icon + pill.iconGap) * f - (homeInset + HOME_PILL.icon + HOME_PILL.gap), 0)} scale(${k((pill.font * f) / HOME_PILL.font)})`;
     let slot = 0;
     home.circles.forEach((circle, i) => {
         if (i === home.infoCircle) return;
@@ -131,12 +133,15 @@ export function openMotion(home: HomeRects, page: PageTargets, look: PageLook, c
     });
     out['--gho-shell-count'] = String(page.shells.length);
 
-    // The extras layer (Spotlight): the description and the HowLongToBeat card's inside, drawn at the page's size in the
-    // root's px (outside the scaled canvas), laid out like the page's card from its top-left corner and the d unit.
+    // The extras layer: the page's parts drawn at the page's size in the root's px (outside the scaled canvas), laid out
+    // as the page lays them out, from the d unit: the store pill (by its right edge and top, both looks) and, Spotlight,
+    // the description and the HowLongToBeat card's inside (by their top-left corners).
+    const ox = home.root?.x ?? 0;
+    const oy = home.root?.y ?? 0;
+    out['--gho-x-d'] = k(d);
+    out['--gho-x-pill-x'] = px(page.store.x + page.store.w - ox);
+    out['--gho-x-pill-y'] = px(page.store.y - oy);
     if (page.extras) {
-        const ox = home.root?.x ?? 0;
-        const oy = home.root?.y ?? 0;
-        out['--gho-x-d'] = k(d);
         const at = (name: string, b: Box) => {
             out[`--gho-x-${name}-x`] = px(b.x - ox);
             out[`--gho-x-${name}-y`] = px(b.y - oy);

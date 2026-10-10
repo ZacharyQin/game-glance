@@ -406,7 +406,7 @@ export function SpotlightHome() {
                 </div>
             </div>
             {/* Open transition: the page's parts Home draws as it turns into the page (hidden until opening). */}
-            {game && <OpenExtras description={data.description} hltb={data.hltb} playedMinutes={data.playedMinutes} locale={data.locale} />}
+            {game && <OpenExtras description={data.description} hltb={data.hltb} playedMinutes={data.playedMinutes} locale={data.locale} source={data.source} family={family} />}
         </div>
     );
 }

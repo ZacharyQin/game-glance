@@ -462,6 +462,19 @@ describe('homeCss open transition', () => {
             expect(all.some(([sel, body]) => sel === `.gh-root[data-gh-extras~="${part}"] .gh-x-${part}` && body.includes('display'))).toBe(true);
         }
     });
+    it("the extras layer's store pill is the page's: its look in the page's d unit, right-aligned at its place, the family pill in it", () => {
+        const all = rules(css);
+        const body = (sel: string) => all.find(([s]) => s === sel)?.[1] ?? '';
+        const dd = (n: number) => `calc(${n}px * var(--gho-x-d))`;
+        expect(body('.gh-open-extras .gh-x-pill')).toContain(sourcePillLook(dd).split(';')[1].trim());
+        for (const decl of ['left: var(--gho-x-pill-x)', 'top: var(--gho-x-pill-y)', 'transform: translateX(-100%)']) expect(body('.gh-open-extras .gh-x-pill')).toContain(decl);
+        expect(body('.gh-open-extras .gh-x-family')).toContain(`right: calc(100% + ${dd(10)})`);
+        expect(all.some(([sel, b]) => sel === '.gh-root[data-gh-extras~="pills"] .gh-x-pill' && b.includes('display: inline-flex'))).toBe(true);
+        // Home's own pill (moving into place) fades out as the page's fades in, still moving.
+        const home = body('.gh-root[data-gh-opening="morph"][data-gh-phase="to"][data-gh-extras~="pills"] .gh-source');
+        expect(home).toContain('opacity: 0');
+        expect(home).toMatch(/transition: transform \d+ms cubic-bezier\([^)]*\), opacity \d+ms/);
+    });
     it('the extras fade in (opacity only) during the morph and are complete at the hand-over', () => {
         const to = rules(css).find(([sel]) => sel === '.gh-root[data-gh-opening="morph"][data-gh-phase="to"][data-gh-extras] .gh-open-extras')?.[1];
         expect(to).toMatch(/opacity: 1/);

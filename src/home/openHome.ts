@@ -171,12 +171,14 @@ export function readChipTexts(root: Element): ChipText[] {
 /**
  * The page's parts Home can draw as it turns into the page's Spotlight look (SpotlightHome's .gh-open-extras), as
  * data-gh-extras words: `desc` when it has the description's text, `hltb` when HowLongToBeat found the game with a Main
- * time (without one the page writes "—" there, which Home's chip would not cover). Pure.
+ * time (without one the page writes "—" there, which Home's chip would not cover), `pills` when it knows the store (the
+ * page's own store pill, and family pill, drawn at the page's size: Home's scaled one is a little narrower). Pure.
  */
-export function extrasParts(description: string | null | undefined, hltb: HltbResult | undefined): string {
+export function extrasParts(description: string | null | undefined, hltb: HltbResult | undefined, source?: string | null): string {
     const parts: string[] = [];
     if (description && description.trim()) parts.push('desc');
     if (hltb?.status === 'found' && hltb.times.main !== null) parts.push('hltb');
+    if (source) parts.push('pills');
     return parts.join(' ');
 }
 
