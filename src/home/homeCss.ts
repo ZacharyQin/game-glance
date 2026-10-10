@@ -467,11 +467,17 @@ export function openingRules(): string[] {
             width: calc(var(--gho-shell-${i}-w) * 1px); height: calc(var(--gho-shell-${i}-h) * 1px); transform: var(--gho-shell-${i}-from); opacity: var(--gho-shell-${i}-o0)`),
         rule(`${MT}${i === 1 ? '[data-gh-shells="2"]' : ''} .gh-open-shell[data-i="${i}"]`, `transform: none; opacity: 1; transition: ${move}, opacity ${T.morph}ms ease`),
     ];
+    // The morph's last part: the page's exact look fades in as the movers come to rest (opacity only).
+    const settle = `opacity ${T.settle}ms ease ${T.morph - T.settle}ms`;
     return [
         // Always there, hidden: the page's scrims over Home's, the opened game's hero (heroFade), the glass panels.
         rule('.gh-scrim-page', `background: ${PAGE_SCRIMS}; opacity: 0`),
         rule('.gh-hero-open', 'position: absolute; inset: 0; pointer-events: none; background-image: var(--gho-hero, none); background-size: cover; background-position: center 30%; background-repeat: no-repeat; opacity: 0'),
-        rule('.gh-open-shell', 'display: none; position: absolute; left: 0; top: 0; margin: 0; padding: 0; pointer-events: none; transform-origin: 0 0; border-radius: 16px; background: rgba(12,16,22,.55); border: 1px solid rgba(255,255,255,.12)'),
+        rule('.gh-open-shell', 'display: none; position: absolute; left: 0; top: 0; margin: 0; padding: 0; pointer-events: none; transform-origin: 0 0; border-radius: 16px; border: 1px solid rgba(255,255,255,.12)'),
+        // The glass: darker and unblurred while it moves (a blur under a moving scale is too slow on the Ally); the page's
+        // own (.38 and a 16 px blur, themeCss's cards and Clean panel) as it settles.
+        rule('.gh-open-shell::before', "content: ''; position: absolute; inset: -1px; border-radius: 16px; background: rgba(12,16,22,.55)"),
+        rule('.gh-open-shell::after', "content: ''; position: absolute; inset: -1px; border-radius: 16px; background: rgba(12,16,22,.38); backdrop-filter: blur(16px); opacity: 0"),
         rule(O, 'pointer-events: none'),
         // The bridge (openBridge): a frozen copy of Home in its final state; nothing inside it may animate again.
         rule('.gh-root.gh-bridge, .gh-root.gh-bridge *', 'animation: none; transition: none'),
@@ -495,8 +501,10 @@ export function openingRules(): string[] {
         // stops clipping it, and keeps its focus ring on that layer).
         rule(`${M} ${play}`, 'overflow: visible; background: transparent; border-color: transparent; box-shadow: none'),
         rule(`${M} ${play}::before`, "content: ''; position: absolute; left: 0; top: 0; width: 100%; height: 100%; border-radius: 999px; background: var(--glance-accent); transform-origin: 0 0; pointer-events: none"),
-        // The page focuses Play (Steam's lighter fill and white ring): a layer with that look fades in as the pill grows.
-        rule(`${M} ${play}::after`, "content: ''; position: absolute; left: 0; top: 0; width: 100%; height: 100%; border-radius: 999px; background: rgba(255,255,255,.28); box-shadow: 0 0 0 2px rgba(255,255,255,.9), 0 14px 40px -8px var(--glance-accent); transform-origin: 0 0; pointer-events: none; opacity: 0"),
+        // The page focuses Play (Steam's lighter fill and white ring): the page's focused pill at its exact size (round
+        // ends; the stretched layer's are oval) fades in as the pill comes to rest, under the glyph and label.
+        rule(`${M} ${play}::after`, "content: ''; position: absolute; left: 0; top: var(--gho-play-dy); width: calc(100% * var(--gho-play-sx)); height: calc(100% * var(--gho-play-sy)); border-radius: 999px; background: linear-gradient(rgba(255,255,255,.28), rgba(255,255,255,.28)), var(--glance-accent); box-shadow: 0 0 0 2px rgba(255,255,255,.9), 0 14px 40px -8px var(--glance-accent); pointer-events: none; opacity: 0"),
+        rule([`${M} ${play} > .gh-btn-icon`, `${M} ${play} > .gh-btn-label`].join(', '), 'z-index: 1'),
         rule(`${MT} ${play}`, `transform: var(--gho-play-fg); transition: ${move}`),
         // Its glyph and label grow to the page's, from the pill's left edge and centre line. The label turns white as the
         // page's focused Play's: a white copy of its words (data-text) fades in over it.
@@ -506,7 +514,11 @@ export function openingRules(): string[] {
         rule(`${M} ${play} > .gh-btn-label::after`, 'content: attr(data-text); position: absolute; left: 0; top: 0; color: #fff; opacity: 0; pointer-events: none'),
         rule(`${MT} ${play} > .gh-btn-label::after`, `opacity: 1; transition: opacity ${T.morph}ms ease`),
         rule(`${MT} ${play}::before`, `transform: var(--gho-play-bg); transition: ${move}`),
-        rule(`${MT} ${play}::after`, `transform: var(--gho-play-bg); opacity: 1; transition: ${move}, opacity ${T.morph}ms ease`),
+        rule(`${MT} ${play}::after`, `opacity: 1; transition: ${settle}`),
+        ...[0, 1].flatMap((i) => [
+            rule(`${MT} .gh-open-shell[data-i="${i}"]::before`, `opacity: 0; transition: ${settle}`),
+            rule(`${MT} .gh-open-shell[data-i="${i}"]::after`, `opacity: 1; transition: ${settle}`),
+        ]),
         ...[0, 1, 2, 3].map((i) => rule(`${MT} .gh-actions > .gh-btn:nth-child(${i + 2})`, `transform: var(--gho-circle-${i}, none); transition: ${move}`)),
         // Chips: their glass gives way to the panels at once; texts move and grow; the bars and unmatched chips fade.
         rule(`${M} .gh-chip`, 'background: transparent; border-color: transparent; backdrop-filter: none; box-shadow: none'),

@@ -187,6 +187,14 @@ describe('openMotion', () => {
         expect(label.sx).toBeCloseTo(22 / 19, 3);
     });
 
+    it("the page pill's exact box (round ends, unlike the stretched layer), relative to Home's pill", () => {
+        const v = vars(openMotion(homeRects(), spotlight(), 'spotlight', s));
+        expect(Number(v['--gho-play-sx'])).toBeCloseTo(354.2 / r.pill.w, 3);
+        expect(Number(v['--gho-play-sy'])).toBeCloseTo(62.5 / r.pill.h, 3);
+        expect(parseFloat(v['--gho-play-dy'])).toBeCloseTo((r.pill.h - 62.5) / 2 / s, 1);
+        expect(v['--gho-play-dy']).toMatch(/px$/);
+    });
+
     it('the output is stable: sorted by name', () => {
         const list = openMotion(homeRects(), spotlight(), 'spotlight', s);
         expect(list.map((x) => x.name)).toEqual([...list.map((x) => x.name)].sort());
@@ -195,7 +203,7 @@ describe('openMotion', () => {
 
 describe('open timings', () => {
     it('match the spec', () => {
-        expect(OPEN_TIMINGS).toEqual({ leave: 220, infoFade: 180, morph: 360, feedHero: 300, feedUi: 220, bridgeFade: 120, readyCap: 500, revealDelay: 60, reveal: 200, leaveDrop: 70, feedRise: 14 });
+        expect(OPEN_TIMINGS).toEqual({ leave: 220, infoFade: 180, morph: 360, settle: 140, feedHero: 300, feedUi: 220, bridgeFade: 120, readyCap: 500, revealDelay: 60, reveal: 200, leaveDrop: 70, feedRise: 14 });
         expect(MORPH_EASE).toBe('cubic-bezier(.2,.8,.2,1)');
     });
 });

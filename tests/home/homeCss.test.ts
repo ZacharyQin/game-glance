@@ -407,6 +407,23 @@ describe('homeCss open transition', () => {
         expect(bar?.[1]).toContain('opacity: var(--gho-chip-2-bar-o, 0)');
         expect(all.some(([sel, body]) => sel.includes('data-gh-opening') && sel.includes('.gh-chip-bar') && /transform-origin:\s*0 0/.test(body))).toBe(true);
     });
+    it("the morph ends on the page's own look: the glass gets the page's tint and blur, the pill its exact round shape (opacity only)", () => {
+        const all = rules(css);
+        const body = (pred: (sel: string) => boolean) => all.filter(([sel]) => pred(sel)).map(([, b]) => b).join(' ');
+        const settle = 'opacity 140ms ease 220ms';
+        // The glass: a dark unblurred layer while moving, the page's (.38 and a 16 px blur) as it settles.
+        expect(body((sel) => sel === '.gh-open-shell::after')).toMatch(/background:\s*rgba\(12,16,22,\.38\)/);
+        expect(body((sel) => sel === '.gh-open-shell::after')).toMatch(/backdrop-filter:\s*blur\(16px\)/);
+        expect(body((sel) => sel.includes('data-gh-phase="to"') && sel.includes('.gh-open-shell') && sel.endsWith('::after'))).toContain(settle);
+        expect(body((sel) => sel.includes('data-gh-phase="to"') && sel.includes('.gh-open-shell') && sel.endsWith('::before'))).toMatch(/opacity:\s*0/);
+        // The pill: the page's focused pill at its exact size, faded in as the stretched layer stops.
+        const pill = body((sel) => sel.includes('data-gh-opening="morph"') && !sel.includes('data-gh-phase') && sel.endsWith('[data-action="play"]::after'));
+        expect(pill).toContain('width: calc(100% * var(--gho-play-sx))');
+        expect(pill).toContain('height: calc(100% * var(--gho-play-sy))');
+        expect(pill).toContain('top: var(--gho-play-dy)');
+        expect(pill).not.toContain('transform: var(--gho-play-bg)');
+        expect(body((sel) => sel.includes('data-gh-phase="to"') && sel.endsWith('[data-action="play"]::after'))).toContain(settle);
+    });
     it("the page's scrims are drawn by Home, hidden until opening", () => {
         const page = rules(css).find(([sel]) => sel === '.gh-scrim-page');
         expect(page?.[1]).toContain(`background: ${PAGE_SCRIMS}`);
@@ -434,13 +451,13 @@ describe('homeCss logo', () => {
 });
 
 describe('homeCss Play pill while opening', () => {
-    it("takes on the page's focused look over the morph (Steam focuses Play there): a ring layer fading in as it grows", () => {
+    it("takes on the page's focused look as the morph settles (Steam focuses Play there): a ring layer at the page pill's exact size", () => {
         const css = homeCss();
         const after = /\.gh-root\[data-gh-opening="morph"\] \.gh-actions > \.gh-btn\[data-action="play"\]::after \{([^}]*)\}/.exec(css)?.[1] ?? '';
         expect(after).toContain('box-shadow: 0 0 0 2px rgba(255,255,255,.9)');
         expect(after).toContain('opacity: 0');
         const to = /\[data-gh-phase="to"\] \.gh-actions > \.gh-btn\[data-action="play"\]::after \{([^}]*)\}/.exec(css)?.[1] ?? '';
-        expect(to).toContain('transform: var(--gho-play-bg)');
+        expect(to).not.toContain('transform');
         expect(to).toContain('opacity: 1');
     });
 });

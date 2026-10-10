@@ -51,6 +51,8 @@ export const OPEN_TIMINGS = {
     leave: 220,
     infoFade: 180,
     morph: 360,
+    /** The morph's last part, as it comes to rest: the page's exact look (the glass's blur, the pill's round ends) fades in. */
+    settle: 140,
     feedHero: 300,
     feedUi: 220,
     bridgeFade: 120,
