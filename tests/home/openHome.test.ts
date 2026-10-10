@@ -126,10 +126,10 @@ describe('pageStatsFromChips', () => {
         { key: 'achievements', label: 'Achievements', value: '0 / 49', bar: true },
         { key: 'hltb', label: 'HLTB main', value: '9.1 h', bar: true },
     ];
-    it("Spotlight: the info card's stats, then HowLongToBeat's Main; achievements written as the card writes them", () => {
+    it("Spotlight: the info card's stats, then HowLongToBeat's Main; achievements as everywhere ('0 / 49')", () => {
         expect(pageStatsFromChips(chips, 'spotlight')).toEqual([
             { key: 'played', label: 'Play Time', value: '1.9 h', bar: false },
-            { key: 'achievements', label: 'Achievements', value: '0/49', bar: false },
+            { key: 'achievements', label: 'Achievements', value: '0 / 49', bar: false },
             { key: 'hltb', label: 'Main', value: '9.1 h', bar: false },
         ]);
     });

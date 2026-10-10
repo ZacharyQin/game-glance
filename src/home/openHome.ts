@@ -121,8 +121,8 @@ export function canvasMeasure(root: Element): Measure {
 export interface ChipText { key: string; label: string; value: string; bar: boolean }
 
 /**
- * The page's stat columns, as Home can know them from its chips (the same Steam words and numbers): Spotlight writes
- * achievements "0/49" in its card and calls HowLongToBeat's column "Main"; Clean keeps Home's texts and bars. A new
+ * The page's stat columns, as Home can know them from its chips (the same Steam words and numbers): Spotlight calls
+ * HowLongToBeat's column "Main"; Clean keeps Home's texts and bars. A new
  * game's Added chip stands for the page's Play time of 0 h. Only these three; a Unifideck size column is not known
  * here (its column then makes the page's others sit a little further right, which the hand-over's fade covers). Pure.
  */
@@ -134,7 +134,7 @@ export function pageStatsFromChips(chips: ChipText[], look: PageLook): PageStat[
     else if (byKey.has('added')) out.push({ key: 'played', label: tr('played'), value: '0 h', bar: false });
     const add = (key: StatKey, label: string, value: string, bar: boolean) => out.push({ key, label, value, bar: look === 'clean' && bar });
     const ach = byKey.get('achievements');
-    if (ach) add('achievements', ach.label, look === 'spotlight' ? ach.value.replace(/\s*\/\s*/g, '/') : ach.value, ach.bar);
+    if (ach) add('achievements', ach.label, ach.value, ach.bar);
     const hltb = byKey.get('hltb');
     if (hltb) add('hltb', look === 'spotlight' ? 'Main' : hltb.label, hltb.value, hltb.bar);
     return out;

@@ -424,6 +424,17 @@ describe('homeCss open transition', () => {
         expect(pill).not.toContain('transform: var(--gho-play-bg)');
         expect(body((sel) => sel.includes('data-gh-phase="to"') && sel.endsWith('[data-action="play"]::after'))).toContain(settle);
     });
+    it("a chip's label can fade on its own, and an accent copy of its value (data-text) can fade in over it", () => {
+        const all = rules(css);
+        const label = all.find(([sel]) => sel.includes('data-gh-phase="to"') && sel.endsWith('.gh-chip:nth-child(3) .gh-chip-label'));
+        expect(label?.[1]).toContain('opacity: var(--gho-chip-2-label-o, var(--gho-chip-2-o, 0))');
+        const copy = all.find(([sel]) => sel.includes('data-gh-opening') && !sel.includes('data-gh-phase') && sel.endsWith('.gh-chip-value::after'));
+        expect(copy?.[1]).toMatch(/content:\s*attr\(data-text\)/);
+        expect(copy?.[1]).toContain('color: var(--glance-accent-text)');
+        expect(copy?.[1]).toMatch(/opacity:\s*0/);
+        const lit = all.find(([sel]) => sel.includes('data-gh-phase="to"') && sel.endsWith('.gh-chip:nth-child(3) .gh-chip-value::after'));
+        expect(lit?.[1]).toContain('opacity: var(--gho-chip-2-accent, 0)');
+    });
     it("a circle's icon takes the counter-scale about its centre while the circle grows", () => {
         const all = rules(css);
         const icon = all.find(([sel]) => sel.includes('data-gh-phase="to"') && sel.endsWith('.gh-btn:nth-child(3) > .gh-btn-icon'));

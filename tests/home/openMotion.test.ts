@@ -205,6 +205,19 @@ describe('openMotion', () => {
         expect(v['--gho-circle-icon-2']).toBeUndefined(); // the info button fades where it is
     });
 
+    it("Spotlight: the HLTB chip's label fades (the card's 'Main' arrives) and its value takes the accent, as the card's Main", () => {
+        const v = vars(openMotion(homeRects(), spotlight(), 'spotlight', s));
+        expect(v['--gho-chip-2-label-o']).toBe('0');
+        expect(v['--gho-chip-2-accent']).toBe('1');
+        expect(v['--gho-chip-0-label-o']).toBeUndefined();
+        expect(v['--gho-chip-0-accent']).toBeUndefined();
+        const clean = spotlight();
+        clean.shells = [box(1073.9, 693.3, 401.1, 90)];
+        const c = vars(openMotion(homeRects(), clean, 'clean', s));
+        expect(c['--gho-chip-2-label-o']).toBeUndefined();
+        expect(c['--gho-chip-2-accent']).toBeUndefined();
+    });
+
     it('the output is stable: sorted by name', () => {
         const list = openMotion(homeRects(), spotlight(), 'spotlight', s);
         expect(list.map((x) => x.name)).toEqual([...list.map((x) => x.name)].sort());

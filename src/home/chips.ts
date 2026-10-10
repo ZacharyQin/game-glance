@@ -1,4 +1,4 @@
-import { formatHours, minutesToHours } from '../logic/format';
+import { formatAchievements, formatHours, minutesToHours } from '../logic/format';
 import { formatLastPlayed } from './recents';
 import { tr } from '../i18n/steamText';
 
@@ -31,7 +31,7 @@ export function gameChips(i: GameChipInput, now: number, locale: string): Chip[]
         chips.push({
             key: 'achievements',
             label: tr('achievements'),
-            value: `${achieved} / ${total}`,
+            value: formatAchievements({ achieved, total }),
             progress: Math.min(1, Math.max(0, achieved / total)),
         });
     }

@@ -516,9 +516,13 @@ export function openingRules(): string[] {
         ...[0, 1, 2, 3].map((i) => rule(`${MT} .gh-actions > .gh-btn:nth-child(${i + 2}) > .gh-btn-icon`, `transform: var(--gho-circle-icon-${i}, none); transition: ${move}`)),
         // Chips: their glass gives way to the panels at once; texts move and grow; the bars and unmatched chips fade.
         rule(`${M} .gh-chip`, 'background: transparent; border-color: transparent; backdrop-filter: none; box-shadow: none'),
+        // An accent copy of a value's words (data-text) over it, for a value the page draws in the accent (openMotion).
+        rule(`${M} .gh-chip-value`, 'position: relative'),
+        rule(`${M} .gh-chip-value::after`, 'content: attr(data-text); position: absolute; left: 0; top: 0; color: var(--glance-accent-text); opacity: 0; pointer-events: none'),
         ...[0, 1, 2, 3].flatMap((i) => [
-            rule(`${MT} .gh-chip:nth-child(${i + 1}) .gh-chip-label`, `transform: var(--gho-chip-${i}-label, none); opacity: var(--gho-chip-${i}-o, 0); transition: ${move}, opacity ${T.infoFade}ms ease`),
+            rule(`${MT} .gh-chip:nth-child(${i + 1}) .gh-chip-label`, `transform: var(--gho-chip-${i}-label, none); opacity: var(--gho-chip-${i}-label-o, var(--gho-chip-${i}-o, 0)); transition: ${move}, opacity ${T.infoFade}ms ease`),
             rule(`${MT} .gh-chip:nth-child(${i + 1}) .gh-chip-value`, `transform: var(--gho-chip-${i}-value, none); opacity: var(--gho-chip-${i}-o, 0); transition: ${move}, opacity ${T.infoFade}ms ease`),
+            rule(`${MT} .gh-chip:nth-child(${i + 1}) .gh-chip-value::after`, `opacity: var(--gho-chip-${i}-accent, 0); transition: opacity ${T.morph}ms ease`),
         ]),
         // A bar moves onto the page's (Clean's panel) when the morph gives it a place (openMotion), and fades otherwise.
         rule(`${M} .gh-chip-bar`, 'transform-origin: 0 0'),

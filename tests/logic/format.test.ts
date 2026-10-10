@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatHours, minutesToHours, steamLanguageToLocale } from '../../src/logic/format';
+import { formatAchievements, formatHours, minutesToHours, steamLanguageToLocale } from '../../src/logic/format';
 
 describe('formatHours', () => {
     it('uses one decimal with the locale separator', () => {
@@ -36,5 +36,11 @@ describe('steamLanguageToLocale', () => {
         expect(steamLanguageToLocale('English')).toBe('en-US');
         expect(steamLanguageToLocale('schinese')).toBe('zh-CN');
         expect(steamLanguageToLocale('klingon')).toBe('en-US');
+    });
+});
+
+describe('formatAchievements', () => {
+    it('one form everywhere (Home, the Clean panel and the Spotlight card), so the open transition never rewrites it', () => {
+        expect(formatAchievements({ achieved: 4, total: 13 })).toBe('4 / 13');
     });
 });

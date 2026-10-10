@@ -98,6 +98,12 @@ export function openMotion(home: HomeRects, page: PageTargets, look: PageLook, c
         }
         const to = page.stats[chip.key]!;
         out[`--gho-chip-${i}-o`] = '1';
+        // Spotlight's HowLongToBeat card names its column "Main" under its own title (it arrives with the card) and draws
+        // the time in the accent: Home's "HLTB main" fades as it moves, and an accent copy of the time fades in.
+        if (look === 'spotlight' && chip.key === 'hltb') {
+            out[`--gho-chip-${i}-label-o`] = '0';
+            out[`--gho-chip-${i}-accent`] = '1';
+        }
         out[`--gho-chip-${i}-label`] = `${translate((to.label.x - chip.label.x) / s, (to.label.y + labelLead - chip.label.y) / s)} scale(${k(labelScale)})`;
         out[`--gho-chip-${i}-value`] = `${translate((to.value.x - chip.value.x) / s, (to.value.y - chip.value.y) / s)} scale(${k(valueScale)})`;
         // Clean: the chip's bar becomes the panel's (same track, fill and share), instead of one fading out and the other in.

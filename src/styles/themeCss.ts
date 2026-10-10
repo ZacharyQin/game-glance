@@ -569,7 +569,7 @@ export function buildArrivingCss(classes: ThemeClasses, look: 'spotlight' | 'cle
     const cloud = extra.cloud ? cls(play, 'CloudStatusRow') : null;
     const shared = ['[data-stat="size"]', '.gg-family', ...(cloud ? [cloud] : [])];
     const parts = look === 'spotlight'
-        ? ['.gg-desc', '.gg-hltb > .gg-label', '.gg-hltb [data-stat="mainExtras"]', '.gg-hltb [data-stat="completionist"]', '.gg-caption', '.gg-muted', '.gg-hltb .gg-bar', ...shared]
+        ? ['.gg-desc', '.gg-hltb > .gg-label', '.gg-hltb [data-stat="hltb"] > .gg-label', '.gg-hltb [data-stat="mainExtras"]', '.gg-hltb [data-stat="completionist"]', '.gg-caption', '.gg-muted', '.gg-hltb .gg-bar', ...shared]
         : [...shared, cleanBarsArriving(extra.bars)];
     const all = present(['.gg-titleblock', '.gg-hero', cls(root, 'PlaySection')]);
     const list = mode === 'all' ? all : parts;

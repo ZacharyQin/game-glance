@@ -1,5 +1,5 @@
 import { GameInfo } from '../data/steam';
-import { formatHours, minutesToHours } from '../logic/format';
+import { formatAchievements, formatHours, minutesToHours } from '../logic/format';
 import { descriptionState } from '../logic/infoCard';
 import type { SizeStat } from '../logic/sizeStat';
 import { tr } from '../i18n/steamText';
@@ -30,7 +30,7 @@ export function InfoCard({ game, locale, description, size = null }: Props) {
                 {game.achievements && (
                     <div data-stat="achievements">
                         <div className="gg-label">{tr('achievements')}</div>
-                        <div className="gg-value">{game.achievements.achieved}/{game.achievements.total}</div>
+                        <div className="gg-value">{formatAchievements(game.achievements)}</div>
                     </div>
                 )}
             </div>

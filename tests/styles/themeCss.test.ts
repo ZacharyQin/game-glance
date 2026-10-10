@@ -735,6 +735,10 @@ describe('the page arriving after the open transition', () => {
             expect(buildArrivingCss(full, look, 'parts', true), look).toContain('.gg-clean-info, .gg-card { backdrop-filter: blur(calc(16 * var(--gg-d))) !important; transition: backdrop-filter 600ms cubic-bezier(.25,.1,.25,1) !important; }');
         }
     });
+    it("Spotlight: the HowLongToBeat card's Main label arrives (Home's 'HLTB main' fades as it moves)", () => {
+        expect(buildArrivingCss(full, 'spotlight', 'parts')).toContain('.gg-hltb [data-stat="hltb"] > .gg-label');
+        expect(buildArrivingCss(full, 'clean', 'parts')).not.toContain('[data-stat="hltb"] > .gg-label');
+    });
     it("'all' hides the whole page but the art, lowered by the rise", () => {
         const css = buildArrivingCss(full, 'spotlight', 'all');
         for (const sel of ['.gg-titleblock', '.gg-hero', '.rt_Play']) expect(css, sel).toContain(sel);

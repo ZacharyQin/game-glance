@@ -46,3 +46,8 @@ export function formatBytes(bytes: unknown, locale: string): string | null {
     }
     return `${formatNumber(v, locale, v >= 100 ? 0 : 1)} ${units[i]}`;
 }
+
+/** Achievement counts as Game Glance writes them everywhere (Home's chip, the Clean panel, the Spotlight card). */
+export function formatAchievements(a: { achieved: number; total: number }): string {
+    return `${a.achieved} / ${a.total}`;
+}
