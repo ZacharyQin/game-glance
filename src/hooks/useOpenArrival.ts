@@ -3,6 +3,7 @@ import { clearOpen, OpenIntent, openPending, reportOpenReady } from '../data/ope
 import { OPEN_TIMINGS } from '../home/motion';
 import { pageReady } from '../styles/pageReady';
 import { pageArrivalSelectors } from '../styles/theme';
+import { ARRIVE_BLUR_MS } from '../styles/themeCss';
 
 type Phase = 'hidden' | 'revealing' | 'done';
 
@@ -14,6 +15,14 @@ type Phase = 'hidden' | 'revealing' | 'done';
  * within OPEN_TIMINGS.readyCap is revealed anyway (Home's copy has left by then). Null when there is no open to
  * arrive from (or it is over): the page is as always.
  */
+/**
+ * How long the page stays in its arriving state once revealed: until its new parts have faded in and its glass has
+ * grown its blur (the stylesheet carries that transition; dropping it mid-way would cancel it, the blur jumping in).
+ */
+export function arrivalHoldMs(): number {
+    return Math.max(OPEN_TIMINGS.reveal, ARRIVE_BLUR_MS);
+}
+
 export function useOpenArrival(ref: RefObject<HTMLElement | null>, appId: number): { intent: OpenIntent; revealed: boolean } | null {
     const [intent] = useState(() => openPending(appId));
     const [phase, setPhase] = useState<Phase>(() => (intent && intent.look !== 'steam' ? 'hidden' : 'done'));
@@ -33,7 +42,7 @@ export function useOpenArrival(ref: RefObject<HTMLElement | null>, appId: number
                 if (!alive) return;
                 setPhase('done');
                 clearOpen();
-            }, OPEN_TIMINGS.reveal);
+            }, arrivalHoldMs());
         };
         const check = () => {
             if (!alive) return;

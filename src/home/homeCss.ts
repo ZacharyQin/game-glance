@@ -467,17 +467,14 @@ export function openingRules(): string[] {
             width: calc(var(--gho-shell-${i}-w) * 1px); height: calc(var(--gho-shell-${i}-h) * 1px); transform: var(--gho-shell-${i}-from); opacity: var(--gho-shell-${i}-o0)`),
         rule(`${MT}${i === 1 ? '[data-gh-shells="2"]' : ''} .gh-open-shell[data-i="${i}"]`, `transform: none; opacity: 1; transition: ${move}, opacity ${T.morph}ms ease`),
     ];
-    // The morph's last part: the page's exact look fades in as the movers come to rest (opacity only).
+    // The morph's last part: the page pill's exact look fades in as it comes to rest (opacity only).
     const settle = `opacity ${T.settle}ms ease-in-out ${T.morph - T.settle}ms`;
     return [
         // Always there, hidden: the page's scrims over Home's, the opened game's hero (heroFade), the glass panels.
         rule('.gh-hero-open', 'position: absolute; inset: 0; pointer-events: none; background-image: var(--gho-hero, none); background-size: cover; background-position: center 30%; background-repeat: no-repeat; opacity: 0'),
-        rule('.gh-open-shell', 'display: none; position: absolute; left: 0; top: 0; margin: 0; padding: 0; pointer-events: none; transform-origin: 0 0; border-radius: 16px; border: 1px solid rgba(255,255,255,.12)'),
-        // The glass: darker and unblurred while it moves (a blur under a moving scale is too slow on the Ally); the page's
-        // own (.38 and a 16 px blur, themeCss's cards and Clean panel) as it settles.
-        // Both inside the 1px border (radius 16 less the border), which stays drawn over them as on the page.
-        rule('.gh-open-shell::before', "content: ''; position: absolute; inset: 0; border-radius: 15px; background: rgba(12,16,22,.55)"),
-        rule('.gh-open-shell::after', "content: ''; position: absolute; inset: 0; border-radius: 15px; background: rgba(12,16,22,.38); backdrop-filter: blur(16px); opacity: 0"),
+        // The glass: the page's cards and Clean panel (.38, its border), never blurred here (a blur under a moving scale is
+        // too slow on the Ally); the arriving page grows its blur from none once revealed (themeCss.buildArrivingCss).
+        rule('.gh-open-shell', 'display: none; position: absolute; left: 0; top: 0; margin: 0; padding: 0; pointer-events: none; transform-origin: 0 0; border-radius: 16px; background: rgba(12,16,22,.38); border: 1px solid rgba(255,255,255,.12)'),
         rule(O, 'pointer-events: none'),
         // The bridge (openBridge): a frozen copy of Home in its final state; nothing inside it may animate again.
         rule('.gh-root.gh-bridge, .gh-root.gh-bridge *', 'animation: none; transition: none'),
@@ -513,10 +510,6 @@ export function openingRules(): string[] {
         rule(`${MT} ${play} > .gh-btn-label::after`, `opacity: 1; transition: opacity ${T.morph}ms ease`),
         rule(`${MT} ${play}::before`, `transform: var(--gho-play-bg); transition: ${move}`),
         rule(`${MT} ${play}::after`, `opacity: 1; transition: ${settle}`),
-        ...[0, 1].flatMap((i) => [
-            rule(`${MT} .gh-open-shell[data-i="${i}"]::before`, `opacity: 0; transition: ${settle}`),
-            rule(`${MT} .gh-open-shell[data-i="${i}"]::after`, `opacity: 1; transition: ${settle}`),
-        ]),
         ...[0, 1, 2, 3].map((i) => rule(`${MT} .gh-actions > .gh-btn:nth-child(${i + 2})`, `transform: var(--gho-circle-${i}, none); transition: ${move}`)),
         // Each circle's icon shrinks as the circle grows (openMotion), so it is the page's size throughout.
         rule(`${M} .gh-actions > .gh-btn-circle > .gh-btn-icon`, 'transform-origin: 50% 50%'),

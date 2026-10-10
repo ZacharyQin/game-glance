@@ -407,20 +407,15 @@ describe('homeCss open transition', () => {
         expect(bar?.[1]).toContain('opacity: var(--gho-chip-2-bar-o, 0)');
         expect(all.some(([sel, body]) => sel.includes('data-gh-opening') && sel.includes('.gh-chip-bar') && /transform-origin:\s*0 0/.test(body))).toBe(true);
     });
-    it("the morph ends on the page's own look: the glass gets the page's tint and blur, the pill its exact round shape (opacity only)", () => {
+    it("the morph ends on the page's own look: the glass is the page's tint without blur (the page grows its blur), the pill its exact round shape", () => {
         const all = rules(css);
         const body = (pred: (sel: string) => boolean) => all.filter(([sel]) => pred(sel)).map(([, b]) => b).join(' ');
         const settle = 'opacity 180ms ease-in-out 270ms';
-        // The glass: a dark unblurred layer while moving, the page's (.38 and a 16 px blur) as it settles.
-        expect(body((sel) => sel === '.gh-open-shell::after')).toMatch(/background:\s*rgba\(12,16,22,\.38\)/);
-        expect(body((sel) => sel === '.gh-open-shell::after')).toMatch(/backdrop-filter:\s*blur\(16px\)/);
-        // Inside the panel's 1 px border (the page's border is drawn over its glass; a layer over it hid it until the hand-over).
-        for (const layer of ['::before', '::after']) {
-            expect(body((sel) => sel === `.gh-open-shell${layer}`), layer).toMatch(/inset:\s*0[;\s]/);
-            expect(body((sel) => sel === `.gh-open-shell${layer}`), layer).toMatch(/border-radius:\s*15px/);
-        }
-        expect(body((sel) => sel.includes('data-gh-phase="to"') && sel.includes('.gh-open-shell') && sel.endsWith('::after'))).toContain(settle);
-        expect(body((sel) => sel.includes('data-gh-phase="to"') && sel.includes('.gh-open-shell') && sel.endsWith('::before'))).toMatch(/opacity:\s*0/);
+        // The glass: the page panel's tint from the start, never blurred on Home (the arriving page grows the blur).
+        const shell = body((sel) => sel === '.gh-open-shell');
+        expect(shell).toMatch(/background:\s*rgba\(12,16,22,\.38\)/);
+        expect(shell).not.toContain('backdrop-filter');
+        expect(all.some(([sel]) => sel.includes('.gh-open-shell::'))).toBe(false);
         // The pill: the page's focused pill at its exact size, faded in as the stretched layer stops.
         const pill = body((sel) => sel.includes('data-gh-opening="morph"') && !sel.includes('data-gh-phase') && sel.endsWith('[data-action="play"]::after'));
         expect(pill).toContain('width: calc(100% * var(--gho-play-sx))');

@@ -729,6 +729,12 @@ describe('the page arriving after the open transition', () => {
             expect(buildArrivingCss(full, 'clean', mode), mode).toContain(`.${root.ActionButtonAndStatusPanel} [role="button"] { transition: none !important; }`);
         }
     });
+    it("the page's glass arrives unblurred, as Home's copy is, and grows its blur once revealed (Michael: the blur, cinematic)", () => {
+        for (const look of ['spotlight', 'clean'] as const) {
+            expect(buildArrivingCss(full, look, 'parts'), look).toContain('.gg-clean-info, .gg-card { backdrop-filter: blur(0px) !important; }');
+            expect(buildArrivingCss(full, look, 'parts', true), look).toContain('.gg-clean-info, .gg-card { backdrop-filter: blur(calc(16 * var(--gg-d))) !important; transition: backdrop-filter 600ms cubic-bezier(.25,.1,.25,1) !important; }');
+        }
+    });
     it("'all' hides the whole page but the art, lowered by the rise", () => {
         const css = buildArrivingCss(full, 'spotlight', 'all');
         for (const sel of ['.gg-titleblock', '.gg-hero', '.rt_Play']) expect(css, sel).toContain(sel);
