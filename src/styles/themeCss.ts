@@ -91,6 +91,8 @@ export const PAGE_LAYOUT = {
     pill: { padX: 24, icon: 20, iconGap: 14, font: 22 },
     /** The glyph in the controller and gear circles. */
     circleIcon: 24,
+    /** A focused button grows by this about its centre (Home's buttons and the page's Play, alike). */
+    focusScale: 1.04,
     /** The cloud circle's glyph (Home's size; the page's was in another unit, so its ratio to Home's changed with the screen). */
     cloudIcon: 26,
     cleanInfo: { padX: 24, padY: 14, colGap: 28, value: 22, barW: 96, barH: 4, barTop: 2 },
@@ -319,8 +321,9 @@ export function buildUnifideckCss({ header, details, root }: ThemeClasses, optio
         // Spotlight Home's look: Steam's Play row has no top padding and a 36 one below (see the playSection rule above), so the buttons start
         // at --gg-play-top; the same here, or Unifideck's pill sits lower than Steam's.
         options.restyle ? rule(`${inner}${UNIFIDECK_PAGE} > div:has(${UNIFIDECK_PRIMARY.join(', ')})`, ` padding-top: 0 !important; padding-bottom: ${d(36)} !important; `) : '',
-        // And the handoff's pill type, dark text on the accent, as on our own Play pill.
-        options.restyle ? rule(primary, ` font-size: ${d(22)} !important; font-weight: 700 !important; color: #0b0d10 !important; `) : '',
+        // And the handoff's pill type, white on the accent and focused as our own Play pill (ring, glow, focus scale).
+        options.restyle ? rule(primary, ` font-size: ${d(22)} !important; font-weight: 700 !important; color: #ffffff !important; transition: transform 250ms, box-shadow 250ms !important; `) : '',
+        options.restyle ? rule(focused, ` box-shadow: 0 0 0 ${d(2)} rgba(255, 255, 255, 0.9), 0 ${d(14)} ${d(40)} calc(-1 * ${d(8)}) var(--gg-accent) !important; transform: scale(${PAGE_LAYOUT.focusScale}) !important; `) : '',
     ].filter((r) => r.length > 0).join('\n');
 }
 
@@ -455,7 +458,7 @@ function restyleRules({ header, details, root, play, shared }: ThemeClasses, lay
         rule(playButton && `${playButton} > div:has(> [role="button"])`, ` min-width: 0 !important; `),
         rule(playButton && `${playButton} [role="button"]`, ` font-size: ${d(PAGE_LAYOUT.pill.font)} !important; font-weight: 700 !important; padding: ${d(8)} ${d(PAGE_LAYOUT.pill.padX)} !important; `),
         // The label bold like Home's (Steam's own class sets 500), so nothing changes at the open transition's hand-over.
-        rule(playButton && `${playButton} [role="button"] > div`, ` font-size: ${d(PAGE_LAYOUT.pill.font)} !important; font-weight: 700 !important; `),
+        rule(playButton && `${playButton} [role="button"] > div`, ` font-size: ${d(PAGE_LAYOUT.pill.font)} !important; font-weight: 700 !important; color: #ffffff !important; `),
         rule(playButton && `${playButton} [role="button"] svg`, ` width: ${d(PAGE_LAYOUT.pill.icon)} !important; height: ${d(PAGE_LAYOUT.pill.icon)} !important; margin-right: ${d(PAGE_LAYOUT.pill.iconGap)} !important; `),
         rule(playButton && `${playButton} [role="button"] + [role="button"]`, ` flex: 0 0 ${d(56)} !important; width: ${d(56)} !important; padding: 0 !important; `),
         rule(playButton && `${playButton} [role="button"] + [role="button"] svg`, ` width: ${d(14)} !important; height: ${d(14)} !important; `),
@@ -472,10 +475,13 @@ function restyleRules({ header, details, root, play, shared }: ThemeClasses, lay
         rule(cloud && `${cloud} svg`, ` width: ${d(PAGE_LAYOUT.cloudIcon)} !important; height: ${d(PAGE_LAYOUT.cloudIcon)} !important; `),
         rule(cloud && `${cloud}.gpfocus`, ` background: #ffffff !important; color: ${CLOUD_FOCUS_BAD} !important; `),
 
-        // Play: dark text on the accent pill (handoff "text on accent"), a white ring and accent glow when focused.
-        rule(playButton && `${playButton} [role="button"]`, ` color: #0b0d10 !important; `),
+        // Play: white words and glyph on the accent pill, as on Home. Focused as Home's Play: the fill stays the accent (no
+        // lighter overlay), a white ring and accent glow, and it grows by the focus scale.
+        rule(playButton && `${playButton} [role="button"]`, ` color: #ffffff !important; `),
+        rule(playButton && `${playButton} [role="button"].gpfocus`, ` background: transparent !important; `),
+        rule(playButton && `${playButton} > div:has(> [role="button"])`, ` transition: transform 250ms, box-shadow 250ms !important; `),
         rule(playButton && `${playButton} > div:has(> [role="button"].gpfocus)`,
-            ` box-shadow: 0 0 0 ${d(2)} rgba(255, 255, 255, 0.9), 0 ${d(14)} ${d(40)} calc(-1 * ${d(8)}) var(--glance-accent) !important; `),
+            ` box-shadow: 0 0 0 ${d(2)} rgba(255, 255, 255, 0.9), 0 ${d(14)} ${d(40)} calc(-1 * ${d(8)}) var(--glance-accent) !important; transform: scale(${PAGE_LAYOUT.focusScale}) !important; `),
 
         // Eyebrow ("Last played · Today", accent) and the 64px/800 title, at most two lines. Hidden unless the
         // full-screen layout applies (below): all-or-nothing, like the rest of the layout.
@@ -597,7 +603,7 @@ export function buildArrivingCss(
     // Steam fades its focus look onto Play (background and colour, 200 ms) as it focuses it, after the page is ready;
     // Home's copy already shows Play focused, so the page's must be lit at once.
     const playButton = cls(root, 'ActionButtonAndStatusPanel');
-    const focusAtOnce = rule(playButton && `${playButton} [role="button"]`, ' transition: none !important; ');
+    const focusAtOnce = rule(playButton && [`${playButton} [role="button"]`, `${playButton} > div:has(> [role="button"])`], ' transition: none !important; ');
     // The glass (Clean panel, Spotlight cards) arrives unblurred, as Home's copy draws it, and grows its blur once revealed.
     const glass = rule('.gg-clean-info, .gg-card', revealed
         ? ` backdrop-filter: blur(${d(16)}) !important; transition: backdrop-filter ${ARRIVE_BLUR_MS}ms ${ARRIVE_BLUR_EASE} !important; `

@@ -261,8 +261,7 @@ export function ActionRow({ game, running = false, download = null, preferred, b
                 }}
             >
                 <span className="gh-btn-icon">{steamPill ? steamPill.icon : play.label === 'Pause' ? <IoPause /> : play.label === 'Download' || play.label === 'Update' ? <IoDownload /> : <IoPlay />}</span>
-                {/* data-text: the open transition draws a white copy of the words over them (homeCss.openingRules) */}
-                <span className="gh-btn-label" data-text={playWord}>{playWord}</span>
+                <span className="gh-btn-label">{playWord}</span>
             </ActionButton>
             <ActionButton
                 className="gh-btn-circle"

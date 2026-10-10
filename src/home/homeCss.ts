@@ -288,7 +288,8 @@ export function homeCss(cardScale: number = CARD_SCALE_HANDHELD): string {
         // light tints for the dark translucent fill) with a dark halo so it reads over bright art too.
         rule('.gh-btn-cloud svg', `width: ${PAGE_LAYOUT.cloudIcon}px; height: ${PAGE_LAYOUT.cloudIcon}px; margin: 0; fill: currentColor; filter: drop-shadow(0 0 1.5px rgba(0,0,0,.7))`),
         ...(Object.keys(CLOUD_COLOURS) as CloudTone[]).map((tone) => rule(`.gh-btn-cloud.gh-cloud-${tone}`, `color: ${CLOUD_COLOURS[tone]}`)),
-        rule('.gh-btn-play', 'width: 250px; flex: 0 0 250px; background: var(--glance-accent); border-color: var(--glance-accent); color: var(--gh-on-accent)'),
+        // White words and glyph on the accent, as on the game page's Play.
+        rule('.gh-btn-play', 'width: 250px; flex: 0 0 250px; background: var(--glance-accent); border-color: var(--glance-accent); color: #fff'),
         // The pill fills with the download progress: the shared darker layer (styles/downloadFill) from the left, clipped to
         // the pill's radius, under the icon and label, exactly as on the details page. No bar below.
         rule('.gh-btn-play', 'position: relative; overflow: hidden'),
@@ -301,7 +302,7 @@ export function homeCss(cardScale: number = CARD_SCALE_HANDHELD): string {
         rule('.gh-btn-play svg', `width: ${HOME_PILL.icon}px; height: ${HOME_PILL.icon}px; margin: 0`),
         rule('.gh-btn-icon', 'display: flex; align-items: center; justify-content: center; line-height: 1'),
         rule('.gh-btn-play .gh-btn-icon', `font-size: ${HOME_PILL.icon}px`),
-        rule('.gh-btn.gh-focus', `box-shadow: 0 0 0 2px rgba(255,255,255,.9), 0 14px 40px -8px var(--glance-accent); transform: scale(1.04)`),
+        rule('.gh-btn.gh-focus', `box-shadow: 0 0 0 2px rgba(255,255,255,.9), 0 14px 40px -8px var(--glance-accent); transform: scale(${PAGE_LAYOUT.focusScale})`),
 
         // Recents row (handoff: left 44, 140 tall; times the card scale, its bottom stays at 688 and it grows upwards
         // from geo.top). Overflow stays visible: earlier capsules scroll off to the left edge.
@@ -502,18 +503,15 @@ export function openingRules(): string[] {
         // stops clipping it, and keeps its focus ring on that layer).
         rule(`${M} ${play}`, 'overflow: visible; background: transparent; border-color: transparent; box-shadow: none'),
         rule(`${M} ${play}::before`, "content: ''; position: absolute; left: 0; top: 0; width: 100%; height: 100%; border-radius: 999px; background: var(--glance-accent); transform-origin: 0 0; pointer-events: none"),
-        // The page focuses Play (Steam's lighter fill and white ring): the page's focused pill at its exact size (round
-        // ends; the stretched layer's are oval) fades in as the pill comes to rest, under the glyph and label.
-        rule(`${M} ${play}::after`, "content: ''; position: absolute; left: 0; top: var(--gho-play-dy); width: calc(100% * var(--gho-play-sx)); height: calc(100% * var(--gho-play-sy)); border-radius: 999px; background: linear-gradient(rgba(255,255,255,.28), rgba(255,255,255,.28)), var(--glance-accent); box-shadow: 0 0 0 2px rgba(255,255,255,.9), 0 14px 40px -8px var(--glance-accent); pointer-events: none; opacity: 0"),
+        // The page focuses Play (its white ring and accent glow, as Home's focus): the page's focused pill at its exact size
+        // (round ends; the stretched layer's are oval) fades in as the pill comes to rest, under the glyph and label.
+        rule(`${M} ${play}::after`, "content: ''; position: absolute; left: 0; top: var(--gho-play-dy); width: calc(100% * var(--gho-play-sx)); height: calc(100% * var(--gho-play-sy)); border-radius: 999px; background: var(--glance-accent); box-shadow: 0 0 0 2px rgba(255,255,255,.9), 0 14px 40px -8px var(--glance-accent); pointer-events: none; opacity: 0"),
         rule([`${M} ${play} > .gh-btn-icon`, `${M} ${play} > .gh-btn-label`].join(', '), 'z-index: 1'),
         rule(`${MT} ${play}`, `transform: var(--gho-play-fg); transition: ${move}`),
-        // Its glyph and label grow to the page's, from the pill's left edge and centre line. The label turns white as the
-        // page's focused Play's: a white copy of its words (data-text) fades in over it.
+        // Its glyph and label grow to the page's, from the pill's left edge and centre line (white on both).
         rule([`${M} ${play} > .gh-btn-icon`, `${M} ${play} > .gh-btn-label`].join(', '), 'transform-origin: 0 50%'),
         rule(`${MT} ${play} > .gh-btn-icon`, `transform: var(--gho-play-icon); transition: ${move}`),
         rule(`${MT} ${play} > .gh-btn-label`, `transform: var(--gho-play-label); transition: ${move}`),
-        rule(`${M} ${play} > .gh-btn-label::after`, 'content: attr(data-text); position: absolute; left: 0; top: 0; color: #fff; opacity: 0; pointer-events: none'),
-        rule(`${MT} ${play} > .gh-btn-label::after`, `opacity: 1; transition: opacity ${T.morph}ms ease`),
         rule(`${MT} ${play}::before`, `transform: var(--gho-play-bg); transition: ${move}`),
         rule(`${MT} ${play}::after`, `opacity: 1; transition: ${settle}`),
         ...[0, 1, 2, 3].map((i) => rule(`${MT} .gh-actions > .gh-btn:nth-child(${i + 2})`, `transform: var(--gho-circle-${i}, none); transition: ${move}`)),

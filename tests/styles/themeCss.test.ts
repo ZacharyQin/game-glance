@@ -232,9 +232,12 @@ describe('buildUnifideckCss (a Unifideck game\u2019s page)', () => {
         expect(css).not.toContain('.unifideck-cancel-btn');
         expect(css).not.toContain('.unifideck-stop-btn');
     });
-    it('Spotlight Home\u2019s look adds the handoff type with dark text; without it, white text', () => {
+    it('Spotlight Home\u2019s look adds the handoff type, white as everywhere, and focuses it as Home\u2019s Play (ring, glow, scale)', () => {
+        const css = buildUnifideckCss(full, { restyle: true });
         expect(buildUnifideckCss(full)).not.toContain('#0b0d10');
-        expect(buildUnifideckCss(full, { restyle: true })).toMatch(/\.unifideck-hide-native-play \.unifideck-play-btn[^{]*\{[^}]*color: #0b0d10 !important;/);
+        expect(css).not.toContain('#0b0d10');
+        expect(css).toMatch(/\.unifideck-hide-native-play \.unifideck-play-btn[^{]*\{[^}]*color: #ffffff !important;/);
+        expect(css).toMatch(new RegExp(`\\.unifideck-play-btn\\.gpfocus[^{]*\\{[^}]*transform: scale\\(${PAGE_LAYOUT.focusScale}\\) !important;`));
     });
     it('with Spotlight Home\u2019s look its row has Steam\u2019s padding (none above, 36 below), so the pill is level with Steam\u2019s', () => {
         const rowRule = /:has\([^)]*\) \{[^}]*padding-top: 0 !important; padding-bottom: [^;]+ !important;/;
@@ -469,12 +472,23 @@ describe('buildThemeCss restyle (Spotlight Home on)', () => {
         // Not in the 1.1.1 output.
         expect(buildThemeCss(steam)).not.toContain('#5cf2b4');
     });
+    it('Play: white words and glyph on the accent pill, as on Home (Steam drew the glyph dark and the words white)', () => {
+        expect(rulesFor(restyled, '.rt_PlayBtn [role="button"]')).toContain('color: #ffffff !important');
+        expect(rulesFor(restyled, '.rt_PlayBtn [role="button"] > div')).toContain('color: #ffffff !important');
+        expect(restyled).not.toContain('#0b0d10');
+    });
+    it("Play focused as Home's: the fill stays the accent (no lighter overlay), a white ring and accent glow, scaled as Home's", () => {
+        expect(rulesFor(restyled, '.rt_PlayBtn [role="button"].gpfocus')).toContain('background: transparent !important');
+        const ring = rulesFor(restyled, '.rt_PlayBtn > div:has(> [role="button"].gpfocus)');
+        expect(ring).toContain('rgba(255, 255, 255, 0.9)');
+        expect(ring).toContain(`transform: scale(${PAGE_LAYOUT.focusScale}) !important`);
+        expect(rulesFor(restyled, '.rt_PlayBtn > div:has(> [role="button"])')).toContain('transition: transform 250ms, box-shadow 250ms !important');
+    });
     it('buildThemeCss with restyle adds the eyebrow, title and accent rules', () => {
         // accent: one per-game colour, animated over 500 ms, on Play, the HLTB goal value and bar
         expect(restyled).toContain("@property --glance-accent { syntax: '<color>'; inherits: true; initial-value: #5fd1ae; }");
         expect(rulesFor(restyled, '.ad_Inner')).toContain('--gg-accent: var(--glance-accent);');
         expect(rulesFor(restyled, '.ad_Inner')).toContain('transition: --glance-accent 500ms ease;');
-        expect(rulesFor(restyled, '.rt_PlayBtn [role="button"]')).toContain('color: #0b0d10 !important');
         expect(rulesFor(restyled, '.rt_PlayBtn > div:has(> [role="button"].gpfocus)')).toContain('var(--glance-accent)');
         // handoff px scaled like Home: its 1440 canvas on 16:9, its 1280 canvas on 16:10
         expect(restyled).toContain(':root { --gg-d: calc(100vw / 1440); }');
@@ -591,7 +605,7 @@ describe('buildThemeCss restyle (Spotlight Home on)', () => {
         expect(extra(header({ SVGTitle: undefined }))).not.toContain('hd_Svg');
         expect(extra({ ...steam, root: { ...steam.root, PlaySection: undefined } })).not.toContain('--gg-side:');
         expect(extra({ ...steam, root: { ...steam.root, PlaySection: undefined } })).not.toContain('padding-left');
-        expect(extra({ ...steam, root: { ...steam.root, ActionButtonAndStatusPanel: undefined } })).not.toContain('#0b0d10');
+        expect(extra({ ...steam, root: { ...steam.root, ActionButtonAndStatusPanel: undefined } })).not.toContain('[role="button"]');
         const noInner = extra({ ...steam, details: { ...steam.details, InnerContainer: undefined } });
         expect(noInner).not.toContain('transition: --glance-accent');
         expect(noInner).not.toContain('> .gg-title');
@@ -604,14 +618,15 @@ describe('buildThemeCss restyle (Spotlight Home on)', () => {
 
         // (display: only Steam's download bar is hidden; object-position: the hero's crop, which moves the picture, not the box)
         // Never layout: on Steam's elements the restyle sets colours, shadows, the scrim, the accent and the
-        // logo's visibility (its box stays), plus the Play row's side padding (the handoff's 56 px insets).
+        // logo's visibility (its box stays), plus the Play row's side padding (the handoff's 56 px insets), and the focused
+        // Play's scale (a transform: drawn bigger, nothing laid out again).
         const steamRules = [...extra(steam).matchAll(/^\s*([^{}\n]+)\{([^}]*)\}/gm)]
             .filter((m) => /\.(hd|ad|ov|rt|ps)_/.test(m[1]) && !/^\s*\.ad_Inner > \.gg-/.test(m[1]));
         expect(steamRules.length).toBeGreaterThan(0);
         for (const [, selector, body] of steamRules) {
             const props = body.split(';').map((d) => d.split(':')[0].trim()).filter(Boolean);
             for (const prop of props) {
-                expect([selector, prop]).toEqual([selector, expect.stringMatching(/^(--gg-accent|--gg-play-top|--gg-row-h|--gg-ok|--gg-warn|--gg-bad|--gg-off|transition|color|background|border|filter|box-shadow|visibility|padding-left|padding-right|padding-top|padding-bottom|font-size|font-weight|width|height|margin-right|top|min-width|flex|padding|backdrop-filter|display|object-position)$/)]);
+                expect([selector, prop]).toEqual([selector, expect.stringMatching(/^(--gg-accent|--gg-play-top|--gg-row-h|--gg-ok|--gg-warn|--gg-bad|--gg-off|transition|color|background|border|filter|box-shadow|visibility|padding-left|padding-right|padding-top|padding-bottom|font-size|font-weight|width|height|margin-right|top|min-width|flex|padding|backdrop-filter|display|object-position|transform)$/)]);
             }
         }
         // (100vh only in the Play row's anchor variable, which the 1.1.1 layout rules read: the default and the TV's)
@@ -726,7 +741,7 @@ describe('the page arriving after the open transition', () => {
     it("Steam's focus fade on Play is off while the page arrives (Home's copy shows Play focused; the page's lit up over 200 ms after the hand-over)", () => {
         const root = full.root as Record<string, string>;
         for (const mode of ['parts', 'all'] as const) {
-            expect(buildArrivingCss(full, 'clean', mode), mode).toContain(`.${root.ActionButtonAndStatusPanel} [role="button"] { transition: none !important; }`);
+            expect(buildArrivingCss(full, 'clean', mode), mode).toContain(`.${root.ActionButtonAndStatusPanel} [role="button"], .${root.ActionButtonAndStatusPanel} > div:has(> [role="button"]) { transition: none !important; }`);
         }
     });
     it("the page's glass arrives unblurred, as Home's copy is, and grows its blur once revealed (Michael: the blur, cinematic)", () => {

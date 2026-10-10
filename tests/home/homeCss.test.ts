@@ -391,14 +391,9 @@ describe('homeCss open transition', () => {
             }
         }
     });
-    it("the Play label turns white as the page's focused Play's: a white copy of its words fades in over it", () => {
+    it('the Play label needs no copy while opening: it is white on Home and on the page', () => {
         const all = rules(css);
-        const copy = all.find(([sel]) => sel.includes('data-gh-opening') && sel.endsWith('.gh-btn-label::after') && !sel.includes('data-gh-phase'));
-        expect(copy?.[1]).toMatch(/content:\s*attr\(data-text\)/);
-        expect(copy?.[1]).toMatch(/color:\s*#fff/);
-        expect(copy?.[1]).toMatch(/opacity:\s*0/);
-        const lit = all.find(([sel]) => sel.includes('data-gh-phase="to"') && sel.endsWith('.gh-btn-label::after'));
-        expect(lit?.[1]).toMatch(/opacity:\s*1/);
+        expect(all.some(([sel]) => sel.includes('data-gh-opening') && sel.endsWith('.gh-btn-label::after'))).toBe(false);
     });
     it("a chip's bar moves onto the page's when the morph gives it a place, and fades otherwise", () => {
         const all = rules(css);
@@ -508,12 +503,28 @@ describe('homeCss logo', () => {
     });
 });
 
+describe('homeCss Play pill', () => {
+    it('white words and glyph on the accent, as on the page', () => {
+        const body = /\.gh-btn-play \{([^}]*background: var\(--glance-accent\)[^}]*)\}/.exec(homeCss())?.[1] ?? '';
+        expect(body).toContain('color: #fff');
+        expect(body).not.toContain('--gh-on-accent');
+    });
+    it("focused: a white ring and accent glow, scaled by the page's focus scale (the page focuses its Play the same)", () => {
+        const body = /\.gh-btn\.gh-focus \{([^}]*)\}/.exec(homeCss())?.[1] ?? '';
+        expect(body).toContain('0 0 0 2px rgba(255,255,255,.9)');
+        expect(body).toContain(`scale(${PAGE_LAYOUT.focusScale})`);
+    });
+});
+
 describe('homeCss Play pill while opening', () => {
     it("takes on the page's focused look as the morph settles (Steam focuses Play there): a ring layer at the page pill's exact size", () => {
         const css = homeCss();
         const after = /\.gh-root\[data-gh-opening="morph"\] \.gh-actions > \.gh-btn\[data-action="play"\]::after \{([^}]*)\}/.exec(css)?.[1] ?? '';
         expect(after).toContain('box-shadow: 0 0 0 2px rgba(255,255,255,.9)');
         expect(after).toContain('opacity: 0');
+        // The page's focused Play keeps its accent fill, as Home's (no lighter overlay any more).
+        expect(after).toContain('background: var(--glance-accent)');
+        expect(after).not.toContain('rgba(255,255,255,.28)');
         const to = /\[data-gh-phase="to"\] \.gh-actions > \.gh-btn\[data-action="play"\]::after \{([^}]*)\}/.exec(css)?.[1] ?? '';
         expect(to).not.toContain('transform');
         expect(to).toContain('opacity: 1');

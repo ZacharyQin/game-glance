@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { HomeRects, MotionVar, openMotion } from '../../src/home/openMotion';
 import type { Box, PageTargets } from '../../src/home/openTargets';
 import { MORPH_EASE, OPEN_TIMINGS } from '../../src/home/motion';
+import { PAGE_LAYOUT } from '../../src/styles/themeCss';
 
 const raw = JSON.parse(readFileSync(resolve(__dirname, 'fixtures/openLayout/home-1500x844.json'), 'utf8')) as { canvasScale: number; rects: Record<string, Box> };
 const r = raw.rects;
@@ -179,36 +180,43 @@ describe('openMotion', () => {
         expect(v['--gho-circle-2']).toBeUndefined();
     });
 
-    it('the Play pill moves by its left edge and centre; its background layer, inside it, grows onto the page pill', () => {
+    // The page focuses Play on arrival, and a focused Play is scaled about its centre (as Home's): the morph lands on it.
+    const f = PAGE_LAYOUT.focusScale;
+    const pageW = 354.2 * f;
+    const pageH = 62.5 * f;
+    it('the Play pill moves by its left edge and centre; its background layer, inside it, grows onto the page pill as focused', () => {
+        expect(f).toBe(1.04);
         const v = vars(openMotion(homeRects(), spotlight(), 'spotlight', s));
         const bg = parse(v['--gho-play-bg']);
-        expect(bg.sx).toBeCloseTo(354.2 / r.pill.w, 3);
-        expect(bg.sy).toBeCloseTo(62.5 / r.pill.h, 3);
+        expect(bg.sx).toBeCloseTo(pageW / r.pill.w, 3);
+        expect(bg.sy).toBeCloseTo(pageH / r.pill.h, 3);
         // Relative to the moved pill: no horizontal shift, and up by half the height it gains (it grows about its centre line).
         expect(bg.tx).toBe(0);
-        expect(bg.ty).toBeCloseTo((r.pill.h - 62.5) / 2 / s, 1);
+        expect(bg.ty).toBeCloseTo((r.pill.h - pageH) / 2 / s, 1);
         const fg = parse(v['--gho-play-fg']);
         expect(fg.sx).toBe(1);
+        // The focused pill grows about its centre: its left edge sits half the growth left of the page pill's.
+        expect(fg.tx).toBeCloseTo((25 - (pageW - 354.2) / 2 - r.pill.x) / s, 1);
         expect(fg.ty).toBeCloseTo((493.1 + 62.5 / 2 - (r.pill.y + r.pill.h / 2)) / s, 1);
         expect(parse(v['--gho-store']).ty).toBeCloseTo((507.7 - r.store.y) / s, 1);
     });
 
-    it("the pill's glyph and label grow to the page's (20 and 22 against Home's 18 and 19) and land where the page draws them", () => {
+    it("the pill's glyph and label grow to the page's focused ones (20 and 22, scaled with the pill) and land where the page draws them", () => {
         const v = vars(openMotion(homeRects(), spotlight(), 'spotlight', s));
         const icon = parse(v['--gho-play-icon']);
         // The page's glyph starts 24 in (Home's 22) and is 20 (Home's 18); its label starts after a 14 gap (Home's 13).
-        expect(icon.tx).toBeCloseTo(24 - 22, 5);
-        expect(icon.sx).toBeCloseTo(20 / 18, 3);
+        expect(icon.tx).toBeCloseTo(24 * f - 22, 4);
+        expect(icon.sx).toBeCloseTo((20 * f) / 18, 3);
         const label = parse(v['--gho-play-label']);
-        expect(label.tx).toBeCloseTo(24 + 20 + 14 - (22 + 18 + 13), 5);
-        expect(label.sx).toBeCloseTo(22 / 19, 3);
+        expect(label.tx).toBeCloseTo((24 + 20 + 14) * f - (22 + 18 + 13), 4);
+        expect(label.sx).toBeCloseTo((22 * f) / 19, 3);
     });
 
-    it("the page pill's exact box (round ends, unlike the stretched layer), relative to Home's pill", () => {
+    it("the page's focused pill's exact box (round ends, unlike the stretched layer), relative to Home's pill", () => {
         const v = vars(openMotion(homeRects(), spotlight(), 'spotlight', s));
-        expect(Number(v['--gho-play-sx'])).toBeCloseTo(354.2 / r.pill.w, 3);
-        expect(Number(v['--gho-play-sy'])).toBeCloseTo(62.5 / r.pill.h, 3);
-        expect(parseFloat(v['--gho-play-dy'])).toBeCloseTo((r.pill.h - 62.5) / 2 / s, 1);
+        expect(Number(v['--gho-play-sx'])).toBeCloseTo(pageW / r.pill.w, 3);
+        expect(Number(v['--gho-play-sy'])).toBeCloseTo(pageH / r.pill.h, 3);
+        expect(parseFloat(v['--gho-play-dy'])).toBeCloseTo((r.pill.h - pageH) / 2 / s, 1);
         expect(v['--gho-play-dy']).toMatch(/px$/);
     });
 

@@ -64,18 +64,22 @@ export function openMotion(home: HomeRects, page: PageTargets, look: PageLook, c
     out['--gho-title'] = tk === 1 ? titleMove : `${titleMove} scale(${k(tk)})`;
     out['--gho-eyebrow'] = translate((page.eyebrowBottomLeft.x - home.eyebrow.x) / s, (page.eyebrowBottomLeft.y - (home.eyebrow.y + home.eyebrow.h)) / s);
 
+    // The page focuses its Play on arrival, and a focused Play grows about its centre (as Home's): the morph lands on it.
+    const f = PAGE_LAYOUT.focusScale;
+    const to: Box = { x: page.play.x - (page.play.w * (f - 1)) / 2, y: page.play.y - (page.play.h * (f - 1)) / 2, w: page.play.w * f, h: page.play.h * f };
     // The pill itself only moves (by its left edge and centre line); its background layer, inside it, grows to the page
     // pill's size about that centre line, so the label never stretches.
-    out['--gho-play-bg'] = `${translate(0, (home.play.h - page.play.h) / 2 / s)} scale(${k(page.play.w / home.play.w)}, ${k(page.play.h / home.play.h)})`;
+    out['--gho-play-bg'] = `${translate(0, (home.play.h - to.h) / 2 / s)} scale(${k(to.w / home.play.w)}, ${k(to.h / home.play.h)})`;
     // The page pill's exact box in the pill's own px (its round ends: the stretched layer's are oval), for the settle.
-    out['--gho-play-sx'] = k(page.play.w / home.play.w);
-    out['--gho-play-sy'] = k(page.play.h / home.play.h);
-    out['--gho-play-dy'] = px((home.play.h - page.play.h) / 2 / s);
-    out['--gho-play-fg'] = translate((page.play.x - home.play.x) / s, (page.play.y + page.play.h / 2 - (home.play.y + home.play.h / 2)) / s);
-    // Inside it (origin: its left edge and centre line), the glyph and the label grow to the page's and move to its insets.
+    out['--gho-play-sx'] = k(to.w / home.play.w);
+    out['--gho-play-sy'] = k(to.h / home.play.h);
+    out['--gho-play-dy'] = px((home.play.h - to.h) / 2 / s);
+    out['--gho-play-fg'] = translate((to.x - home.play.x) / s, (to.y + to.h / 2 - (home.play.y + home.play.h / 2)) / s);
+    // Inside it (origin: its left edge and centre line), the glyph and the label grow to the page's and move to its insets
+    // (scaled with the focused pill).
     const pill = PAGE_LAYOUT.pill;
-    out['--gho-play-icon'] = `${translate(pill.padX - HOME_PILL.padX, 0)} scale(${k(pill.icon / HOME_PILL.icon)})`;
-    out['--gho-play-label'] = `${translate(pill.padX + pill.icon + pill.iconGap - (HOME_PILL.padX + HOME_PILL.icon + HOME_PILL.gap), 0)} scale(${k(pill.font / HOME_PILL.font)})`;
+    out['--gho-play-icon'] = `${translate(pill.padX * f - HOME_PILL.padX, 0)} scale(${k((pill.icon * f) / HOME_PILL.icon)})`;
+    out['--gho-play-label'] = `${translate((pill.padX + pill.icon + pill.iconGap) * f - (HOME_PILL.padX + HOME_PILL.icon + HOME_PILL.gap), 0)} scale(${k((pill.font * f) / HOME_PILL.font)})`;
     let slot = 0;
     home.circles.forEach((circle, i) => {
         if (i === home.infoCircle) return;
