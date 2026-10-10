@@ -67,7 +67,7 @@ export function cleanCss(): string {
 }
 
 /** The page arriving after Spotlight Home's open transition (themeCss.buildArrivingCss); '' without the layout's classes. */
-export function arrivingCss(look: 'spotlight' | 'clean', mode: 'parts' | 'all', revealed = false, extra: { cloud?: boolean; bars?: string[] } = {}): string {
+export function arrivingCss(look: 'spotlight' | 'clean', mode: 'parts' | 'all', revealed = false, extra: Parameters<typeof buildArrivingCss>[4] = {}): string {
     return buildArrivingCss(themeClasses(), look, mode, revealed, extra);
 }
 

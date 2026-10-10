@@ -40,3 +40,14 @@ describe('pageReady and the focus on Play', () => {
         expect(pageReady(doc({ ...base, '.play .gpfocus': shown() }), withFocus, () => true)).toBe(true);
     });
 });
+
+describe('pageReady and the parts Home drew', () => {
+    it("waits for the page's description when Home drew one (Home's copy fades onto it at the hand-over)", () => {
+        const withDesc = { ...sel, desc: '.gg-desc' };
+        const base = { [sel.headerImg]: shown({ complete: true, naturalWidth: 1920 }), '.gg-titleblock': shown(), '.play': shown() };
+        expect(pageReady(doc(base), withDesc, () => true)).toBe(false);
+        expect(pageReady(doc({ ...base, '.gg-desc': hidden }), withDesc, () => true)).toBe(false);
+        expect(pageReady(doc({ ...base, '.gg-desc': shown() }), withDesc, () => true)).toBe(true);
+        expect(pageReady(doc(base), sel, () => true)).toBe(true);
+    });
+});

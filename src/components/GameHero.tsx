@@ -166,7 +166,7 @@ function Hero({ overview, details, restyle, clean }: Props & { restyle: boolean;
                 {launching && <style>{launchCss()}</style>}
                 {accent && <style>{accentCss(accent)}</style>}
                 {fillCss && <style>{fillCss}</style>}
-                {arrival && restyle && <style>{arrivingCss(clean ? 'clean' : 'spotlight', arrival.intent.mode, arrival.revealed, { cloud: arrival.intent.homeCloud === false, bars: arrival.intent.homeBars })}</style>}
+                {arrival && restyle && <style>{arrivingCss(clean ? 'clean' : 'spotlight', arrival.intent.mode, arrival.revealed, { cloud: arrival.intent.homeCloud === false, bars: arrival.intent.homeBars, desc: arrival.intent.homeDesc, hltb: arrival.intent.homeHltb })}</style>}
                 {source && (
                     <SourcePill label={source}>
                         {/* A game from the family library (Steam's line under Play is hidden): with the restyled look only. */}

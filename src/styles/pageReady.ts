@@ -20,6 +20,8 @@ export interface ReadySelectors {
     play: string | null;
     /** Steam's focus on the page's Play row (Home's copy shows Play focused); unchecked when absent. */
     focus?: string | null;
+    /** The page's description, when Home drew it as it opened (Home's copy fades onto it); unchecked when absent. */
+    desc?: string | null;
 }
 
 /**
@@ -51,7 +53,7 @@ export function pageReady(doc: Doc | null | undefined, sel: ReadySelectors, show
         };
         // Steam focuses Play only as its exit animation ends, after the art and layout are ready (probed on the Ally).
         const focused = !sel.focus || doc.querySelector(sel.focus) !== null;
-        return laidOut(sel.titleblock) && laidOut(sel.play) && focused;
+        return laidOut(sel.titleblock) && laidOut(sel.play) && focused && (!sel.desc || laidOut(sel.desc));
     } catch {
         return false;
     }

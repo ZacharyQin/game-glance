@@ -735,6 +735,17 @@ describe('the page arriving after the open transition', () => {
             expect(buildArrivingCss(full, look, 'parts', true), look).toContain('.gg-clean-info, .gg-card { backdrop-filter: blur(calc(16 * var(--gg-d))) !important; transition: backdrop-filter 600ms cubic-bezier(.25,.1,.25,1) !important; }');
         }
     });
+    it('Spotlight: the description and the HowLongToBeat card are there at once when Home drew them as it opened', () => {
+        const hltbParts = ['.gg-hltb > .gg-label', '.gg-hltb [data-stat="hltb"] > .gg-label', '.gg-hltb [data-stat="mainExtras"]', '.gg-hltb [data-stat="completionist"]', '.gg-caption', '.gg-hltb .gg-bar'];
+        const desc = buildArrivingCss(full, 'spotlight', 'parts', false, { desc: true });
+        expect(desc).not.toContain('.gg-desc');
+        for (const sel of hltbParts) expect(desc, sel).toContain(sel);
+        const hltb = buildArrivingCss(full, 'spotlight', 'parts', false, { hltb: true });
+        expect(hltb).toContain('.gg-desc');
+        for (const sel of hltbParts) expect(hltb, sel).not.toContain(sel);
+        // The other new parts still arrive.
+        for (const sel of ['.gg-family', '[data-stat="size"]']) expect(buildArrivingCss(full, 'spotlight', 'parts', false, { desc: true, hltb: true }), sel).toContain(sel);
+    });
     it("Spotlight: the HowLongToBeat card's Main label arrives (Home's 'HLTB main' fades as it moves)", () => {
         expect(buildArrivingCss(full, 'spotlight', 'parts')).toContain('.gg-hltb [data-stat="hltb"] > .gg-label');
         expect(buildArrivingCss(full, 'clean', 'parts')).not.toContain('[data-stat="hltb"] > .gg-label');

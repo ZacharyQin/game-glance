@@ -563,15 +563,22 @@ const ARRIVE_RISE_PX = 14;
  * whole page but its art (our title block and cards, Steam's Play row), lowered by the rise. `revealed`: the same
  * elements back to visible over ARRIVE_MS. Its own stylesheet, only with the full-screen layout; '' otherwise.
  */
-export function buildArrivingCss(classes: ThemeClasses, look: 'spotlight' | 'clean', mode: 'parts' | 'all', revealed = false, extra: { cloud?: boolean; bars?: string[] } = {}): string {
+export function buildArrivingCss(
+    classes: ThemeClasses, look: 'spotlight' | 'clean', mode: 'parts' | 'all', revealed = false,
+    extra: { cloud?: boolean; bars?: string[]; desc?: boolean; hltb?: boolean } = {},
+): string {
     const { header, details, root, play } = classes;
     if (!(cls(header, 'TopCapsule') && cls(details, 'InnerContainer') && cls(details, 'AppDetailsOverviewPanel') && cls(root, 'AppDetailsContainer'))) return '';
     // Not the cloud button: Home's moves into its place, so the page's own must be there at once. Unless Home showed
     // none (`extra.cloud`: its state was not known yet), when the page's arrives like the other new parts.
     const cloud = extra.cloud ? cls(play, 'CloudStatusRow') : null;
     const shared = ['[data-stat="size"]', '.gg-family', ...(cloud ? [cloud] : [])];
+    // Spotlight: the description and the HowLongToBeat card's rest, unless Home drew them as it opened (`extra.desc`,
+    // `extra.hltb`: home/OpenExtras), when the page's are there at once under Home's copy.
+    const desc = extra.desc ? [] : ['.gg-desc'];
+    const hltb = extra.hltb ? [] : ['.gg-hltb > .gg-label', '.gg-hltb [data-stat="hltb"] > .gg-label', '.gg-hltb [data-stat="mainExtras"]', '.gg-hltb [data-stat="completionist"]', '.gg-caption', '.gg-hltb .gg-bar'];
     const parts = look === 'spotlight'
-        ? ['.gg-desc', '.gg-hltb > .gg-label', '.gg-hltb [data-stat="hltb"] > .gg-label', '.gg-hltb [data-stat="mainExtras"]', '.gg-hltb [data-stat="completionist"]', '.gg-caption', '.gg-muted', '.gg-hltb .gg-bar', ...shared]
+        ? [...desc, ...hltb, '.gg-muted', ...shared]
         : [...shared, cleanBarsArriving(extra.bars)];
     const all = present(['.gg-titleblock', '.gg-hero', cls(root, 'PlaySection')]);
     const list = mode === 'all' ? all : parts;
