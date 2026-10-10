@@ -4,7 +4,7 @@ import { browserStores, heroUrls } from './artwork';
 import { markLeaving } from './homeMemory';
 import { takeSteamFocus } from './steamFocus';
 import { createOpenTransition, OpenTransition } from './openTransition';
-import { applyOpening, canvasMeasure, extrasFlags, OpenVariant, openVariant, pageStatsFromChips, readChipTexts, readExtrasAsked, measureHome } from './openHome';
+import { applyOpening, canvasMeasure, extrasFlags, missingStats, OpenVariant, openVariant, pageStatsFromChips, readChipTexts, readExtrasAsked, measureHome, viewportSize } from './openHome';
 import { openMotion } from './openMotion';
 import { pageTargets, PageLook } from './openTargets';
 import { mountOpenBridge } from './openBridge';
@@ -175,7 +175,7 @@ function startHome(c: OpenContext): (() => void) | null {
             const canvasEl = root.querySelector('.gh-canvas') as HTMLElement | null;
             const win = root.ownerDocument?.defaultView;
             const scale = home && canvasEl && canvasEl.offsetWidth > 0 ? home.canvas.w / canvasEl.offsetWidth : 0;
-            const screen = { width: win?.innerWidth ?? 0, height: win?.innerHeight ?? 0 };
+            const screen = win ? viewportSize(win) : { width: 0, height: 0 };
             if (home && scale > 0 && screen.width > 0 && screen.height > 0) {
                 const stats = pageStatsFromChips(readChipTexts(root), c.look);
                 const store = home.store ?? { x: 0, y: 0, w: 0, h: 0 };
@@ -267,7 +267,9 @@ export function openGame(appId: number, source?: HTMLElement | null) {
         const extras = variant === 'morph' && look === 'spotlight' && root ? root.querySelector('.gh-open-extras')?.getAttribute('data-parts') ?? '' : '';
         // The family library pill moves in with Home's store pill: the page's must not arrive again (it blinked).
         const homeFamily = variant === 'morph' && root ? root.querySelector('.gh-family') !== null : undefined;
-        const intent: OpenIntent = { look: pageRestyled ? look : 'steam', mode: variant === 'morph' ? 'parts' : 'all', eyebrow, homeCloud, homeBars, homeFamily, ...extrasFlags(extras) };
+        // The page's stat columns Home showed no chip for (a new game's Play time) arrive instead of popping in.
+        const homeMissing = variant === 'morph' && root ? missingStats(readChipTexts(root).map((c) => c.key)) : undefined;
+        const intent: OpenIntent = { look: pageRestyled ? look : 'steam', mode: variant === 'morph' ? 'parts' : 'all', eyebrow, homeCloud, homeBars, homeFamily, homeMissing, ...extrasFlags(extras) };
         next = { root, appId, variant, look, heroUrl, intent, extras };
         controller().open(appId, variant);
     } catch (error) {

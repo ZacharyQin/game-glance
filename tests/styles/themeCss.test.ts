@@ -477,6 +477,9 @@ describe('buildThemeCss restyle (Spotlight Home on)', () => {
         expect(rulesFor(restyled, '.rt_PlayBtn [role="button"] > div')).toContain('color: #ffffff !important');
         expect(restyled).not.toContain('#0b0d10');
     });
+    it("Play has no green sheen: Steam's focus shine (a green gradient on its ::after) is hidden on the accent pill", () => {
+        expect(rulesFor(restyled, '.rt_PlayBtn [role="button"]::after')).toContain('display: none !important');
+    });
     it("Play focused as Home's: the fill stays the accent (no lighter overlay), a white ring and accent glow, scaled as Home's", () => {
         expect(rulesFor(restyled, '.rt_PlayBtn [role="button"].gpfocus')).toContain('background: transparent !important');
         const ring = rulesFor(restyled, '.rt_PlayBtn > div:has(> [role="button"].gpfocus)');
@@ -612,7 +615,8 @@ describe('buildThemeCss restyle (Spotlight Home on)', () => {
         // Without the full-screen layout the title block stays hidden (see below) and the logo stays.
         const stacked = extra(header({ TopCapsule: undefined }));
         expect(stacked).not.toContain('visibility: hidden');
-        expect(stacked).not.toContain('::after');
+        // (the Play pill's hidden sheen is not layout: it holds in any layout)
+        expect(stacked.replace(/^.*\[role="button"\]::after \{[^}]*\}$/m, '')).not.toContain('::after');
         expect(stacked).not.toContain('> .gg-title');
         expect(stacked).toContain('.gg-title {');
 
@@ -760,6 +764,19 @@ describe('the page arriving after the open transition', () => {
         for (const sel of hltbParts) expect(hltb, sel).not.toContain(sel);
         // The other new parts still arrive.
         for (const sel of ['.gg-family', '[data-stat="size"]']) expect(buildArrivingCss(full, 'spotlight', 'parts', false, { desc: true, hltb: true }), sel).toContain(sel);
+    });
+    it("a stat column Home did not show arrives with the new parts (a new game's Play time: Home had its Added chip)", () => {
+        for (const look of ['spotlight', 'clean'] as const) {
+            const css = buildArrivingCss(full, look, 'parts', false, { missing: ['played'] });
+            expect(css, look).toContain('[data-stat="played"]');
+            expect(buildArrivingCss(full, look, 'parts', false), look).not.toContain('[data-stat="played"]');
+        }
+        expect(buildArrivingCss(full, 'clean', 'parts', false, { missing: ['bad key"]'] })).not.toContain('bad key');
+    });
+    it("Unifideck's store version dropdown (Steam's DialogDropDown) arrives with the new parts instead of popping in", () => {
+        for (const look of ['spotlight', 'clean'] as const) {
+            expect(buildArrivingCss(full, look, 'parts'), look).toContain(':has(> .DialogDropDown_CurrentDisplay)');
+        }
     });
     it('the family pill is there at once when Home showed one (it moves with the store pill), and arrives otherwise', () => {
         for (const look of ['spotlight', 'clean'] as const) {

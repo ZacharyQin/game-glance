@@ -20,7 +20,8 @@ export type ArriveMode = 'parts' | 'all';
  * `homeBars`: the stats whose progress bar Home's morph moved onto the page's (those bars do not arrive again), and
  * `homeDesc` / `homeHltb`: Home drew the description / the HowLongToBeat card's rest as it turned into the page
  * (home/OpenExtras), so the page shows those at once instead of letting them arrive, and `homeFamily`: Home showed
- * the family library pill (it moves in with the store pill, so the page's is there at once too).
+ * the family library pill (it moves in with the store pill, so the page's is there at once too), and `homeMissing`:
+ * the page's stat columns Home showed no chip for (they arrive with the new parts).
  */
 export interface OpenIntent {
     look: PageLook | 'steam';
@@ -31,6 +32,7 @@ export interface OpenIntent {
     homeDesc?: boolean;
     homeHltb?: boolean;
     homeFamily?: boolean;
+    homeMissing?: string[];
 }
 
 let pending: { appId: number; at: number; intent: OpenIntent } | null = null;

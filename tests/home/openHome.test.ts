@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { applyOpening, extrasFlags, extrasParts, measureHome, openVariant, pageStatsFromChips, readExtrasAsked } from '../../src/home/openHome';
+import { applyOpening, extrasFlags, extrasParts, measureHome, missingStats, viewportSize, openVariant, pageStatsFromChips, readExtrasAsked } from '../../src/home/openHome';
 import { BRIDGE_FADE_EASE, mountOpenBridge } from '../../src/home/openBridge';
 
 describe('openVariant', () => {
@@ -127,6 +127,22 @@ describe('applyOpening', () => {
         f.frames.splice(0).forEach((cb) => cb());
         expect(f.props.size).toBe(0);
         expect(f.attrs.size).toBe(0);
+    });
+});
+
+describe('viewportSize', () => {
+    it("the window's exact size (the page lays out from 100vw / 100vh, fractional at a 2.32 pixel ratio), not innerWidth's rounding", () => {
+        expect(viewportSize({ innerWidth: 828, innerHeight: 466, visualViewport: { width: 828.0172, height: 466.3793 } })).toEqual({ width: 828.0172, height: 466.3793 });
+        expect(viewportSize({ innerWidth: 828, innerHeight: 466 })).toEqual({ width: 828, height: 466 });
+        expect(viewportSize({ innerWidth: 828, innerHeight: 466, visualViewport: { width: 0, height: 0 } })).toEqual({ width: 828, height: 466 });
+    });
+});
+
+describe('missingStats', () => {
+    it("the page's stat columns Home showed no chip for (they arrive instead of popping in at the hand-over)", () => {
+        expect(missingStats(['added', 'achievements', 'hltb'])).toEqual(['played']);
+        expect(missingStats(['played', 'achievements', 'hltb'])).toEqual([]);
+        expect(missingStats(['played'])).toEqual(['achievements', 'hltb']);
     });
 });
 

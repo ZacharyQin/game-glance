@@ -28,6 +28,20 @@ const boxOf = (el: Element | null | undefined): Box | null => {
     return { x: r.left, y: r.top, w: r.width, h: r.height };
 };
 
+/**
+ * The window's exact size in CSS px: the page lays out from 100vw / 100vh, which are fractional at the Ally's pixel
+ * ratio (466.38, where innerHeight says 466), so the targets must be too. innerWidth / innerHeight without a viewport.
+ */
+export function viewportSize(win: { innerWidth: number; innerHeight: number; visualViewport?: { width: number; height: number } | null }): { width: number; height: number } {
+    const v = win.visualViewport;
+    return v && v.width > 0 && v.height > 0 ? { width: v.width, height: v.height } : { width: win.innerWidth, height: win.innerHeight };
+}
+
+/** The page's stat columns (Play time, Achievements, HowLongToBeat Main) Home showed no chip for, by Home's chip keys. Pure. */
+export function missingStats(chipKeys: string[]): string[] {
+    return ['played', 'achievements', 'hltb'].filter((key) => !chipKeys.includes(key));
+}
+
 /** Home's boxes for openMotion (CSS px), or null when anything required is missing (no game selected, nothing laid out). */
 export function measureHome(root: Element | null): HomeRects | null {
     try {

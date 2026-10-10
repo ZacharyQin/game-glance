@@ -479,6 +479,8 @@ function restyleRules({ header, details, root, play, shared }: ThemeClasses, lay
         // lighter overlay), a white ring and accent glow, and it grows by the focus scale.
         rule(playButton && `${playButton} [role="button"]`, ` color: #ffffff !important; `),
         rule(playButton && `${playButton} [role="button"].gpfocus`, ` background: transparent !important; `),
+        // Steam's focus shine on Play (a green gradient on its ::after) would show over the accent pill.
+        rule(playButton && `${playButton} [role="button"]::after`, ` display: none !important; `),
         rule(playButton && `${playButton} > div:has(> [role="button"])`, ` transition: transform 250ms, box-shadow 250ms !important; `),
         rule(playButton && `${playButton} > div:has(> [role="button"].gpfocus)`,
             ` box-shadow: 0 0 0 ${d(2)} rgba(255, 255, 255, 0.9), 0 ${d(14)} ${d(40)} calc(-1 * ${d(8)}) var(--glance-accent) !important; transform: scale(${PAGE_LAYOUT.focusScale}) !important; `),
@@ -571,7 +573,7 @@ const ARRIVE_RISE_PX = 14;
  */
 export function buildArrivingCss(
     classes: ThemeClasses, look: 'spotlight' | 'clean', mode: 'parts' | 'all', revealed = false,
-    extra: { cloud?: boolean; bars?: string[]; desc?: boolean; hltb?: boolean; family?: boolean } = {},
+    extra: { cloud?: boolean; bars?: string[]; desc?: boolean; hltb?: boolean; family?: boolean; missing?: string[] } = {},
 ): string {
     const { header, details, root, play } = classes;
     if (!(cls(header, 'TopCapsule') && cls(details, 'InnerContainer') && cls(details, 'AppDetailsOverviewPanel') && cls(root, 'AppDetailsContainer'))) return '';
@@ -579,7 +581,10 @@ export function buildArrivingCss(
     // none (`extra.cloud`: its state was not known yet), when the page's arrives like the other new parts.
     const cloud = extra.cloud ? cls(play, 'CloudStatusRow') : null;
     // Nor the family pill when Home showed one (`extra.family`): it moved in with Home's store pill.
-    const shared = ['[data-stat="size"]', ...(extra.family ? [] : ['.gg-family']), ...(cloud ? [cloud] : [])];
+    // A stat column Home showed no chip for (`extra.missing`: a new game's Play time), and Unifideck's store version
+    // dropdown (Steam's DialogDropDown), arrive too instead of popping in.
+    const missing = (extra.missing ?? []).filter((key) => /^[a-z]+$/i.test(key)).map((key) => `[data-stat="${key}"]`);
+    const shared = ['[data-stat="size"]', ...missing, ...(extra.family ? [] : ['.gg-family']), ...(cloud ? [cloud] : []), ':has(> .DialogDropDown_CurrentDisplay)'];
     // Spotlight: the description and the HowLongToBeat card's rest, unless Home drew them as it opened (`extra.desc`,
     // `extra.hltb`: home/OpenExtras), when the page's are there at once under Home's copy.
     const desc = extra.desc ? [] : ['.gg-desc'];
