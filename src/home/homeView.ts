@@ -56,13 +56,13 @@ export function playAction(installed: boolean, running: boolean, download: Downl
 }
 
 /**
- * Whether a resolved hero art may be kept for the session. Only once Steam's details for the game are
- * loaded (before that `strHeroImage` is unknown); a game with hero art keeps only the hero itself
- * (a fallback then means a slow or failed load); a game without hero art keeps its fallback. Misses never.
+ * Whether a resolved hero art may be kept for the session (remembered with the url list it came from, so details that
+ * list another file look again). A hero that loaded, always; a fallback only once Steam's details say the game has no
+ * hero art (before, or with hero art, it means a slow or failed load). Misses never.
  */
 export function shouldMemoArt(detailsLoaded: boolean, hasHeroImage: boolean, mode: 'full' | 'fallback' | 'none'): boolean {
-    if (mode === 'none' || !detailsLoaded) return false;
-    return hasHeroImage ? mode === 'full' : true;
+    if (mode === 'full') return true;
+    return mode === 'fallback' && detailsLoaded && !hasHeroImage;
 }
 
 /** "Play a game…" only when recents are empty and the boot-time retries are over. */

@@ -118,7 +118,7 @@ export interface RecentsRowNav {
  * still do nothing (pointer events are off in homeCss). Rendered only with games. `geometry` is the card scale's sizes
  * (handheld or docked), the same SpotlightHome gives homeCss.
  */
-export function RecentsRow({ games, selected, geometry, nav, expand = true }: { games: HomeGame[]; selected: number; geometry: RecentsGeometry; nav: RecentsRowNav; expand?: boolean }) {
+export function RecentsRow({ games, selected, geometry, nav, expand = true, snap = false }: { games: HomeGame[]; selected: number; geometry: RecentsGeometry; nav: RecentsRowNav; expand?: boolean; snap?: boolean }) {
     const count = games.length;
     const at = clampFocus(count, selected);
     const layout = recentsLayout(count, at, geometry, expand);
@@ -143,7 +143,7 @@ export function RecentsRow({ games, selected, geometry, nav, expand = true }: { 
             role="listbox"
             aria-label={tr('recentGames')}
         >
-            <div className="gh-recents-track" style={{ transform: `translateX(${layout.scrollX}px)` }}>
+            <div className={`gh-recents-track${snap ? ' gh-recents-snap' : ''}`} style={{ transform: `translateX(${layout.scrollX}px)` }}>
                 {games.map((game, i) => (
                     <GameCapsule
                         key={game.appId}

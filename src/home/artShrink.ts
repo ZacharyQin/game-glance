@@ -108,7 +108,7 @@ export function loadDecoded(url: string, crossOrigin = false): Promise<HTMLImage
  * A copy of `url` at `size` as a blob url (decoded and resized off the main thread by createImageBitmap, encoded by an
  * OffscreenCanvas), already decoded once; null when anything is missing or fails (the file is drawn instead).
  */
-export async function makeCopy(url: string, size: Size, type: 'image/jpeg' | 'image/png'): Promise<string | null> {
+async function createCopy(url: string, size: Size, type: CopyType): Promise<string | null> {
     try {
         if (typeof createImageBitmap !== 'function' || typeof OffscreenCanvas !== 'function' || typeof fetch !== 'function') return null;
         const response = await fetch(url);
@@ -130,6 +130,42 @@ export async function makeCopy(url: string, size: Size, type: 'image/jpeg' | 'im
         return null;
     }
 }
+
+export type CopyType = 'image/jpeg' | 'image/png';
+type CopyMaker = (url: string, size: Size, type: CopyType) => Promise<string | null>;
+
+/**
+ * `make` remembered by file, size and type (the newest `max`), shared by everyone asking at the same time: a game's art
+ * is copied once per session however often its lookup runs again. A failed copy is not kept.
+ */
+export function createCopyCache(make: CopyMaker, max: number): CopyMaker {
+    const copies = new Map<string, Promise<string | null>>();
+    return (url, size, type) => {
+        const key = `${url}|${size.width}x${size.height}|${type}`;
+        const hit = copies.get(key);
+        if (hit) {
+            copies.delete(key);
+            copies.set(key, hit);
+            return hit;
+        }
+        const run = make(url, size, type).then((copy) => {
+            if (copy === null) copies.delete(key);
+            return copy;
+        }, () => {
+            copies.delete(key);
+            return null;
+        });
+        copies.set(key, run);
+        while (copies.size > max) copies.delete(copies.keys().next().value as string);
+        return run;
+    };
+}
+
+/** Copies kept for the session (heroes, logos and wide card art of a few rows of games). */
+const COPY_MAX = 96;
+
+/** A copy of `url` at `size` (createCopy), made once per file, size and type. */
+export const makeCopy = createCopyCache(createCopy, COPY_MAX);
 
 /**
  * Art drawn with background-size: cover in `box` (device px): loads and decodes `url`, and hands back the url to draw,

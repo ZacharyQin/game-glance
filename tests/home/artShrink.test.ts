@@ -1,5 +1,5 @@
-import { afterEach, describe, expect, it } from 'vitest';
-import { copyPlan, displayInfo, isPngUrl, logoCopy, noteDisplay, resetDisplay } from '../../src/home/artShrink';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { copyPlan, createCopyCache, displayInfo, isPngUrl, logoCopy, noteDisplay, resetDisplay } from '../../src/home/artShrink';
 import { logoFit } from '../../src/home/logo';
 
 describe('copyPlan (art drawn with background-size: cover in `box`, device px)', () => {
@@ -76,5 +76,41 @@ describe('isPngUrl', () => {
         expect(isPngUrl('https://x/1_logo.PNG')).toBe(true);
         expect(isPngUrl('https://x/library_hero.jpg?c=1')).toBe(false);
         expect(isPngUrl('https://x/png/a.jpg')).toBe(false);
+    });
+});
+
+describe('createCopyCache', () => {
+    const size = { width: 100, height: 50 };
+    it('makes a copy of a file at a size once; asking again (another visit, at once) hands back the same', async () => {
+        let n = 0;
+        const make = vi.fn(async () => `blob:${++n}`);
+        const cache = createCopyCache(make, 8);
+        const [a, b] = [cache('u', size, 'image/jpeg'), cache('u', size, 'image/jpeg')];
+        expect(await a).toBe('blob:1');
+        expect(await b).toBe('blob:1');
+        expect(await cache('u', size, 'image/jpeg')).toBe('blob:1');
+        expect(make).toHaveBeenCalledTimes(1);
+    });
+    it('another size or type is another copy', async () => {
+        const make = vi.fn(async (url: string, s: { width: number }, type: string) => `${url}:${s.width}:${type}`);
+        const cache = createCopyCache(make, 8);
+        await cache('u', size, 'image/jpeg');
+        expect(await cache('u', { width: 200, height: 100 }, 'image/jpeg')).toBe('u:200:image/jpeg');
+        expect(await cache('u', size, 'image/png')).toBe('u:100:image/png');
+        expect(make).toHaveBeenCalledTimes(3);
+    });
+    it('a failed copy is tried again next time', async () => {
+        const make = vi.fn(async () => null as string | null);
+        const cache = createCopyCache(make, 8);
+        await cache('u', size, 'image/jpeg');
+        await cache('u', size, 'image/jpeg');
+        expect(make).toHaveBeenCalledTimes(2);
+    });
+    it('keeps at most `max` copies', async () => {
+        const make = vi.fn(async (url: string) => `c:${url}`);
+        const cache = createCopyCache(make, 2);
+        for (const u of ['a', 'b', 'c']) await cache(u, size, 'image/jpeg');
+        await cache('a', size, 'image/jpeg');
+        expect(make).toHaveBeenCalledTimes(4);
     });
 });

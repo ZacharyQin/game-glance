@@ -103,9 +103,11 @@ describe('playAction', () => {
 });
 
 describe('shouldMemoArt', () => {
-    it('does not keep a result while Steam has not loaded the game details', () => {
+    it('without Steam\'s details keeps a hero that loaded (remembered by its url list: details listing a new file look again), never a fallback', () => {
+        // Steam holds details for few games (3 of 12 recents on the Ally): the others re-loaded their hero on every visit.
+        expect(shouldMemoArt(false, false, 'full')).toBe(true);
         expect(shouldMemoArt(false, false, 'fallback')).toBe(false);
-        expect(shouldMemoArt(false, false, 'full')).toBe(false);
+        expect(shouldMemoArt(false, false, 'none')).toBe(false);
     });
     it('keeps the hero when the details have one and it loaded', () => {
         expect(shouldMemoArt(true, true, 'full')).toBe(true);

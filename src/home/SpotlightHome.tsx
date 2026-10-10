@@ -140,7 +140,7 @@ export function SpotlightHome() {
     const shownAt = heroIndex(data.games.length, cycle.shown);
     const shownGame = shownAt === null ? null : data.games[shownAt] ?? null;
     const heldAccent = useRef(data.accent);
-    if (!cycle.cycling) heldAccent.current = data.accent;
+    if (!cycle.holding) heldAccent.current = data.accent;
     const accent = heldAccent.current;
     // The zone holding gamepad focus, as reported by each zone's focus events; tabs/feed raise the sheet.
     const [zone, setZone] = useState<Zone>('recents');
@@ -150,7 +150,8 @@ export function SpotlightHome() {
     const sheetUp = zone === 'tabs' || zone === 'feed';
     const gameIds = useMemo(() => data.games.map((g) => g.appId), [data.games]);
     // The games either side of the selection, whose hero art is pre-loaded so L1/R1 crossfade at once.
-    const heroNeighbours = useMemo(() => neighbourIds(gameIds, focusIndex, HERO_PRELOAD_RADIUS), [gameIds, focusIndex]);
+    // Not while a fast run holds the screen: their loads would land on the run's end, as its card widens.
+    const heroNeighbours = useMemo(() => (cycle.holding ? [] : neighbourIds(gameIds, focusIndex, HERO_PRELOAD_RADIUS)), [gameIds, focusIndex, cycle.holding]);
     // With the logo option, their logos too (home/logoArt), on the same rest as the art, so L1/R1 draw the next logo on the step.
     const neighbourKey = heroNeighbours.join(',');
     useEffect(() => {
@@ -250,7 +251,7 @@ export function SpotlightHome() {
             if (onLibrary || !data.focused) return openLibrary();
             const appId = data.focused.appId;
             // In a fast run Home still shows another game: it shows the selected one first, then opens it from there.
-            if (cycle.cycling) {
+            if (cycle.holding) {
                 cycle.settle();
                 afterFrames(() => openGame(appId, selectedCard()));
                 return;
@@ -392,7 +393,7 @@ export function SpotlightHome() {
                                     {onLibrary ? (
                                         <TitleBlock eyebrow={eyebrowText(null, true)} title={tr('viewLibrary')} chips={data.libraryChips} />
                                     ) : (
-                                        <TitleBlock eyebrow={collectionEyebrow(data.rowCollection, eyebrowText(data.lastPlayedLabel, false, data.focusedIsNew, data.rowCollection !== null))} title={game.name} chips={data.chips} appId={game.appId} logo={gameLogo} version={data.detailsVersion} resolve={!cycle.cycling} />
+                                        <TitleBlock eyebrow={collectionEyebrow(data.rowCollection, eyebrowText(data.lastPlayedLabel, false, data.focusedIsNew, data.rowCollection !== null))} title={game.name} chips={data.chips} appId={game.appId} logo={gameLogo} version={data.detailsVersion} resolve={!cycle.holding} />
                                     )}
                                     <ActionRow
                                         game={onLibrary ? null : game}
@@ -411,7 +412,7 @@ export function SpotlightHome() {
                                         {family && <FamilyPill label={family} className="gh-family" iconClassName="gh-family-icon" />}
                                     </SourcePill>
                                 )}
-                                <RecentsRow games={data.games} selected={focusIndex} geometry={geometry} nav={recentsNav} expand={!cycle.cycling} />
+                                <RecentsRow games={data.games} selected={focusIndex} geometry={geometry} nav={recentsNav} expand={!cycle.narrow} snap={cycle.holding} />
                                 <FeedSheet
                                         data={data}
                                         raised={sheetUp}
@@ -434,7 +435,7 @@ export function SpotlightHome() {
                 </div>
             </div>
             {/* Open transition: the page's parts Home draws as it turns into the page (hidden until opening; not built during a fast run). */}
-            {game && !cycle.cycling && <OpenExtras description={data.description} hltb={data.hltb} playedMinutes={data.playedMinutes} locale={data.locale} source={data.source} family={family} playedMissing={!data.chips.some((c) => c.key === 'played')} />}
+            {game && !cycle.holding && <OpenExtras description={data.description} hltb={data.hltb} playedMinutes={data.playedMinutes} locale={data.locale} source={data.source} family={family} playedMissing={!data.chips.some((c) => c.key === 'played')} />}
         </div>
     );
 }

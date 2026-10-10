@@ -15,6 +15,7 @@ import { useAsync } from '../hooks/useAsync';
 import { useOverrideVersion } from '../hooks/useOverrideVersion';
 import { useSettled } from '../hooks/useSettled';
 import { BUMPER_REPEAT_MS } from './focusZones';
+import { FAST_CYCLE_MS, SETTLE_WIDEN_MS } from './fastCycle';
 import { steamLanguageToLocale } from '../logic/format';
 import { heroicStoreLabel } from '../logic/heroic';
 import { accentFor, DEFAULT_ACCENT } from './accent';
@@ -116,9 +117,10 @@ const HLTB_READ_BATCH = 8;
 /**
  * How long the selection rests before the per-game work that only matters where the user stops starts (HLTB lookup,
  * accent sampling, Steam details for the neighbours). Longer than a held L1/R1's repeat (BUMPER_REPEAT_MS), so holding
- * a bumper through ten games does that work once, for the game it stops on.
+ * a bumper through ten games does that work once, for the game it stops on; and after a fast run's card has widened
+ * (home/fastCycle), so that work does not stutter the widen.
  */
-export const SELECTION_SETTLE_MS = Math.max(250, BUMPER_REPEAT_MS + 50);
+export const SELECTION_SETTLE_MS = Math.max(250, BUMPER_REPEAT_MS + 50, FAST_CYCLE_MS + SETTLE_WIDEN_MS + 40);
 /** Feed pills: accents sampled a few games at a time, repainting after each batch. */
 const CARD_ACCENT_BATCH = 4;
 

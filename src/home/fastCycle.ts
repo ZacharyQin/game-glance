@@ -1,16 +1,22 @@
 import { useEffect, useState } from 'react';
 import { BUMPER_REPEAT_MS } from './focusZones';
+import { SETTLE_WIDEN_MS } from './motion';
+
+export { SETTLE_WIDEN_MS };
 
 /**
  * Fast cycling (a quick run of L1/R1 or Left/Right through the games). The first step from rest is shown at once; a step
  * that follows the last one within FAST_CYCLE_MS starts a run, during which the screen holds what it showed (hero art,
  * accent, the wide card) and only the selection moves along the narrow cards. FAST_CYCLE_MS after the last step the run
- * ends on the selection, shown at once. Each shown game otherwise cost a restyle of the whole of Home (the accent) and its
+ * ends: the selected card widens first, alone and quickly (SETTLE_WIDEN_MS), then the hero, accent and logo follow. Each shown game otherwise cost a restyle of the whole of Home (the accent) and its
  * images' decodes on every step (probed on the Ally: 20-60 ms a step, freezes of up to 600 ms).
  */
 
-/** Longer than a held bumper's repeat, so holding L1/R1 is one run. */
-export const FAST_CYCLE_MS = Math.max(250, BUMPER_REPEAT_MS + 50);
+/** Longer than a held bumper's repeat (170 ms), so holding L1/R1 is one run; a run ends this long after its last step. */
+export const FAST_CYCLE_MS = Math.max(200, BUMPER_REPEAT_MS + 30);
+
+/** At rest; in a run (narrow cards, the screen holds); or the run's card widening (the screen still holds). */
+export type CyclePhase = 'rest' | 'run' | 'widen';
 
 export interface CycleState {
     /** The selection the screen shows. */
@@ -19,39 +25,50 @@ export interface CycleState {
     at: number;
     /** When the selection last changed (ms). */
     last: number;
-    /** In a run: the screen holds `shown` while the selection moves on. */
-    cycling: boolean;
+    phase: CyclePhase;
 }
 
 export function startCycle(index: number, now: number): CycleState {
-    return { shown: index, at: index, last: now, cycling: false };
+    return { shown: index, at: index, last: now, phase: 'rest' };
 }
 
 /** The state after the selection becomes `index` at `now`; the same state when it already is. Pure. */
 export function stepCycle(state: CycleState, index: number, now: number): CycleState {
     if (index === state.at) return state;
-    if (now - state.last < FAST_CYCLE_MS) return { shown: state.shown, at: index, last: now, cycling: true };
-    return { shown: index, at: index, last: now, cycling: false };
+    if (state.phase !== 'widen' && now - state.last < FAST_CYCLE_MS) return { shown: state.shown, at: index, last: now, phase: 'run' };
+    return { shown: index, at: index, last: now, phase: 'rest' };
 }
 
-/** A run ends on the selection (its wait is over, or something needs the screen to match it now). Pure. */
+/** A run's wait is over: the selected card widens, the screen still holds. Pure. */
+export function widenCycle(state: CycleState): CycleState {
+    return state.phase === 'run' ? { ...state, phase: 'widen' } : state;
+}
+
+/** The screen shows the selection (the card has widened, or something needs it now: opening the game). Pure. */
 export function settleCycle(state: CycleState): CycleState {
-    return state.cycling || state.shown !== state.at ? { ...state, shown: state.at, cycling: false } : state;
+    return state.phase !== 'rest' || state.shown !== state.at ? { ...state, shown: state.at, phase: 'rest' } : state;
+}
+
+/** What a phase means on screen: narrow cards (no wide card), and the screen holding the game it showed. */
+export function cycleView(phase: CyclePhase): { narrow: boolean; holding: boolean } {
+    return { narrow: phase === 'run', holding: phase !== 'rest' };
 }
 
 /**
- * The selection the screen shows for `index`, whether a run is on, and `settle()` to end a run at once (opening the
- * selected game: the screen must show it). React glue for stepCycle/settleCycle.
+ * The selection the screen shows for `index`, whether the cards are narrow and the screen holds, and `settle()` to end
+ * a run at once (opening the selected game: the screen must show it). React glue for the functions above.
  */
-export function useFastCycle(index: number): { shown: number; cycling: boolean; settle(): void } {
+export function useFastCycle(index: number): { shown: number; narrow: boolean; holding: boolean; settle(): void } {
     const [state, setState] = useState(() => startCycle(index, 0));
     const current = stepCycle(state, index, Date.now());
     // Applied during render (React's "adjust state when a prop changes"): the step's first frame already holds or shows.
     if (current !== state) setState(current);
     useEffect(() => {
-        if (!state.cycling) return undefined;
-        const timer = setTimeout(() => setState(settleCycle), FAST_CYCLE_MS);
+        if (state.phase === 'rest') return undefined;
+        const timer = state.phase === 'run'
+            ? setTimeout(() => setState(widenCycle), FAST_CYCLE_MS)
+            : setTimeout(() => setState(settleCycle), SETTLE_WIDEN_MS);
         return () => clearTimeout(timer);
-    }, [state.cycling, state.last]);
-    return { shown: current.shown, cycling: current.cycling, settle: () => setState(settleCycle) };
+    }, [state.phase, state.last]);
+    return { shown: current.shown, ...cycleView(current.phase), settle: () => setState(settleCycle) };
 }

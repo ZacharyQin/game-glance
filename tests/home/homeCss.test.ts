@@ -1,3 +1,4 @@
+import { SETTLE_WIDEN_MS } from '../../src/home/fastCycle';
 import { describe, expect, it } from 'vitest';
 import {
     statusCss,
@@ -127,6 +128,8 @@ describe('homeCss', () => {
         // During a fast L1/R1 run the selected card stays narrow (gh-cap-sel) and gets the same ring and glow.
         expect(css).toMatch(/\.gh-recents-focus \.gh-cap-sel\s*\{[^}]*box-shadow:\s*0 0 0 2px rgba\(255,255,255,\.9\), 0 0 [\d.]+px [\d.]+px var\(--glance-accent\)/);
         expect(css).toMatch(/\.gh-cap-sel\s*\{\s*--gh-edge: rgba\(255,255,255,\.35\)/);
+        // When the run ends the card widens quickly (SETTLE_WIDEN_MS), its neighbours moving with it.
+        expect(css).toMatch(new RegExp(`\\.gh-recents-snap \\.gh-cap\\s*\\{[^}]*transition: left ${SETTLE_WIDEN_MS}ms cubic-bezier\\([^)]*\\), width ${SETTLE_WIDEN_MS}ms`));
         // A game new to the library: a small light "New" pill at the card's top left.
         expect(css).toMatch(/\.gh-cap-new\s*\{[^}]*position:\s*absolute[^}]*text-transform:\s*uppercase[^}]*background:\s*rgba\(255,255,255,\.92\)/);
         expect(css).not.toMatch(/\.gh-cap\s*\{[^}]*cursor:\s*pointer/);

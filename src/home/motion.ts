@@ -31,6 +31,8 @@ export const FEED_ART_FADE_MS = 350;
 
 /** CSS shorthands. */
 export const SLIDE = `${SLIDE_MS}ms ${SLIDE_EASE}`;
+/** A fast L1/R1 run's end (home/fastCycle): the selected card widens this quickly, alone. */
+export const SETTLE_WIDEN_MS = 160;
 export const SHEET = `${SHEET_MS}ms ${SHEET_EASE}`;
 export const FEED_SCROLL = `${FEED_SCROLL_MS}ms ${SHEET_EASE}`;
 

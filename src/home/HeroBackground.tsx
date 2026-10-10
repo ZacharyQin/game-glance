@@ -24,13 +24,14 @@ async function firstThatLoads(urls: string[]): Promise<string | null> {
     return null;
 }
 
-const artMemo = new Map<number, Art>();
+/** Resolved art by game, with the url list it came from (Steam can list another file once it loads the game's details). */
+const artMemo = new Map<number, { key: string; art: Art }>();
 /** Lookups in flight, so a pre-load and the selection share one load. */
-const inFlight = new Map<number, Promise<Art>>();
+const inFlight = new Map<string, Promise<Art>>();
 
-function remember(appId: number, art: Art) {
+function remember(appId: number, key: string, art: Art) {
     artMemo.delete(appId);
-    artMemo.set(appId, art);
+    artMemo.set(appId, { key, art });
     while (artMemo.size > ART_MEMO_MAX) {
         const oldest = artMemo.keys().next().value;
         if (oldest === undefined) break;
@@ -38,30 +39,53 @@ function remember(appId: number, art: Art) {
     }
 }
 
+/** A game's art urls now (hero files, then the fallback capsules) and their memo key. */
+function artSources(appId: number): { full: string[]; fallback: string[]; key: string } {
+    const { full, fallback } = heroSources(heroUrls(appId, browserStores), capsuleUrls(appId, browserStores));
+    return { full, fallback, key: `${full.join('|')}||${fallback.join('|')}` };
+}
+
+/** The art remembered for a game's current url list, or undefined. */
+function knownArt(appId: number): Art | undefined {
+    const entry = artMemo.get(appId);
+    if (!entry) return undefined;
+    try {
+        return entry.key === artSources(appId).key ? entry.art : undefined;
+    } catch {
+        return undefined;
+    }
+}
+
 /** Whether a game's art is already resolved this session (the warm-up skips it). */
 export function artKnown(appId: number): boolean {
-    return artMemo.has(appId);
+    return knownArt(appId) !== undefined;
 }
 
 /** Hero art when the game has it; else the blurred-capsule fallback; else nothing (ink). Never rejects. */
 export function resolveArt(appId: number): Promise<Art> {
+    let sources: ReturnType<typeof artSources>;
+    try {
+        sources = artSources(appId);
+    } catch (error) {
+        console.warn(`${LOG_PREFIX} Home: hero art urls failed`, error);
+        return Promise.resolve({ mode: 'none' });
+    }
     const memo = artMemo.get(appId);
-    if (memo) return Promise.resolve(memo);
-    const pending = inFlight.get(appId);
+    if (memo && memo.key === sources.key) return Promise.resolve(memo.art);
+    const flight = `${appId}|${sources.key}`;
+    const pending = inFlight.get(flight);
     if (pending) return pending;
-    const lookup = lookupArt(appId).finally(() => inFlight.delete(appId));
-    inFlight.set(appId, lookup);
+    const lookup = lookupArt(appId, sources).finally(() => inFlight.delete(flight));
+    inFlight.set(flight, lookup);
     return lookup;
 }
 
-async function lookupArt(appId: number): Promise<Art> {
+async function lookupArt(appId: number, { full, fallback, key }: ReturnType<typeof artSources>): Promise<Art> {
     try {
-        // Until Steam has loaded the game's details, `strHeroImage` is unknown and only the fallback is
-        // possible; such a result is shown but not kept, and is re-resolved when the details arrive.
+        // Until Steam has loaded the game's details, `strHeroImage` is unknown: a fallback then is shown but not kept.
         const assets = browserStores.details(appId)?.libraryAssets;
         const detailsLoaded = assets !== undefined && assets !== null;
         const hasHeroImage = typeof assets?.strHeroImage === 'string' && assets.strHeroImage.length > 0;
-        const { full, fallback } = heroSources(heroUrls(appId, browserStores), capsuleUrls(appId, browserStores));
         let art: Art = { mode: 'none' };
         const hero = await firstThatLoads(full);
         if (hero) art = { mode: 'full', url: hero };
@@ -69,7 +93,7 @@ async function lookupArt(appId: number): Promise<Art> {
             const url = await firstThatLoads(fallback);
             if (url) art = { mode: 'fallback', url };
         }
-        if (shouldMemoArt(detailsLoaded, hasHeroImage, art.mode)) remember(appId, art);
+        if (shouldMemoArt(detailsLoaded, hasHeroImage, art.mode)) remember(appId, key, art);
         return art;
     } catch (error) {
         console.warn(`${LOG_PREFIX} Home: hero art lookup failed`, error);
@@ -88,7 +112,7 @@ export function heroShownApp(): number | null {
 /** A game's hero art as Home shows or last resolved it (null when unknown); never loads anything. */
 export function heroArtFor(appId: number): Art | null {
     if (shownNow?.appId === appId) return shownNow.art;
-    return artMemo.get(appId) ?? null;
+    return artMemo.get(appId)?.art ?? null;
 }
 
 const sameArt = (a: Art | undefined, b: Art) =>
@@ -132,7 +156,7 @@ export function HeroBackground({ appId, detailsVersion, neighbours = [] }: { app
     // settled, instead of fading in from black.
     useLayoutEffect(() => {
         if (appId === null) return;
-        const known = artMemo.get(appId) ?? null;
+        const known = knownArt(appId) ?? null;
         const settled = settledHeroLayers(shown.current !== undefined, known, Date.now());
         if (!settled || !known) return;
         shown.current = known;

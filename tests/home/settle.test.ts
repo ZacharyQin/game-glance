@@ -1,11 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { BUMPER_REPEAT_MS } from '../../src/home/focusZones';
+import { FAST_CYCLE_MS, SETTLE_WIDEN_MS } from '../../src/home/fastCycle';
 import { accentNow, SELECTION_SETTLE_MS, shownAccent } from '../../src/home/useHomeData';
 
 describe('SELECTION_SETTLE_MS', () => {
     it('is longer than a held bumper\'s repeat, so holding L1/R1 never settles on the games it passes', () => {
         expect(SELECTION_SETTLE_MS).toBeGreaterThan(BUMPER_REPEAT_MS);
-        expect(SELECTION_SETTLE_MS).toBeLessThanOrEqual(300);
+        expect(SELECTION_SETTLE_MS).toBeLessThanOrEqual(450);
+    });
+    it("starts only once a fast run's card has widened (its lookups would stutter the widen)", () => {
+        expect(SELECTION_SETTLE_MS).toBeGreaterThanOrEqual(FAST_CYCLE_MS + SETTLE_WIDEN_MS);
     });
 });
 
