@@ -78,7 +78,10 @@ export function openMotion(home: HomeRects, page: PageTargets, look: PageLook, c
     home.circles.forEach((circle, i) => {
         if (i === home.infoCircle) return;
         const to = page.circles[slot++];
-        if (to) out[`--gho-circle-${i}`] = mapBox(circle, to, s, true);
+        if (!to) return;
+        out[`--gho-circle-${i}`] = mapBox(circle, to, s, true);
+        // Its icon is already the page's size (homeCss): it shrinks as the circle grows, to stay that size.
+        out[`--gho-circle-icon-${i}`] = `scale(${k(circle.w / to.w)})`;
     });
     if (home.store) out['--gho-store'] = translate((page.store.x - home.store.x) / s, (page.store.y - home.store.y) / s);
 

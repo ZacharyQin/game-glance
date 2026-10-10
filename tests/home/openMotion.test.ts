@@ -195,6 +195,16 @@ describe('openMotion', () => {
         expect(v['--gho-play-dy']).toMatch(/px$/);
     });
 
+    it("each circle's icon shrinks as the circle grows, so it is the page's size throughout (it grew 11% and snapped back)", () => {
+        const v = vars(openMotion(homeRects(), spotlight(), 'spotlight', s));
+        for (const i of [0, 1, 3]) {
+            const grow = parse(v[`--gho-circle-${i}`]).sx;
+            expect(v[`--gho-circle-icon-${i}`]).toMatch(/^scale\([\d.]+\)$/);
+            expect(Number(/scale\(([\d.]+)\)/.exec(v[`--gho-circle-icon-${i}`])![1]) * grow).toBeCloseTo(1, 3);
+        }
+        expect(v['--gho-circle-icon-2']).toBeUndefined(); // the info button fades where it is
+    });
+
     it('the output is stable: sorted by name', () => {
         const list = openMotion(homeRects(), spotlight(), 'spotlight', s);
         expect(list.map((x) => x.name)).toEqual([...list.map((x) => x.name)].sort());

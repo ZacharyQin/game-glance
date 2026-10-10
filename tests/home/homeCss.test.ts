@@ -429,6 +429,14 @@ describe('homeCss open transition', () => {
         expect(pill).not.toContain('transform: var(--gho-play-bg)');
         expect(body((sel) => sel.includes('data-gh-phase="to"') && sel.endsWith('[data-action="play"]::after'))).toContain(settle);
     });
+    it("a circle's icon takes the counter-scale about its centre while the circle grows", () => {
+        const all = rules(css);
+        const icon = all.find(([sel]) => sel.includes('data-gh-phase="to"') && sel.endsWith('.gh-btn:nth-child(3) > .gh-btn-icon'));
+        expect(icon?.[1]).toContain('transform: var(--gho-circle-icon-1, none)');
+        expect(all.some(([sel, body]) => sel.includes('data-gh-opening') && !sel.includes('data-gh-phase') && sel.includes('.gh-btn-circle > .gh-btn-icon') && /transform-origin:\s*50% 50%/.test(body))).toBe(true);
+        // The cloud's icon is the page's size too (PAGE_LAYOUT.cloudIcon, on both).
+        expect(css).toMatch(new RegExp(`\\.gh-btn-cloud svg\\s*\\{[^}]*width:\\s*${PAGE_LAYOUT.cloudIcon}px`));
+    });
     it("Home shades its art as the game page does, at rest (Michael: Cronos's page shading, by default), so opening never changes it", () => {
         const all = rules(css);
         const page = all.find(([sel]) => sel === '.gh-scrim-page');

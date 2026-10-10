@@ -89,8 +89,10 @@ export const PAGE_LAYOUT = {
     titleBlock: { gap: 14, eyebrow: 12, title: 64 },
     /** Inside the Play pill: its glyph's inset, the glyph, the gap to the label, the label's type size. */
     pill: { padX: 24, icon: 20, iconGap: 14, font: 22 },
-    /** The glyph in the controller, gear and cloud circles. */
+    /** The glyph in the controller and gear circles. */
     circleIcon: 24,
+    /** The cloud circle's glyph (Home's size; the page's was in another unit, so its ratio to Home's changed with the screen). */
+    cloudIcon: 26,
     cleanInfo: { padX: 24, padY: 14, colGap: 28, value: 22, barW: 96, barH: 4, barTop: 2 },
     /** The store pill's top above the cards block (.gg-hero), Spotlight look. */
     storePillTop: 82,
@@ -465,6 +467,7 @@ function restyleRules({ header, details, root, play, shared }: ThemeClasses, lay
             backdrop-filter: blur(${d(12)}) !important; box-shadow: none !important;
             --gg-ok: ${CLOUD_COLOURS.ok}; --gg-warn: ${CLOUD_COLOURS.busy}; --gg-bad: ${CLOUD_COLOURS.bad}; --gg-off: ${CLOUD_COLOURS.off}; `),
         rule(cloud && `${cloud} svg`, ` filter: drop-shadow(0 0 ${d(1.5)} rgba(0, 0, 0, 0.7)) !important; `),
+        rule(cloud && `${cloud} svg`, ` width: ${d(PAGE_LAYOUT.cloudIcon)} !important; height: ${d(PAGE_LAYOUT.cloudIcon)} !important; `),
         rule(cloud && `${cloud}.gpfocus`, ` background: #ffffff !important; color: ${CLOUD_FOCUS_BAD} !important; `),
 
         // Play: dark text on the accent pill (handoff "text on accent"), a white ring and accent glow when focused.

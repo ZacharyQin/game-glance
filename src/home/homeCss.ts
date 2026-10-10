@@ -285,7 +285,7 @@ export function homeCss(cardScale: number = CARD_SCALE_HANDHELD): string {
         rule('.gh-steam-icon svg', `width: ${PAGE_LAYOUT.circleIcon}px; height: ${PAGE_LAYOUT.circleIcon}px; margin: 0; fill: currentColor`),
         // Cloud circle: the same circle as the others; only its icon is coloured by the sync state (cloud.CLOUD_COLOURS,
         // light tints for the dark translucent fill) with a dark halo so it reads over bright art too.
-        rule('.gh-btn-cloud svg', 'width: 26px; height: 26px; margin: 0; fill: currentColor; filter: drop-shadow(0 0 1.5px rgba(0,0,0,.7))'),
+        rule('.gh-btn-cloud svg', `width: ${PAGE_LAYOUT.cloudIcon}px; height: ${PAGE_LAYOUT.cloudIcon}px; margin: 0; fill: currentColor; filter: drop-shadow(0 0 1.5px rgba(0,0,0,.7))`),
         ...(Object.keys(CLOUD_COLOURS) as CloudTone[]).map((tone) => rule(`.gh-btn-cloud.gh-cloud-${tone}`, `color: ${CLOUD_COLOURS[tone]}`)),
         rule('.gh-btn-play', 'width: 250px; flex: 0 0 250px; background: var(--glance-accent); border-color: var(--glance-accent); color: var(--gh-on-accent)'),
         // The pill fills with the download progress: the shared darker layer (styles/downloadFill) from the left, clipped to
@@ -518,6 +518,9 @@ export function openingRules(): string[] {
             rule(`${MT} .gh-open-shell[data-i="${i}"]::after`, `opacity: 1; transition: ${settle}`),
         ]),
         ...[0, 1, 2, 3].map((i) => rule(`${MT} .gh-actions > .gh-btn:nth-child(${i + 2})`, `transform: var(--gho-circle-${i}, none); transition: ${move}`)),
+        // Each circle's icon shrinks as the circle grows (openMotion), so it is the page's size throughout.
+        rule(`${M} .gh-actions > .gh-btn-circle > .gh-btn-icon`, 'transform-origin: 50% 50%'),
+        ...[0, 1, 2, 3].map((i) => rule(`${MT} .gh-actions > .gh-btn:nth-child(${i + 2}) > .gh-btn-icon`, `transform: var(--gho-circle-icon-${i}, none); transition: ${move}`)),
         // Chips: their glass gives way to the panels at once; texts move and grow; the bars and unmatched chips fade.
         rule(`${M} .gh-chip`, 'background: transparent; border-color: transparent; backdrop-filter: none; box-shadow: none'),
         ...[0, 1, 2, 3].flatMap((i) => [

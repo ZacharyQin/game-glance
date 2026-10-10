@@ -791,3 +791,11 @@ describe('the store pill', () => {
         expect(sourcePillLook((n) => `${n}px`)).toContain('box-sizing: border-box');
     });
 });
+
+describe('the cloud button on the restyled page', () => {
+    it("draws its icon in the page's unit at Home's size (it was in another unit, so its ratio to Home's changed with the screen)", () => {
+        const css = buildThemeCss(full, { restyle: true });
+        const play = full.play as Record<string, string>;
+        expect(css).toContain(`.${play.CloudStatusRow} svg { width: calc(${PAGE_LAYOUT.cloudIcon} * var(--gg-d)) !important; height: calc(${PAGE_LAYOUT.cloudIcon} * var(--gg-d)) !important; }`);
+    });
+});
