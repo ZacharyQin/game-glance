@@ -1,5 +1,5 @@
 import { HltbResult } from '../data/hltb';
-import { HLTB_COLUMNS, hltbFoundView } from '../logic/hltbCardView';
+import { HLTB_COLUMNS, HLTB_TITLE, hltbFoundView } from '../logic/hltbCardView';
 import { tr } from '../i18n/steamText';
 
 interface Props {
@@ -11,7 +11,7 @@ interface Props {
 }
 
 export function HltbCard({ result, playedMinutes, locale, restyle = false }: Props) {
-    const header = <div className="gg-label">HowLongToBeat</div>;
+    const header = <div className="gg-label">{HLTB_TITLE}</div>;
 
     if (result === undefined) {
         return (

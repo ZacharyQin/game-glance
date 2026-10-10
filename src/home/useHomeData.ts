@@ -66,6 +66,8 @@ export interface HomeData {
     chips: Chip[];
     /** The focused game's HowLongToBeat result, once known (the open transition draws the page's card from it). */
     hltb: HltbResult | undefined;
+    /** The focused game's play time in minutes (Steam's, or Unifideck's when it knows more), as the page counts it. */
+    playedMinutes: number;
     /** The focused game's description in Steam's language, once fetched (null: none, or the Clean look, which shows none). */
     description: string | null;
     /** The focused game's store ("Steam", "GOG", ...), once known; the same label as the details page's source pill. */
@@ -630,6 +632,7 @@ export function useHomeData(focusIndex = 0): HomeData {
     // useAccentWarmup makes most of them known beforehand.
     const accent = useAccent(appId, resting);
 
+    const playedMinutes = focused ? mergePlaytime({ minutes: focused.playedMinutes, lastPlayed: focused.lastPlayed }, unifideck).minutes : 0;
     const nowSeconds = Math.floor(Date.now() / 1000);
     const chips = useMemo(() => {
         if (!focused) return [];
@@ -677,5 +680,5 @@ export function useHomeData(focusIndex = 0): HomeData {
     const { download, installed: installedNow, status: pillStatus } = useDownload(appId, focused?.installed ?? false);
     const focusedLive = useMemo(() => (focused && focused.installed !== installedNow ? { ...focused, installed: installedNow } : focused), [focused, installedNow]);
 
-    return { games, recentsSettled, focused: focusedLive, focusedRunning, download, pillStatus, detailsVersion, locale, lastPlayedLabel, focusedIsNew, rowCollection, chips, hltb, description, source, libraryChips: library, accent, news, updated, friends, friendsOnline, trending, recommended, deals };
+    return { games, recentsSettled, focused: focusedLive, focusedRunning, download, pillStatus, detailsVersion, locale, lastPlayedLabel, focusedIsNew, rowCollection, chips, hltb, description, playedMinutes, source, libraryChips: library, accent, news, updated, friends, friendsOnline, trending, recommended, deals };
 }

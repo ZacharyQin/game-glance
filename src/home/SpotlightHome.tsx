@@ -24,6 +24,7 @@ import { GameStatusBar } from '../components/GameStatusBar';
 import { RecentsRow } from './RecentsRow';
 import { CARD_SCALE_HANDHELD, cardScaleFor, clampFocus, isLibraryFocus, recentsGeometry } from './recentsLayout';
 import { canvasStyle, homeCanvas } from './scale';
+import { OpenExtras } from './OpenExtras';
 import { TitleBlock } from './TitleBlock';
 import { useBumperSelect } from './useBumperSelect';
 import { gameStepSound, playNavSound } from './navSound';
@@ -404,6 +405,8 @@ export function SpotlightHome() {
                     </div>
                 </div>
             </div>
+            {/* Open transition: the page's parts Home draws as it turns into the page (hidden until opening). */}
+            {game && <OpenExtras description={data.description} hltb={data.hltb} playedMinutes={data.playedMinutes} locale={data.locale} />}
         </div>
     );
 }

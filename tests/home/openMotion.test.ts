@@ -79,6 +79,23 @@ describe('openMotion', () => {
         expect(b['--gho-title']).toBe(a['--gho-title']);
     });
 
+    it("the extras layer: the description's box and the HowLongToBeat card's inside, in the root's own px, and the page's d", () => {
+        const page: PageTargets = {
+            ...spotlight(),
+            extras: { desc: box(50.8, 686.1, 698.1, 70.3), hltbTitle: box(819.2, 614.7, 630, 17.2), columns: {}, caption: box(819.2, 728.2, 630, 22.7) },
+        };
+        const v = vars(openMotion({ ...homeRects(), root: box(10, 20, 1500, 844) }, page, 'spotlight', s));
+        expect(v['--gho-x-d']).toBe(String(Math.round(s * 10000) / 10000));
+        expect([v['--gho-x-desc-x'], v['--gho-x-desc-y'], v['--gho-x-desc-w']]).toEqual(['40.8px', '666.1px', '698.1px']);
+        expect([v['--gho-x-hltb-x'], v['--gho-x-hltb-y'], v['--gho-x-hltb-w']]).toEqual(['809.2px', '594.7px', '630px']);
+    });
+
+    it('without extras on the page targets (or no root measured): the extras sit in window px, or there are none', () => {
+        expect(Object.keys(vars(openMotion(homeRects(), spotlight(), 'spotlight', s))).filter((n) => n.startsWith('--gho-x-'))).toEqual([]);
+        const page: PageTargets = { ...spotlight(), extras: { desc: box(50, 600, 700, 70), hltbTitle: box(800, 600, 600, 17), columns: {}, caption: box(800, 700, 600, 22) } };
+        expect(vars(openMotion(homeRects(), page, 'spotlight', s))['--gho-x-desc-x']).toBe('50px');
+    });
+
     it('one shell per card, placed at the card and scaled down onto the chips that merge into it', () => {
         const v = vars(openMotion(homeRects(), spotlight(), 'spotlight', s));
         // The info card's shell sits at the card (canvas px) ...
@@ -226,7 +243,7 @@ describe('openMotion', () => {
 
 describe('open timings', () => {
     it('match the spec', () => {
-        expect(OPEN_TIMINGS).toEqual({ leave: 220, infoFade: 180, morph: 450, settle: 180, feedHero: 300, feedUi: 220, bridgeFade: 300, readyCap: 500, revealDelay: 0, reveal: 200, leaveDrop: 70, feedRise: 14 });
+        expect(OPEN_TIMINGS).toEqual({ leave: 220, infoFade: 180, morph: 450, settle: 180, extras: 250, feedHero: 300, feedUi: 220, bridgeFade: 300, readyCap: 500, revealDelay: 0, reveal: 200, leaveDrop: 70, feedRise: 14 });
         expect(MORPH_EASE).toBe('cubic-bezier(.3,.55,.15,1)');
     });
 });

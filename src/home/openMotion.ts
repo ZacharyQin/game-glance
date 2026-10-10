@@ -14,6 +14,8 @@ import type { Box, PageLook, PageTargets, StatKey } from './openTargets';
  */
 
 export interface HomeRects {
+    /** `.gh-root` on screen: the extras layer (not scaled) is placed in its px. Absent: at the window's origin. */
+    root?: Box;
     /** `.gh-canvas` on screen (its origin; Home's canvas px start there). */
     canvas: Box;
     titleSlot: Box;
@@ -124,6 +126,21 @@ export function openMotion(home: HomeRects, page: PageTargets, look: PageLook, c
         out[`--gho-shell-${i}-o0`] = from ? '1' : '0';
     });
     out['--gho-shell-count'] = String(page.shells.length);
+
+    // The extras layer (Spotlight): the description and the HowLongToBeat card's inside, drawn at the page's size in the
+    // root's px (outside the scaled canvas), laid out like the page's card from its top-left corner and the d unit.
+    if (page.extras) {
+        const ox = home.root?.x ?? 0;
+        const oy = home.root?.y ?? 0;
+        out['--gho-x-d'] = k(d);
+        const at = (name: string, b: Box) => {
+            out[`--gho-x-${name}-x`] = px(b.x - ox);
+            out[`--gho-x-${name}-y`] = px(b.y - oy);
+            out[`--gho-x-${name}-w`] = px(b.w);
+        };
+        at('desc', page.extras.desc);
+        at('hltb', page.extras.hltbTitle);
+    }
 
     return Object.keys(out).sort().map((name) => ({ name, value: out[name] }));
 }

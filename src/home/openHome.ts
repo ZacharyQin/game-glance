@@ -1,5 +1,6 @@
 import type { HomeRects, MotionVar } from './openMotion';
-import type { Box, Measure, PageLook, PageStat, StatKey } from './openTargets';
+import type { Box, ExtraColumn, ExtrasAsked, Measure, PageLook, PageStat, StatKey } from './openTargets';
+import type { HltbResult } from '../data/hltb';
 import { tr } from '../i18n/steamText';
 
 /**
@@ -46,6 +47,7 @@ export function measureHome(root: Element | null): HomeRects | null {
             bar: boxOf(chip.querySelector('.gh-chip-bar')),
         })).filter((c) => c.label && c.value);
         return {
+            root: boxOf(root) ?? undefined,
             canvas,
             titleSlot,
             titleText: root.querySelector('.gh-title-slot .gh-title') !== null,
@@ -67,7 +69,7 @@ export function measureHome(root: Element | null): HomeRects | null {
  * game's hero for heroFade. Returns the undo (a cancel before the hand-over): every variable and attribute goes, and
  * the pending frame does nothing.
  */
-export function applyOpening(root: HTMLElement, variant: OpenVariant, vars: MotionVar[], heroUrl: string | null): () => void {
+export function applyOpening(root: HTMLElement, variant: OpenVariant, vars: MotionVar[], heroUrl: string | null, extras = ''): () => void {
     const names: string[] = [];
     const set = (name: string, value: string) => {
         root.style.setProperty(name, value);
@@ -77,6 +79,8 @@ export function applyOpening(root: HTMLElement, variant: OpenVariant, vars: Moti
     if (heroUrl) set('--gho-hero', `url("${heroUrl.replace(/"/g, '%22')}")`);
     const shells = vars.find((v) => v.name === '--gho-shell-count')?.value;
     if (shells) root.setAttribute('data-gh-shells', shells);
+    // The page's parts Home draws as it turns into it (extrasParts): homeCss shows only those.
+    if (extras) root.setAttribute('data-gh-extras', extras);
     root.setAttribute('data-gh-opening', variant);
     root.setAttribute('data-gh-phase', 'from');
     let live = true;
@@ -89,7 +93,7 @@ export function applyOpening(root: HTMLElement, variant: OpenVariant, vars: Moti
     return () => {
         live = false;
         for (const name of names) root.style.removeProperty(name);
-        for (const attr of ['data-gh-opening', 'data-gh-phase', 'data-gh-shells']) root.removeAttribute(attr);
+        for (const attr of ['data-gh-opening', 'data-gh-phase', 'data-gh-shells', 'data-gh-extras']) root.removeAttribute(attr);
     };
 }
 
@@ -148,4 +152,33 @@ export function readChipTexts(root: Element): ChipText[] {
         value: chip.querySelector('.gh-chip-value')?.textContent?.trim() ?? '',
         bar: chip.querySelector('.gh-chip-bar') !== null,
     }));
+}
+
+/**
+ * The page's parts Home can draw as it turns into the page's Spotlight look (SpotlightHome's .gh-open-extras), as
+ * data-gh-extras words: `desc` when it has the description's text, `hltb` when HowLongToBeat found the game with a Main
+ * time (without one the page writes "—" there, which Home's chip would not cover). Pure.
+ */
+export function extrasParts(description: string | null | undefined, hltb: HltbResult | undefined): string {
+    const parts: string[] = [];
+    if (description && description.trim()) parts.push('desc');
+    if (hltb?.status === 'found' && hltb.times.main !== null) parts.push('hltb');
+    return parts.join(' ');
+}
+
+/** The open intent's flags for the parts Home drew (extrasParts words): the page shows those at once. */
+export function extrasFlags(parts: string): { homeDesc?: true; homeHltb?: true } {
+    const words = parts.split(/\s+/);
+    return { ...(words.includes('desc') ? { homeDesc: true as const } : {}), ...(words.includes('hltb') ? { homeHltb: true as const } : {}) };
+}
+
+/** What the extras layer holds, for openTargets: its HowLongToBeat columns after Main, and whether it has a bar. */
+export function readExtrasAsked(root: Element): ExtrasAsked {
+    const keys: ExtraColumn['key'][] = ['mainExtras', 'completionist'];
+    const columns = [...root.querySelectorAll('.gh-open-extras .gh-x-stats > div')].slice(1, 3).map((column, i) => ({
+        key: keys[i],
+        label: column.querySelector('.gh-x-label')?.textContent?.trim() ?? '',
+        value: column.querySelector('.gh-x-value')?.textContent?.trim() ?? '',
+    }));
+    return { columns, bar: root.querySelector('.gh-open-extras .gh-x-bar') !== null };
 }

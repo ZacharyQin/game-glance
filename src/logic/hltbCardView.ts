@@ -7,6 +7,9 @@ import { beyondCaption, computeProgress, HltbTimes, mainStoryProgress, Tier, tow
  * so the two cannot drift apart. Pure.
  */
 
+/** The card's title. */
+export const HLTB_TITLE = 'HowLongToBeat';
+
 /** A column's key (data-stat): Main is `hltb`, as Home's chip and the Clean look's stat. */
 export type HltbColumnKey = 'hltb' | 'mainExtras' | 'completionist';
 

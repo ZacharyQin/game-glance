@@ -17,9 +17,19 @@ export type ArriveMode = 'parts' | 'all';
  * The page's look the open was made for ('steam': the Game Glance page is off, Steam's own page opens), how it arrives,
  * `eyebrow`: Home's eyebrow words at the open (the page shows the same, so nothing changes at the hand-over), and
  * `homeCloud`: whether Home showed its cloud button (false: its state was not known yet, so the page's arrives), and
- * `homeBars`: the stats whose progress bar Home's morph moved onto the page's (those bars do not arrive again).
+ * `homeBars`: the stats whose progress bar Home's morph moved onto the page's (those bars do not arrive again), and
+ * `homeDesc` / `homeHltb`: Home drew the description / the HowLongToBeat card's rest as it turned into the page
+ * (home/OpenExtras), so the page shows those at once instead of letting them arrive.
  */
-export interface OpenIntent { look: PageLook | 'steam'; mode: ArriveMode; eyebrow?: string; homeCloud?: boolean; homeBars?: string[] }
+export interface OpenIntent {
+    look: PageLook | 'steam';
+    mode: ArriveMode;
+    eyebrow?: string;
+    homeCloud?: boolean;
+    homeBars?: string[];
+    homeDesc?: boolean;
+    homeHltb?: boolean;
+}
 
 let pending: { appId: number; at: number; intent: OpenIntent } | null = null;
 const listeners = new Set<(appId: number) => void>();

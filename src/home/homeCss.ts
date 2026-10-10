@@ -7,6 +7,7 @@ import { FEED_ROW2_HEADER } from './feedLayout';
 import { PERSONA_DOT, PERSONA_DOT_COLOURS, PersonaDot, STATUS_BAR, STATUS_FADE_MS } from './statusItems';
 import { ACCENT_MS, CAP_ART_FADE_MS, CAP_STATE_MS, FEED_ART_FADE_MS, FEED_SCROLL, HERO_FADE_MS, MORPH_EASE, OPEN_TIMINGS, SHEET, SHEET_MS, SLIDE } from './motion';
 import { PAGE_LAYOUT, PAGE_SCRIMS, STEAM_TOP_GRADIENT } from '../styles/themeCss';
+import { PAGE_LINES } from './openTargets';
 import { CARD_SCALE_HANDHELD, GLOW as CAP_GLOW, RECENTS_BOTTOM, recentsGeometry } from './recentsLayout';
 import { PILL_INSET, ROW_OFFSET, SIDE_INSET } from './insets';
 
@@ -469,6 +470,11 @@ export function openingRules(): string[] {
     ];
     // The morph's last part: the page pill's exact look fades in as it comes to rest (opacity only).
     const settle = `opacity ${T.settle}ms ease-in-out ${T.morph - T.settle}ms`;
+    // The extras layer: the page's own sizes, in its d unit (openMotion's --gho-x-d), outside the scaled canvas.
+    const L = PAGE_LAYOUT;
+    const dd = (n: number) => `calc(${n}px * var(--gho-x-d))`;
+    const X = '.gh-open-extras';
+    const at = (name: string) => `left: var(--gho-x-${name}-x); top: var(--gho-x-${name}-y); width: var(--gho-x-${name}-w)`;
     return [
         // Always there, hidden: the page's scrims over Home's, the opened game's hero (heroFade), the glass panels.
         rule('.gh-hero-open', 'position: absolute; inset: 0; pointer-events: none; background-image: var(--gho-hero, none); background-size: cover; background-position: center 30%; background-repeat: no-repeat; opacity: 0'),
@@ -529,6 +535,26 @@ export function openingRules(): string[] {
         ...[0, 1, 2, 3].map((i) => rule(`${MT} .gh-chip:nth-child(${i + 1}) .gh-chip-bar`, `transform: var(--gho-chip-${i}-bar, none); opacity: var(--gho-chip-${i}-bar-o, 0); transition: ${move}, opacity ${T.infoFade}ms ease`)),
         ...shell(0),
         ...shell(1),
+
+        // The page's parts Home draws as it turns into it (Spotlight look; SpotlightHome's .gh-open-extras, openMotion's
+        // --gho-x-*): the description and the HowLongToBeat card's title, other columns, bar and caption, laid out as the
+        // page's card, each part only when Home has it (data-gh-extras), fading in to be complete at the hand-over.
+        rule(X, 'display: none; position: absolute; left: 0; top: 0; width: 100%; height: 100%; pointer-events: none; color: #fff; opacity: 0'),
+        rule(`${M}[data-gh-extras] ${X}`, 'display: block; opacity: 0'),
+        rule(`${MT}[data-gh-extras] ${X}`, `opacity: 1; transition: opacity ${T.extras}ms ease-out ${T.morph - T.extras}ms`),
+        rule(`${X} .gh-x-desc`, `display: none; position: absolute; ${at('desc')}; margin: 0; font-size: ${dd(L.cardText.desc)}; font-weight: 400; line-height: ${L.cardText.descLine};
+            color: rgba(255,255,255,.84); -webkit-line-clamp: ${L.cardText.descLines}; -webkit-box-orient: vertical; overflow: hidden`),
+        rule('.gh-root[data-gh-extras~="desc"] .gh-x-desc', 'display: -webkit-box'),
+        rule(`${X} .gh-x-hltb`, `display: none; position: absolute; ${at('hltb')}; flex-direction: column; gap: ${dd(L.cards.hltbGap)}`),
+        rule('.gh-root[data-gh-extras~="hltb"] .gh-x-hltb', 'display: flex'),
+        rule(`${X} .gh-x-label`, `font-size: ${dd(L.stats.label)}; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; line-height: ${PAGE_LINES.label}; white-space: nowrap; color: rgba(255,255,255,.62)`),
+        rule(`${X} .gh-x-stats`, `display: flex; gap: ${dd(L.stats.colGapHltb)}`),
+        rule(`${X} .gh-x-stats > div`, `display: flex; flex-direction: column; gap: ${dd(L.stats.rowGap)}`),
+        rule(`${X} .gh-x-value`, `font-size: ${dd(L.stats.value)}; font-weight: 700; line-height: ${PAGE_LINES.value}; white-space: nowrap`),
+        rule(`${X} .gh-x-stats > div:first-child .gh-x-value`, 'visibility: hidden'),
+        rule(`${X} .gh-x-bar`, `height: ${dd(L.cardText.bar)}; border-radius: ${dd(3)}; background: rgba(255,255,255,.14); overflow: hidden`),
+        rule(`${X} .gh-x-bar > div`, `height: 100%; border-radius: ${dd(3)}; background: var(--glance-accent)`),
+        rule(`${X} .gh-x-caption`, `font-size: ${dd(L.cardText.caption)}; line-height: ${PAGE_LINES.caption}; color: rgba(255,255,255,.72)`),
 
         // heroFade and fade: the opened game's hero over Home's (heroFade), Home's UI fading as one.
         rule('.gh-root[data-gh-opening="heroFade"][data-gh-phase="to"] .gh-hero-open', `opacity: 1; transition: opacity ${T.feedHero}ms ease`),

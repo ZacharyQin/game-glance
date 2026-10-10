@@ -4,7 +4,7 @@ import { browserStores, heroUrls } from './artwork';
 import { markLeaving } from './homeMemory';
 import { takeSteamFocus } from './steamFocus';
 import { createOpenTransition, OpenTransition } from './openTransition';
-import { applyOpening, canvasMeasure, OpenVariant, openVariant, pageStatsFromChips, readChipTexts, measureHome } from './openHome';
+import { applyOpening, canvasMeasure, extrasFlags, OpenVariant, openVariant, pageStatsFromChips, readChipTexts, readExtrasAsked, measureHome } from './openHome';
 import { openMotion } from './openMotion';
 import { pageTargets, PageLook } from './openTargets';
 import { mountOpenBridge } from './openBridge';
@@ -158,7 +158,8 @@ function urls(read: () => string[]): string[] {
 }
 
 /** The open being started (set by openGame); the controller's hooks take a copy when Home starts moving. */
-interface OpenContext { root: HTMLElement | null; appId: number; variant: OpenVariant; look: PageLook; intent: OpenIntent; heroUrl: string | null }
+/** `extras`: the page's parts Home draws as it turns into the page (openHome.extrasParts words; '' for none). */
+interface OpenContext { root: HTMLElement | null; appId: number; variant: OpenVariant; look: PageLook; intent: OpenIntent; heroUrl: string | null; extras: string }
 let next: OpenContext | null = null;
 let active: OpenContext | null = null;
 /** One controller for the session: it must outlive Home, which Steam unmounts once the game page opens. */
@@ -178,14 +179,14 @@ function startHome(c: OpenContext): (() => void) | null {
             if (home && scale > 0 && screen.width > 0 && screen.height > 0) {
                 const stats = pageStatsFromChips(readChipTexts(root), c.look);
                 const store = home.store ?? { x: 0, y: 0, w: 0, h: 0 };
-                const page = pageTargets(c.look, screen, stats, canvasMeasure(root), { w: store.w, h: store.h });
-                return applyOpening(root, 'morph', openMotion(home, page, c.look, scale), null);
+                const page = pageTargets(c.look, screen, stats, canvasMeasure(root), { w: store.w, h: store.h }, c.extras ? readExtrasAsked(root) : undefined);
+                return applyOpening(root, 'morph', openMotion(home, page, c.look, scale), null, c.extras);
             }
         } catch (error) {
             console.warn(`${LOG_PREFIX} Home: could not set up the morph`, error);
         }
         // Home could not be measured: the page still gets a calm fade, and arrives whole.
-        c.intent = { ...c.intent, mode: 'all' };
+        c.intent = { ...c.intent, mode: 'all', homeDesc: undefined, homeHltb: undefined };
         return applyOpening(root, 'fade', [], null);
     }
     return applyOpening(root, c.variant, [], c.variant === 'heroFade' ? c.heroUrl : null);
@@ -262,7 +263,10 @@ export function openGame(appId: number, source?: HTMLElement | null) {
         const homeCloud = variant === 'morph' && root ? root.querySelector('.gh-actions .gh-btn[data-action="cloud"]') !== null : undefined;
         // Clean: the chips whose bar the morph moves onto the panel's (openMotion), so the page's do not fade in again.
         const homeBars = variant === 'morph' && look === 'clean' && root ? readChipTexts(root).filter((c) => c.bar).map((c) => c.key) : undefined;
-        next = { root, appId, variant, look, heroUrl, intent: { look: pageRestyled ? look : 'steam', mode: variant === 'morph' ? 'parts' : 'all', eyebrow, homeCloud, homeBars } };
+        // Spotlight: the description and the HowLongToBeat card's rest Home draws as it turns into the page (OpenExtras).
+        const extras = variant === 'morph' && look === 'spotlight' && root ? root.querySelector('.gh-open-extras')?.getAttribute('data-parts') ?? '' : '';
+        const intent: OpenIntent = { look: pageRestyled ? look : 'steam', mode: variant === 'morph' ? 'parts' : 'all', eyebrow, homeCloud, homeBars, ...extrasFlags(extras) };
+        next = { root, appId, variant, look, heroUrl, intent, extras };
         controller().open(appId, variant);
     } catch (error) {
         // Not reached in practice (the controller never throws); the page must open regardless.

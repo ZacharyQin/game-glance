@@ -4,7 +4,7 @@ import {
 } from '../../src/home/homeCss';
 import { sourcePillLook } from '../../src/styles/sourcePill';
 import { PAGE_LAYOUT, PAGE_SCRIMS, STEAM_TOP_GRADIENT } from '../../src/styles/themeCss';
-import { ACCENT_MS, CAP_ART_FADE_MS, CAP_STATE_MS, HERO_FADE_MS, SHEET_MS, SLIDE_MS } from '../../src/home/motion';
+import { ACCENT_MS, CAP_ART_FADE_MS, CAP_STATE_MS, HERO_FADE_MS, OPEN_TIMINGS, SHEET_MS, SLIDE_MS } from '../../src/home/motion';
 import { CARD_SCALE_DOCKED, CARD_SCALE_HANDHELD, recentsGeometry, recentsGlowTop } from '../../src/home/recentsLayout';
 
 /** Selector lists of every style rule, @-rule preludes (keyframes, @property) excluded. */
@@ -455,6 +455,37 @@ describe('homeCss open transition', () => {
         expect(all.some(([sel]) => sel.includes('data-gh-opening') && sel.includes('.gh-scrim-page'))).toBe(false);
         // No dimming at rest (the page has none); the feed sheet still dims (SpotlightHome's DIM_SHEET).
         expect(all.find(([sel]) => sel === '.gh-root')?.[1]).toMatch(/--gh-dim:\s*0;/);
+    });
+    it("the extras layer (the description, the HowLongToBeat card's rest) is hidden at rest and shown, part by part, only by a morph", () => {
+        const all = rules(css);
+        expect(all.find(([sel]) => sel === '.gh-open-extras')?.[1]).toContain('display: none');
+        const shown = all.find(([sel]) => sel === '.gh-root[data-gh-opening="morph"][data-gh-extras] .gh-open-extras')?.[1];
+        expect(shown).toContain('display: block');
+        expect(shown).toMatch(/opacity: 0/);
+        for (const part of ['desc', 'hltb']) {
+            expect(all.find(([sel]) => sel === `.gh-open-extras .gh-x-${part}`)?.[1], part).toContain('display: none');
+            expect(all.some(([sel, body]) => sel === `.gh-root[data-gh-extras~="${part}"] .gh-x-${part}` && body.includes('display'))).toBe(true);
+        }
+    });
+    it('the extras fade in (opacity only) during the morph and are complete at the hand-over', () => {
+        const to = rules(css).find(([sel]) => sel === '.gh-root[data-gh-opening="morph"][data-gh-phase="to"][data-gh-extras] .gh-open-extras')?.[1];
+        expect(to).toMatch(/opacity: 1/);
+        expect(to).toContain(`transition: opacity ${OPEN_TIMINGS.extras}ms ease-out ${OPEN_TIMINGS.morph - OPEN_TIMINGS.extras}ms`);
+    });
+    it("the extras are laid out as the page's cards, in the page's d unit (openMotion's --gho-x-d)", () => {
+        const all = rules(css);
+        const body = (sel: string) => all.find(([s]) => s === sel)?.[1] ?? '';
+        const dd = (n: number) => `calc(${n}px * var(--gho-x-d))`;
+        expect(body('.gh-open-extras .gh-x-desc')).toContain(`font-size: ${dd(PAGE_LAYOUT.cardText.desc)}`);
+        expect(body('.gh-open-extras .gh-x-desc')).toContain(`-webkit-line-clamp: ${PAGE_LAYOUT.cardText.descLines}`);
+        expect(body('.gh-open-extras .gh-x-hltb')).toContain(`gap: ${dd(PAGE_LAYOUT.cards.hltbGap)}`);
+        expect(body('.gh-open-extras .gh-x-label')).toContain(`font-size: ${dd(PAGE_LAYOUT.stats.label)}`);
+        expect(body('.gh-open-extras .gh-x-value')).toContain(`font-size: ${dd(PAGE_LAYOUT.stats.value)}`);
+        expect(body('.gh-open-extras .gh-x-stats')).toContain(`gap: ${dd(PAGE_LAYOUT.stats.colGapHltb)}`);
+        expect(body('.gh-open-extras .gh-x-bar')).toContain(`height: ${dd(PAGE_LAYOUT.cardText.bar)}`);
+        expect(body('.gh-open-extras .gh-x-caption')).toContain(`font-size: ${dd(PAGE_LAYOUT.cardText.caption)}`);
+        // Main's time is Home's chip, moving there: the layer keeps its place without drawing it.
+        expect(body('.gh-open-extras .gh-x-stats > div:first-child .gh-x-value')).toContain('visibility: hidden');
     });
     it('the glass panels are hidden until opening, and the second only when there are two', () => {
         const all = rules(css);

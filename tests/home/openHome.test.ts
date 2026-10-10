@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { applyOpening, measureHome, openVariant, pageStatsFromChips } from '../../src/home/openHome';
+import { applyOpening, extrasFlags, extrasParts, measureHome, openVariant, pageStatsFromChips, readExtrasAsked } from '../../src/home/openHome';
 import { BRIDGE_FADE_EASE, mountOpenBridge } from '../../src/home/openBridge';
 
 describe('openVariant', () => {
@@ -66,6 +66,8 @@ describe('measureHome', () => {
         expect(r!.chips[0].bar).toBeNull();
         expect(r!.chips[1].bar).toEqual({ x: 159, y: 419, w: 70, h: 3 });
         expect(r!.canvas.w).toBe(1500);
+        // The extras layer is placed in the root's px.
+        expect(r!.root).toEqual({ x: 0, y: 0, w: 1500, h: 844 });
     });
     it('knows a text title from a logo (a text title grows to the page size, a logo does not)', () => {
         const withText = home();
@@ -110,13 +112,62 @@ describe('applyOpening', () => {
         applyOpening(f.root, 'heroFade', [], 'https://steamloopback.host/assets/10/library_hero.jpg');
         expect(f.props.get('--gho-hero')).toBe('url("https://steamloopback.host/assets/10/library_hero.jpg")');
     });
+    it("marks the parts Home draws as it turns into the page (data-gh-extras), none when it has none", () => {
+        const f = fakeRoot();
+        applyOpening(f.root, 'morph', [], null, 'desc hltb');
+        expect(f.attrs.get('data-gh-extras')).toBe('desc hltb');
+        const g = fakeRoot();
+        applyOpening(g.root, 'morph', [], null, '');
+        expect(g.attrs.has('data-gh-extras')).toBe(false);
+    });
     it('undo (cancel before the hand-over) removes every trace, and a pending frame then does nothing', () => {
         const f = fakeRoot();
-        const undo = applyOpening(f.root, 'morph', [{ name: '--gho-title', value: 'translate(1px, 2px)' }], 'x');
+        const undo = applyOpening(f.root, 'morph', [{ name: '--gho-title', value: 'translate(1px, 2px)' }], 'x', 'desc');
         undo();
         f.frames.splice(0).forEach((cb) => cb());
         expect(f.props.size).toBe(0);
         expect(f.attrs.size).toBe(0);
+    });
+});
+
+describe('extrasParts', () => {
+    const found = (main: number | null) => ({ status: 'found' as const, gameId: 1, times: { main, mainExtras: 12, completionist: 24 } });
+    it('the description when Home has its text; the HowLongToBeat card when it found the game with a Main time', () => {
+        expect(extrasParts('A ship in the dark.', found(9))).toBe('desc hltb');
+        expect(extrasParts(null, found(9))).toBe('hltb');
+        expect(extrasParts('  ', undefined)).toBe('');
+        expect(extrasParts('Text', { status: 'notFound' })).toBe('desc');
+    });
+    it('no Main time: no card (the page\'s "—" there would have nothing of Home\'s under it)', () => {
+        expect(extrasParts(null, found(null))).toBe('');
+    });
+});
+
+describe('extrasFlags', () => {
+    it("tells the page which of its parts Home drew (they show at once instead of arriving)", () => {
+        expect(extrasFlags('desc hltb')).toEqual({ homeDesc: true, homeHltb: true });
+        expect(extrasFlags('hltb')).toEqual({ homeHltb: true });
+        expect(extrasFlags('')).toEqual({});
+    });
+});
+
+describe('readExtrasAsked', () => {
+    const text = (t: string) => ({ ...el(0, 0, 0, 0), textContent: t });
+    const column = (label: string, value: string) => ({
+        ...el(0, 0, 0, 0),
+        querySelector: (sel: string) => (sel === '.gh-x-label' ? text(label) : sel === '.gh-x-value' ? text(value) : null),
+    });
+    it("reads the layer's HowLongToBeat columns after Main, and whether it has a bar", () => {
+        const root = el(0, 0, 1500, 844, {}, { '.gh-open-extras .gh-x-bar': el(0, 0, 1, 1) }, {
+            '.gh-open-extras .gh-x-stats > div': [column('Main', '9 h'), column('+ Extras', '12 h'), column('100%', '24 h')],
+        });
+        expect(readExtrasAsked(root as unknown as Element)).toEqual({
+            columns: [{ key: 'mainExtras', label: '+ Extras', value: '12 h' }, { key: 'completionist', label: '100%', value: '24 h' }],
+            bar: true,
+        });
+    });
+    it('no card in the layer: no columns, no bar', () => {
+        expect(readExtrasAsked(el(0, 0, 1500, 844) as unknown as Element)).toEqual({ columns: [], bar: false });
     });
 });
 

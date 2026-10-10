@@ -51,11 +51,14 @@ export type Measure = (text: string, role: 'label' | 'value' | 'cleanValue', fon
 
 /** The cards' and the Clean panel's border (CSS px, not scaled). */
 const BORDER = 1;
-/** Line heights: labels inherit Steam's 1.5, values are set to 1.2 (themeCss). */
-const LABEL_LINE = 1.5;
-const VALUE_LINE = 1.2;
-/** The caption's line height: it inherits the font's normal one (measured on the device: 1.45). */
-const CAPTION_LINE = 1.45;
+/**
+ * The page's line heights: labels inherit Steam's 1.5, values are set to 1.2 (themeCss), the HowLongToBeat caption inherits
+ * the font's normal one (measured on the device: 1.45). Home's open transition draws the same texts with them.
+ */
+export const PAGE_LINES = { label: 1.5, value: 1.2, caption: 1.45 } as const;
+const LABEL_LINE = PAGE_LINES.label;
+const VALUE_LINE = PAGE_LINES.value;
+const CAPTION_LINE = PAGE_LINES.caption;
 /** The Spotlight cards' height with three description lines (handoff px; the theme's TV_CARDS_H). */
 const CARDS_H = PAGE_LAYOUT.playTop.tvCards;
 

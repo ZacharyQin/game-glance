@@ -53,6 +53,8 @@ export const OPEN_TIMINGS = {
     morph: 450,
     /** The morph's last part, as it comes to rest: the page's exact look (the glass's blur, the pill's round ends) fades in. */
     settle: 180,
+    /** The page's parts Home draws as it turns into it (the description, the HowLongToBeat card's rest) fade in, done at the hand-over. */
+    extras: 250,
     feedHero: 300,
     feedUi: 220,
     bridgeFade: 300,
