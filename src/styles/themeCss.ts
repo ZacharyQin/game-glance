@@ -589,13 +589,20 @@ export function buildSteamEnterOffCss({ transition }: ThemeClasses): string {
     const enter = cls(transition, 'Enter');
     const enterActive = cls(transition, 'EnterActive');
     if (!top || !enter || !enterActive) return '';
-    return rule([`${top}${enter}`, `${top}${enterActive}`], ' opacity: 1 !important; transform: none !important; transition: none !important; ');
+    const exit = cls(transition, 'Exit');
+    const exitActive = cls(transition, 'ExitActive');
+    return [
+        rule([`${top}${enter}`, `${top}${enterActive}`], ' opacity: 1 !important; transform: none !important; transition: none !important; '),
+        // The page leaving (Home) goes at once: its exit animation drew it, offset, under the fading bridge.
+        exit && exitActive ? rule([`${top}${exit}`, `${top}${exitActive}`], ' opacity: 0 !important; transition: none !important; ') : '',
+    ].filter((r) => r.length > 0).join('\n');
 }
 
 /** What the page's "ready" check reads (styles/pageReady): Steam's hero image (not its blurred placeholder), our title block, Steam's Play row. */
-export function arrivalSelectors({ header, root }: ThemeClasses): { headerImg: string | null; titleblock: string; play: string | null } {
+export function arrivalSelectors({ header, root }: ThemeClasses): { headerImg: string | null; titleblock: string; play: string | null; focus: string | null } {
     const topCapsule = cls(header, 'TopCapsule');
-    return { headerImg: topCapsule && `${topCapsule} img:not([src*="_blur"])`, titleblock: '.gg-titleblock', play: cls(root, 'PlaySection') };
+    const play = cls(root, 'PlaySection');
+    return { headerImg: topCapsule && `${topCapsule} img:not([src*="_blur"])`, titleblock: '.gg-titleblock', play, focus: play && `${play} .gpfocus` };
 }
 
 /** Steam's footer (one element over every page, Home's and the game page's alike), or null when its class is unknown. */

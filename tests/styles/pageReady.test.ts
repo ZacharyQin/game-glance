@@ -31,3 +31,12 @@ describe('pageReady and what is on screen', () => {
         expect(pageReady(d, sel, (el) => el === img)).toBe(true);
     });
 });
+
+describe('pageReady and the focus on Play', () => {
+    it("waits for Steam to focus the page's Play (Home's copy shows it focused; Steam focuses it as its exit animation ends)", () => {
+        const withFocus = { ...sel, focus: '.play .gpfocus' };
+        const base = { [sel.headerImg]: shown({ complete: true, naturalWidth: 1920 }), '.gg-titleblock': shown(), '.play': shown() };
+        expect(pageReady(doc(base), withFocus, () => true)).toBe(false);
+        expect(pageReady(doc({ ...base, '.play .gpfocus': shown() }), withFocus, () => true)).toBe(true);
+    });
+});
