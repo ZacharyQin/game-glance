@@ -476,8 +476,9 @@ export function openingRules(): string[] {
         rule('.gh-open-shell', 'display: none; position: absolute; left: 0; top: 0; margin: 0; padding: 0; pointer-events: none; transform-origin: 0 0; border-radius: 16px; border: 1px solid rgba(255,255,255,.12)'),
         // The glass: darker and unblurred while it moves (a blur under a moving scale is too slow on the Ally); the page's
         // own (.38 and a 16 px blur, themeCss's cards and Clean panel) as it settles.
-        rule('.gh-open-shell::before', "content: ''; position: absolute; inset: -1px; border-radius: 16px; background: rgba(12,16,22,.55)"),
-        rule('.gh-open-shell::after', "content: ''; position: absolute; inset: -1px; border-radius: 16px; background: rgba(12,16,22,.38); backdrop-filter: blur(16px); opacity: 0"),
+        // Both inside the 1px border (radius 16 less the border), which stays drawn over them as on the page.
+        rule('.gh-open-shell::before', "content: ''; position: absolute; inset: 0; border-radius: 15px; background: rgba(12,16,22,.55)"),
+        rule('.gh-open-shell::after', "content: ''; position: absolute; inset: 0; border-radius: 15px; background: rgba(12,16,22,.38); backdrop-filter: blur(16px); opacity: 0"),
         rule(O, 'pointer-events: none'),
         // The bridge (openBridge): a frozen copy of Home in its final state; nothing inside it may animate again.
         rule('.gh-root.gh-bridge, .gh-root.gh-bridge *', 'animation: none; transition: none'),

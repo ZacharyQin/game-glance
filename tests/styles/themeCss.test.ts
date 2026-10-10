@@ -785,3 +785,9 @@ describe('steamFooterSelector', () => {
         expect(steamFooterSelector(full)).toBeNull();
     });
 });
+
+describe('the store pill', () => {
+    it("is the same size on Home and the page: its height includes the border (the page's was 1.7 px taller at the hand-over)", () => {
+        expect(sourcePillLook((n) => `${n}px`)).toContain('box-sizing: border-box');
+    });
+});

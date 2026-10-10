@@ -414,6 +414,11 @@ describe('homeCss open transition', () => {
         // The glass: a dark unblurred layer while moving, the page's (.38 and a 16 px blur) as it settles.
         expect(body((sel) => sel === '.gh-open-shell::after')).toMatch(/background:\s*rgba\(12,16,22,\.38\)/);
         expect(body((sel) => sel === '.gh-open-shell::after')).toMatch(/backdrop-filter:\s*blur\(16px\)/);
+        // Inside the panel's 1 px border (the page's border is drawn over its glass; a layer over it hid it until the hand-over).
+        for (const layer of ['::before', '::after']) {
+            expect(body((sel) => sel === `.gh-open-shell${layer}`), layer).toMatch(/inset:\s*0[;\s]/);
+            expect(body((sel) => sel === `.gh-open-shell${layer}`), layer).toMatch(/border-radius:\s*15px/);
+        }
         expect(body((sel) => sel.includes('data-gh-phase="to"') && sel.includes('.gh-open-shell') && sel.endsWith('::after'))).toContain(settle);
         expect(body((sel) => sel.includes('data-gh-phase="to"') && sel.includes('.gh-open-shell') && sel.endsWith('::before'))).toMatch(/opacity:\s*0/);
         // The pill: the page's focused pill at its exact size, faded in as the stretched layer stops.
