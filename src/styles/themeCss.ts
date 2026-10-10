@@ -550,11 +550,13 @@ const ARRIVE_RISE_PX = 14;
  * whole page but its art (our title block and cards, Steam's Play row), lowered by the rise. `revealed`: the same
  * elements back to visible over ARRIVE_MS. Its own stylesheet, only with the full-screen layout; '' otherwise.
  */
-export function buildArrivingCss(classes: ThemeClasses, look: 'spotlight' | 'clean', mode: 'parts' | 'all', revealed = false): string {
-    const { header, details, root } = classes;
+export function buildArrivingCss(classes: ThemeClasses, look: 'spotlight' | 'clean', mode: 'parts' | 'all', revealed = false, extra: { cloud?: boolean } = {}): string {
+    const { header, details, root, play } = classes;
     if (!(cls(header, 'TopCapsule') && cls(details, 'InnerContainer') && cls(details, 'AppDetailsOverviewPanel') && cls(root, 'AppDetailsContainer'))) return '';
-    // Not the cloud button: Home's moves into its place, so the page's own must be there at once.
-    const shared = ['[data-stat="size"]', '.gg-family'];
+    // Not the cloud button: Home's moves into its place, so the page's own must be there at once. Unless Home showed
+    // none (`extra.cloud`: its state was not known yet), when the page's arrives like the other new parts.
+    const cloud = extra.cloud ? cls(play, 'CloudStatusRow') : null;
+    const shared = ['[data-stat="size"]', '.gg-family', ...(cloud ? [cloud] : [])];
     const parts = look === 'spotlight'
         ? ['.gg-desc', '.gg-hltb > .gg-label', '.gg-hltb [data-stat="mainExtras"]', '.gg-hltb [data-stat="completionist"]', '.gg-caption', '.gg-muted', '.gg-hltb .gg-bar', ...shared]
         : [...shared, '.gg-clean-info .gg-bar'];

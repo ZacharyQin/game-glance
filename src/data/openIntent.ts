@@ -15,9 +15,10 @@ export const OPEN_INTENT_MS = 3000;
 export type ArriveMode = 'parts' | 'all';
 /**
  * The page's look the open was made for ('steam': the Game Glance page is off, Steam's own page opens), how it arrives,
- * and `eyebrow`: Home's eyebrow words at the open (the page shows the same, so nothing changes at the hand-over).
+ * `eyebrow`: Home's eyebrow words at the open (the page shows the same, so nothing changes at the hand-over), and
+ * `homeCloud`: whether Home showed its cloud button (false: its state was not known yet, so the page's arrives).
  */
-export interface OpenIntent { look: PageLook | 'steam'; mode: ArriveMode; eyebrow?: string }
+export interface OpenIntent { look: PageLook | 'steam'; mode: ArriveMode; eyebrow?: string; homeCloud?: boolean }
 
 let pending: { appId: number; at: number; intent: OpenIntent } | null = null;
 const listeners = new Set<(appId: number) => void>();

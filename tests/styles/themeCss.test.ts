@@ -712,6 +712,12 @@ describe('the page arriving after the open transition', () => {
         expect(css).not.toContain(`.${play.CloudStatusRow}`);
         expect(css).not.toContain('.gg-desc');
     });
+    it("the page's cloud arrives with the new parts when Home showed none (its state was not known yet)", () => {
+        for (const look of ['spotlight', 'clean'] as const) {
+            expect(buildArrivingCss(full, look, 'parts', false, { cloud: true }), look).toContain(`.${play.CloudStatusRow}`);
+            expect(buildArrivingCss(full, look, 'parts', true, { cloud: true }), look).toMatch(new RegExp(`\\.${play.CloudStatusRow}[^{]*\\{ opacity: 1`));
+        }
+    });
     it("'all' hides the whole page but the art, lowered by the rise", () => {
         const css = buildArrivingCss(full, 'spotlight', 'all');
         for (const sel of ['.gg-titleblock', '.gg-hero', '.rt_Play']) expect(css, sel).toContain(sel);

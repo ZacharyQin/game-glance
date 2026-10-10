@@ -258,7 +258,9 @@ export function openGame(appId: number, source?: HTMLElement | null) {
         const heroUrl = art?.mode === 'full' ? art.url : (urls(() => heroUrls(appId, browserStores))[0] ?? null);
         // The page shows Home's eyebrow words when Home morphed into it, so they do not change at the hand-over.
         const eyebrow = variant === 'morph' ? root?.querySelector('.gh-eyebrow')?.textContent?.trim() || undefined : undefined;
-        next = { root, appId, variant, look, heroUrl, intent: { look: pageRestyled ? look : 'steam', mode: variant === 'morph' ? 'parts' : 'all', eyebrow } };
+        // Home without its cloud button (the state was not known yet): the page's arrives instead of popping in.
+        const homeCloud = variant === 'morph' && root ? root.querySelector('.gh-actions .gh-btn[data-action="cloud"]') !== null : undefined;
+        next = { root, appId, variant, look, heroUrl, intent: { look: pageRestyled ? look : 'steam', mode: variant === 'morph' ? 'parts' : 'all', eyebrow, homeCloud } };
         controller().open(appId, variant);
     } catch (error) {
         // Not reached in practice (the controller never throws); the page must open regardless.
