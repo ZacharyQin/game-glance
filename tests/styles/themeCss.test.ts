@@ -723,6 +723,12 @@ describe('the page arriving after the open transition', () => {
         expect(css).toContain('.gg-clean-info > [data-stat]:not([data-stat="achievements"]):not([data-stat="hltb"]) .gg-bar');
         expect(css).not.toContain('.gg-clean-info .gg-bar');
     });
+    it("Steam's focus fade on Play is off while the page arrives (Home's copy shows Play focused; the page's lit up over 200 ms after the hand-over)", () => {
+        const root = full.root as Record<string, string>;
+        for (const mode of ['parts', 'all'] as const) {
+            expect(buildArrivingCss(full, 'clean', mode), mode).toContain(`.${root.ActionButtonAndStatusPanel} [role="button"] { transition: none !important; }`);
+        }
+    });
     it("'all' hides the whole page but the art, lowered by the rise", () => {
         const css = buildArrivingCss(full, 'spotlight', 'all');
         for (const sel of ['.gg-titleblock', '.gg-hero', '.rt_Play']) expect(css, sel).toContain(sel);

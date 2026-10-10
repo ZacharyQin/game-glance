@@ -570,7 +570,11 @@ export function buildArrivingCss(classes: ThemeClasses, look: 'spotlight' | 'cle
         : mode === 'all'
             ? ` opacity: 0 !important; transform: translateY(${ARRIVE_RISE_PX}px) !important; `
             : ' opacity: 0 !important; ';
-    return [steamFade, rule(list, body)].filter((r) => r.length > 0).join('\n');
+    // Steam fades its focus look onto Play (background and colour, 200 ms) as it focuses it, after the page is ready;
+    // Home's copy already shows Play focused, so the page's must be lit at once.
+    const playButton = cls(root, 'ActionButtonAndStatusPanel');
+    const focusAtOnce = rule(playButton && `${playButton} [role="button"]`, ' transition: none !important; ');
+    return [steamFade, rule(list, body), focusAtOnce].filter((r) => r.length > 0).join('\n');
 }
 
 /** Clean's bars that arrive: all of them, or (`brought`: the stats whose bar Home's morph moved into place) the others. */
