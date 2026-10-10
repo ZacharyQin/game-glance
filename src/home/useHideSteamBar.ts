@@ -15,6 +15,7 @@ const QUICK_TICKS = 60; // 3 s
 export function useHideSteamBar(doc: Document | null, away: boolean): void {
     useEffect(() => {
         if (!doc) return undefined;
+        const release = holdCover(doc);
         const clear = () => doc.querySelectorAll(`[${COVERED}]`).forEach((el) => el.removeAttribute(COVERED));
         const update = () => {
             try {
@@ -41,13 +42,32 @@ export function useHideSteamBar(doc: Document | null, away: boolean): void {
         }, QUICK_MS);
         return () => {
             clearInterval(timer);
-            // Home leaving for a game page with the open transition: the page's bar takes the cover over (the bridge
-            // carries a copy of ours meanwhile); clearing here showed Steam's bar for a moment.
-            if (!openUnderway()) clear();
+            // Only the last bar to go gives Steam's back: Steam keeps Home mounted through its exit animation, well after
+            // the game page's bar took the cover over (its clearing showed Steam's bar for a frame). While an open is
+            // under way, the page's bar may not be up yet; the bridge carries a copy of ours meanwhile.
+            if (release() && !openUnderway()) clear();
         };
     }, [doc, away]);
 }
 
+
+const holders = new WeakMap<object, number>();
+
+/**
+ * One more bar (Home's or a game page's) wants Steam's top bar covered in `doc`. Returns its release, which says whether
+ * it was the last one (only then is Steam's bar given back); a second call does nothing and says false.
+ */
+export function holdCover(doc: object): () => boolean {
+    holders.set(doc, (holders.get(doc) ?? 0) + 1);
+    let held = true;
+    return () => {
+        if (!held) return false;
+        held = false;
+        const left = (holders.get(doc) ?? 1) - 1;
+        holders.set(doc, left);
+        return left === 0;
+    };
+}
 
 /** Gives Steam's top bar back (the marker removed), e.g. after the open transition to Steam's own page. */
 export function clearSteamBarCover(doc: Document | null | undefined) {
