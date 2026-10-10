@@ -339,7 +339,8 @@ export function SpotlightHome() {
     return (
         <div ref={rootRef} className="gh-root" style={{ '--glance-accent': data.accent, '--glance-accent-text': legibleAccent(data.accent), '--gh-dim': sheetUp ? DIM_SHEET : DIM_REST, '--gh-side': `${side}px`, '--gh-row': `${rowInset(side, tv)}px`, '--gh-pill': `${pillInset(tv)}px`, '--gh-bottom': `${legend}px`, '--gh-shift': `${stackShift(logicalHeight, legend, false)}px`, '--gh-raise': `${FEED_SHEET.raise + raiseDelta}px` } as CSSProperties}>
             <style>{css}</style>
-            <HeroBackground appId={game?.appId ?? null} detailsVersion={data.detailsVersion} neighbours={heroNeighbours} />
+            {/* No game until the restore is applied (Home back on B): the first game's art would flash before the selected one's. */}
+            <HeroBackground appId={resolved ? game?.appId ?? null : null} detailsVersion={data.detailsVersion} neighbours={heroNeighbours} />
             {/* The opened game's hero (a feed card's, homeCss.openingRules), the feed sheet's dim, and the page's shading. */}
             <div className="gh-hero-open" />
             <div className="gh-scrim gh-scrim-dim" />
@@ -406,7 +407,7 @@ export function SpotlightHome() {
                 </div>
             </div>
             {/* Open transition: the page's parts Home draws as it turns into the page (hidden until opening). */}
-            {game && <OpenExtras description={data.description} hltb={data.hltb} playedMinutes={data.playedMinutes} locale={data.locale} source={data.source} family={family} />}
+            {game && <OpenExtras description={data.description} hltb={data.hltb} playedMinutes={data.playedMinutes} locale={data.locale} source={data.source} family={family} playedMissing={!data.chips.some((c) => c.key === 'played')} />}
         </div>
     );
 }

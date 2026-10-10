@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { HeroLayer, initialHeroLayers, neighbourIds, nextHeroLayers } from '../../src/home/heroLayers';
+import { HeroLayer, initialHeroLayers, neighbourIds, nextHeroLayers, settledHeroLayers } from '../../src/home/heroLayers';
 
 const layer = (id: number, start: number, settled = false): HeroLayer<string> => ({ id, art: `a${id}`, start, settled });
 
@@ -9,6 +9,16 @@ describe('initialHeroLayers', () => {
     });
     it('nothing known yet: no layer (the art fades in once loaded, as before)', () => {
         expect(initialHeroLayers(null, 0)).toEqual([]);
+    });
+});
+
+describe('settledHeroLayers', () => {
+    it("nothing on screen yet and the game's art known: shown at once, settled (Home back on B, once its selection is restored)", () => {
+        expect(settledHeroLayers(false, 'art', 5)).toEqual([{ id: 0, art: 'art', start: 5, settled: true }]);
+    });
+    it('art already on screen (a switch fades as before), or the art not known yet (it loads, then fades in): null', () => {
+        expect(settledHeroLayers(true, 'art', 5)).toBeNull();
+        expect(settledHeroLayers(false, null, 5)).toBeNull();
     });
 });
 

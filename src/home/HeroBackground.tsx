@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { LOG_PREFIX } from '../constants';
 import { browserStores, capsuleUrls, heroUrls } from './artwork';
 import { loadWithTimeout } from './accentSample';
-import { HeroLayer, initialHeroLayers, nextHeroLayers } from './heroLayers';
+import { HeroLayer, nextHeroLayers, settledHeroLayers } from './heroLayers';
 import { heroSources, shouldMemoArt } from './homeView';
 import { HERO_FADE_MS, HERO_PRELOAD_DELAY_MS } from './motion';
 
@@ -138,10 +138,21 @@ function Layer({ art, settled }: { art: Art; settled: boolean }) {
  * pre-loaded (local steamloopback files, at most 2 x HERO_PRELOAD_RADIUS, deduplicated), so the next switch starts at once.
  */
 export function HeroBackground({ appId, detailsVersion, neighbours = [] }: { appId: number | null; detailsVersion: number; neighbours?: number[] }) {
-    // Home coming back (B from the game page): the game's art, when already known, is there from the first frame.
-    const [layers, setLayers] = useState<Array<HeroLayer<Art>>>(() => initialHeroLayers(appId === null ? null : artMemo.get(appId) ?? null, Date.now()));
+    const [layers, setLayers] = useState<Array<HeroLayer<Art>>>([]);
     const nextId = useRef(0);
-    const shown = useRef<Art | undefined>(layers[0]?.art);
+    const shown = useRef<Art | undefined>(undefined);
+
+    // Nothing on screen yet (Home back on B, once its selection is restored): a known art is there before the first paint,
+    // settled, instead of fading in from black.
+    useLayoutEffect(() => {
+        if (appId === null) return;
+        const known = artMemo.get(appId) ?? null;
+        const settled = settledHeroLayers(shown.current !== undefined, known, Date.now());
+        if (!settled || !known) return;
+        shown.current = known;
+        shownNow = { appId, art: known };
+        setLayers(settled);
+    }, [appId]);
 
     useEffect(() => {
         if (appId === null) {
