@@ -746,6 +746,16 @@ describe('the page arriving after the open transition', () => {
         // The other new parts still arrive.
         for (const sel of ['.gg-family', '[data-stat="size"]']) expect(buildArrivingCss(full, 'spotlight', 'parts', false, { desc: true, hltb: true }), sel).toContain(sel);
     });
+    it("revealing 'parts' fades opacity only: a part placed by its own transform keeps it (the family pill's translateY(-50%) next to the store pill)", () => {
+        for (const look of ['spotlight', 'clean'] as const) {
+            const css = buildArrivingCss(full, look, 'parts', true);
+            const body = new RegExp(`\\.gg-family[^{]*\\{([^}]*)\\}`).exec(css)?.[1] ?? '';
+            expect(body, look).toContain('opacity: 1 !important');
+            expect(body, look).not.toContain('transform');
+        }
+        // 'all' still lowers the whole page by the rise and lifts it back.
+        expect(buildArrivingCss(full, 'spotlight', 'all', true)).toContain('transform: none !important');
+    });
     it("Spotlight: the HowLongToBeat card's Main label arrives (Home's 'HLTB main' fades as it moves)", () => {
         expect(buildArrivingCss(full, 'spotlight', 'parts')).toContain('.gg-hltb [data-stat="hltb"] > .gg-label');
         expect(buildArrivingCss(full, 'clean', 'parts')).not.toContain('[data-stat="hltb"] > .gg-label');

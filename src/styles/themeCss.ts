@@ -585,8 +585,12 @@ export function buildArrivingCss(
     // Steam fades every page in by itself (TopLevelTransition: 200 ms delay, then 600 ms; probed on the Ally). Under the
     // open transition's bridge that fade would show black; the arriving page is shown at once instead.
     const steamFade = buildSteamEnterOffCss(classes);
+    // Revealed: 'all' lifts the whole page back from its rise; 'parts' only fades in, so a part placed by its own
+    // transform (the family pill's translateY(-50%) beside the store pill) keeps it.
     const body = revealed
-        ? ` opacity: 1 !important; transform: none !important; transition: opacity ${ARRIVE_MS}ms ease, transform ${ARRIVE_MS}ms cubic-bezier(.2,.8,.2,1) !important; `
+        ? mode === 'all'
+            ? ` opacity: 1 !important; transform: none !important; transition: opacity ${ARRIVE_MS}ms ease, transform ${ARRIVE_MS}ms cubic-bezier(.2,.8,.2,1) !important; `
+            : ` opacity: 1 !important; transition: opacity ${ARRIVE_MS}ms ease !important; `
         : mode === 'all'
             ? ` opacity: 0 !important; transform: translateY(${ARRIVE_RISE_PX}px) !important; `
             : ' opacity: 0 !important; ';
