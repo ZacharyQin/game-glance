@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { LOG_PREFIX } from '../constants';
+import { withKnownAchievements } from '../home/detailsMemo';
 import { cache } from '../data/cache';
 import { setCurrentGame } from '../data/currentGame';
 import { lookupHltb } from '../data/hltb';
@@ -74,7 +75,9 @@ function lastPlayedEyebrow(overview: unknown, locale: string, unifideckLastPlaye
 }
 
 function Hero({ overview, details, restyle, clean }: Props & { restyle: boolean; clean: boolean }) {
-    const steamGame = readGameInfo(overview, details);
+    // Until Steam has loaded the game's details, the achievement counts Spotlight Home already knows (home/detailsMemo), so the
+    // first frame is complete (the Clean panel no longer gains its Achievements column after the open transition's hand-over).
+    const steamGame = withKnownAchievements(readGameInfo(overview, details));
     // A Unifideck game: its own play time and last played, as on Unifideck's Play row (Steam has none for these).
     const unifideck = useUnifideckPlaytime(steamGame.appId, steamGame.isShortcut);
     const game = unifideck ? { ...steamGame, playedMinutes: mergePlaytime({ minutes: steamGame.playedMinutes, lastPlayed: 0 }, unifideck).minutes } : steamGame;

@@ -33,7 +33,7 @@ import { homeCollections, pickCollectionGames, RECENT_ROW, RowSort } from './col
 import { formatLastPlayed, mergeRecentSources, pickHomeRecents, pickRecents, RawApp, RecentGame } from './recents';
 import { getWishlistDeals } from './wishlist';
 import { pageHidden } from './pageVisible';
-import { memoAchievements, noteDetails } from './detailsMemo';
+import { noteDetails, withKnownAchievements } from './detailsMemo';
 import { neighbourIds } from './heroLayers';
 import { useWarmup, useWarmVersion } from './useWarmup';
 import { forgetHltb, peekHltb, rememberHltb } from './warmup';
@@ -586,9 +586,8 @@ export function useHomeData(focusIndex = 0): HomeData {
     }, [overrideVersion]);
     const info = useMemo(
         () => (appId === null ? null : guarded('game info', () => {
-            const read = readGameInfo(overview(appId), steam.appDetailsStore?.GetAppDetails?.(appId));
             // Steam's store has no achievement counts for a game it did not load itself; the details callback did carry them.
-            return read.achievements || read.isShortcut ? read : { ...read, achievements: memoAchievements(appId) ?? null };
+            return withKnownAchievements(readGameInfo(overview(appId), steam.appDetailsStore?.GetAppDetails?.(appId)));
         }, null)),
         // eslint-disable-next-line react-hooks/exhaustive-deps
         [appId, detailsVersion, warmVersion],

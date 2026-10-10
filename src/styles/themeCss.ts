@@ -17,6 +17,7 @@ export interface ThemeClasses {
     launch?: ClassMap; // Steam's launch overlay module: Container, ConfigurationHeader, ControlOverviewContainer, LaunchStatus
     shared?: ClassMap; // the Play section's family library line module: Row, SharedLibrary
     transition?: ClassMap; // Steam's top-level page transition module: TopLevelTransition, Enter, EnterActive (its page-enter fade)
+    footer?: ClassMap; // Steam's footer module: BasicFooter, FooterLegend (the button legend along the bottom of every page)
 }
 
 function cls(map: ClassMap, key: string): string | null {
@@ -81,6 +82,10 @@ export const PAGE_LAYOUT = {
     stats: { label: 11, value: 30, colGapInfo: 40, colGapHltb: 36, rowGap: 4 },
     /** The title block: the gap between title and eyebrow, and the eyebrow's type size. */
     titleBlock: { gap: 14, eyebrow: 12, title: 64 },
+    /** Inside the Play pill: its glyph's inset, the glyph, the gap to the label, the label's type size. */
+    pill: { padX: 24, icon: 20, iconGap: 14, font: 22 },
+    /** The glyph in the controller, gear and cloud circles. */
+    circleIcon: 24,
     cleanInfo: { padX: 24, padY: 14, colGap: 28, value: 22, barW: 96, barH: 4, barTop: 2 },
     /** The store pill's top above the cards block (.gg-hero), Spotlight look. */
     storePillTop: 82,
@@ -439,14 +444,15 @@ function restyleRules({ header, details, root, play, shared }: ThemeClasses, lay
         // Steam gives the pill group a fixed min-width in px (164, and 218 for games with a "Play from" arrow), which would
         // push the arrow segment past the slot into the circles. The group is exactly the slot; the arrow sits inside its right end.
         rule(playButton && `${playButton} > div:has(> [role="button"])`, ` min-width: 0 !important; `),
-        rule(playButton && `${playButton} [role="button"]`, ` font-size: ${d(22)} !important; font-weight: 700 !important; padding: ${d(8)} ${d(24)} !important; `),
-        rule(playButton && `${playButton} [role="button"] > div`, ` font-size: ${d(22)} !important; `),
-        rule(playButton && `${playButton} [role="button"] svg`, ` width: ${d(20)} !important; height: ${d(20)} !important; margin-right: ${d(14)} !important; `),
+        rule(playButton && `${playButton} [role="button"]`, ` font-size: ${d(PAGE_LAYOUT.pill.font)} !important; font-weight: 700 !important; padding: ${d(8)} ${d(PAGE_LAYOUT.pill.padX)} !important; `),
+        // The label bold like Home's (Steam's own class sets 500), so nothing changes at the open transition's hand-over.
+        rule(playButton && `${playButton} [role="button"] > div`, ` font-size: ${d(PAGE_LAYOUT.pill.font)} !important; font-weight: 700 !important; `),
+        rule(playButton && `${playButton} [role="button"] svg`, ` width: ${d(PAGE_LAYOUT.pill.icon)} !important; height: ${d(PAGE_LAYOUT.pill.icon)} !important; margin-right: ${d(PAGE_LAYOUT.pill.iconGap)} !important; `),
         rule(playButton && `${playButton} [role="button"] + [role="button"]`, ` flex: 0 0 ${d(56)} !important; width: ${d(56)} !important; padding: 0 !important; `),
         rule(playButton && `${playButton} [role="button"] + [role="button"] svg`, ` width: ${d(14)} !important; height: ${d(14)} !important; `),
         rule(menuButton, ` background: rgba(12, 16, 22, 0.4) !important; backdrop-filter: blur(${d(12)}) !important; `),
         rule(menuButton && `${menuButton}.gpfocus`, ` background: #ffffff !important; `),
-        rule(menuButton && `${menuButton} svg`, ` width: ${d(24)} !important; height: ${d(24)} !important; `),
+        rule(menuButton && `${menuButton} svg`, ` width: ${d(PAGE_LAYOUT.circleIcon)} !important; height: ${d(PAGE_LAYOUT.circleIcon)} !important; `),
         // The cloud status is the same circle as the others (Steam's own row background, and the lighter 1.1.1 fill, gave it
         // a lighter tinted disc); its icon keeps the state colour, re-tuned for the dark fill (CLOUD_COLOURS, shared with
         // Home) with a dark halo for bright art. It only takes focus on a sync problem: white like the others, dark red icon.
@@ -582,6 +588,11 @@ export function buildSteamEnterOffCss({ transition }: ThemeClasses): string {
 export function arrivalSelectors({ header, root }: ThemeClasses): { headerImg: string | null; titleblock: string; play: string | null } {
     const topCapsule = cls(header, 'TopCapsule');
     return { headerImg: topCapsule && `${topCapsule} img:not([src*="_blur"])`, titleblock: '.gg-titleblock', play: cls(root, 'PlaySection') };
+}
+
+/** Steam's footer (one element over every page, Home's and the game page's alike), or null when its class is unknown. */
+export function steamFooterSelector({ footer }: ThemeClasses): string | null {
+    return cls(footer, 'BasicFooter');
 }
 
 /** The game's accent on Steam's page container (Play and our elements both inherit it); nothing for a non-#rrggbb value. */

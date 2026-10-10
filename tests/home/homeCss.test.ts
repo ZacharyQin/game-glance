@@ -3,7 +3,7 @@ import {
     FEED_SHEET, hexAlpha, homeCss, MAX_STACK_SHIFT, sourcePillTop, stackShift, TITLE_BLOCK, titleBlockBottom, titleBlockLayout,
 } from '../../src/home/homeCss';
 import { sourcePillLook } from '../../src/styles/sourcePill';
-import { PAGE_SCRIMS } from '../../src/styles/themeCss';
+import { PAGE_LAYOUT, PAGE_SCRIMS } from '../../src/styles/themeCss';
 import { ACCENT_MS, CAP_ART_FADE_MS, CAP_STATE_MS, HERO_FADE_MS, SHEET_MS, SLIDE_MS } from '../../src/home/motion';
 import { CARD_SCALE_DOCKED, CARD_SCALE_HANDHELD, recentsGeometry, recentsGlowTop } from '../../src/home/recentsLayout';
 
@@ -276,6 +276,9 @@ describe('homeCss', () => {
             }
         });
     });
+    it("Steam's own controller and gear icons are drawn at the page's size", () => {
+        expect(homeCss()).toMatch(new RegExp(`\\.gh-steam-icon svg\\s*\\{[^}]*width:\\s*${PAGE_LAYOUT.circleIcon}px[^;]*;\\s*height:\\s*${PAGE_LAYOUT.circleIcon}px`));
+    });
     it('the cloud circle is the same circle as the others; only its icon takes the state colour, with a halo', () => {
         const css = homeCss();
         expect(css).not.toMatch(/\.gh-btn-cloud\s*\{/);
@@ -387,6 +390,15 @@ describe('homeCss open transition', () => {
                 for (const p of props) expect(['transform', 'opacity', 'none'], `${sel}: ${m[1]}`).toContain(p);
             }
         }
+    });
+    it("the Play label turns white as the page's focused Play's: a white copy of its words fades in over it", () => {
+        const all = rules(css);
+        const copy = all.find(([sel]) => sel.includes('data-gh-opening') && sel.endsWith('.gh-btn-label::after') && !sel.includes('data-gh-phase'));
+        expect(copy?.[1]).toMatch(/content:\s*attr\(data-text\)/);
+        expect(copy?.[1]).toMatch(/color:\s*#fff/);
+        expect(copy?.[1]).toMatch(/opacity:\s*0/);
+        const lit = all.find(([sel]) => sel.includes('data-gh-phase="to"') && sel.endsWith('.gh-btn-label::after'));
+        expect(lit?.[1]).toMatch(/opacity:\s*1/);
     });
     it("the page's scrims are drawn by Home, hidden until opening", () => {
         const page = rules(css).find(([sel]) => sel === '.gh-scrim-page');

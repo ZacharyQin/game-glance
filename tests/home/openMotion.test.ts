@@ -158,6 +158,17 @@ describe('openMotion', () => {
         expect(parse(v['--gho-store']).ty).toBeCloseTo((507.7 - r.store.y) / s, 1);
     });
 
+    it("the pill's glyph and label grow to the page's (20 and 22 against Home's 18 and 19) and land where the page draws them", () => {
+        const v = vars(openMotion(homeRects(), spotlight(), 'spotlight', s));
+        const icon = parse(v['--gho-play-icon']);
+        // The page's glyph starts 24 in (Home's 22) and is 20 (Home's 18); its label starts after a 14 gap (Home's 13).
+        expect(icon.tx).toBeCloseTo(24 - 22, 5);
+        expect(icon.sx).toBeCloseTo(20 / 18, 3);
+        const label = parse(v['--gho-play-label']);
+        expect(label.tx).toBeCloseTo(24 + 20 + 14 - (22 + 18 + 13), 5);
+        expect(label.sx).toBeCloseTo(22 / 19, 3);
+    });
+
     it('the output is stable: sorted by name', () => {
         const list = openMotion(homeRects(), spotlight(), 'spotlight', s);
         expect(list.map((x) => x.name)).toEqual([...list.map((x) => x.name)].sort());

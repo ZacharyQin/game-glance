@@ -12,7 +12,7 @@ import { heroArtFor, heroShownApp } from './HeroBackground';
 import { homeMode } from './mode';
 import { settings } from '../data/settings';
 import { clearOpen, markOpen, onOpenReady, OpenIntent } from '../data/openIntent';
-import { pageArrivalSelectors, steamEnterOffCss } from '../styles/theme';
+import { pageArrivalSelectors, steamEnterOffCss, steamFooter } from '../styles/theme';
 import { clearSteamBarCover } from './useHideSteamBar';
 
 /** Opens a game's page directly, without the transition (Play pill fallbacks, Steam call fallbacks). */
@@ -220,7 +220,10 @@ function controller(): OpenTransition {
             if (!c?.root) return null;
             const doc = c.root.ownerDocument;
             // Our status bar lives outside Home's root; its copy also keeps Steam's top bar hidden until the page's own takes over.
-            const bridge = mountOpenBridge(c.root, steamEnterOffCss(), [...doc.querySelectorAll('.gg-status-host')]);
+            // Steam's footer is one element over every page: the copy would cover it, so it carries a copy of it too.
+            const footer = steamFooter();
+            const extras = [...doc.querySelectorAll('.gg-status-host'), ...(footer ? [...doc.querySelectorAll(footer)] : [])];
+            const bridge = mountOpenBridge(c.root, steamEnterOffCss(), extras);
             if (c.intent.look !== 'steam') return bridge;
             // Steam's own page draws no status bar of ours: give Steam's top bar back once the bridge is gone.
             return { fadeOut: (ms: number) => bridge.fadeOut(ms), remove: () => { bridge.remove(); clearSteamBarCover(doc); } };

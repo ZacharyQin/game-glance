@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { DETAILS_MEMO_MAX, memoAchievements, memoDetails, noteDetails, resetDetailsMemo } from '../../src/home/detailsMemo';
+import { DETAILS_MEMO_MAX, memoAchievements, memoDetails, noteDetails, resetDetailsMemo, withKnownAchievements } from '../../src/home/detailsMemo';
 
 describe('detailsMemo', () => {
     afterEach(resetDetailsMemo);
@@ -46,5 +46,20 @@ describe('detailsMemo achievements', () => {
         noteDetails(5, null);
         expect(memoAchievements(5)).toEqual({ achieved: 2, total: 10 });
         expect(memoAchievements(6)).toBeUndefined();
+    });
+});
+
+describe('withKnownAchievements', () => {
+    afterEach(resetDetailsMemo);
+    it("fills a game's missing counts from the memo (the page's first frame, before Steam loads its details)", () => {
+        noteDetails(268910, { achievements: { nTotal: 13, nAchieved: 4 } });
+        expect(withKnownAchievements({ appId: 268910, isShortcut: false, achievements: null }).achievements).toEqual({ achieved: 4, total: 13 });
+    });
+    it("keeps Steam's own counts, and gives a shortcut or an unknown game nothing", () => {
+        noteDetails(5, { achievements: { nTotal: 10, nAchieved: 2 } });
+        const own = { appId: 5, isShortcut: false, achievements: { achieved: 3, total: 10 } };
+        expect(withKnownAchievements(own)).toBe(own);
+        expect(withKnownAchievements({ appId: 5, isShortcut: true, achievements: null }).achievements).toBeNull();
+        expect(withKnownAchievements({ appId: 6, isShortcut: false, achievements: null }).achievements).toBeNull();
     });
 });

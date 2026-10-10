@@ -1,5 +1,5 @@
 import { PAGE_LAYOUT } from '../styles/themeCss';
-import { TITLE_BLOCK } from './homeCss';
+import { HOME_PILL, TITLE_BLOCK } from './homeCss';
 import type { Box, PageLook, PageTargets, StatKey } from './openTargets';
 
 /**
@@ -66,6 +66,10 @@ export function openMotion(home: HomeRects, page: PageTargets, look: PageLook, c
     // pill's size about that centre line, so the label never stretches.
     out['--gho-play-bg'] = `${translate(0, (home.play.h - page.play.h) / 2 / s)} scale(${k(page.play.w / home.play.w)}, ${k(page.play.h / home.play.h)})`;
     out['--gho-play-fg'] = translate((page.play.x - home.play.x) / s, (page.play.y + page.play.h / 2 - (home.play.y + home.play.h / 2)) / s);
+    // Inside it (origin: its left edge and centre line), the glyph and the label grow to the page's and move to its insets.
+    const pill = PAGE_LAYOUT.pill;
+    out['--gho-play-icon'] = `${translate(pill.padX - HOME_PILL.padX, 0)} scale(${k(pill.icon / HOME_PILL.icon)})`;
+    out['--gho-play-label'] = `${translate(pill.padX + pill.icon + pill.iconGap - (HOME_PILL.padX + HOME_PILL.icon + HOME_PILL.gap), 0)} scale(${k(pill.font / HOME_PILL.font)})`;
     let slot = 0;
     home.circles.forEach((circle, i) => {
         if (i === home.infoCircle) return;

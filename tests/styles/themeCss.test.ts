@@ -1,6 +1,6 @@
 import { sourcePillIcon, sourcePillLook } from '../../src/styles/sourcePill';
 import { describe, expect, it } from 'vitest';
-import { buildAccentCss, buildArrivingCss, buildCleanCss, buildSteamEnterOffCss, buildDownloadCss, buildLaunchCss, buildThemeCss, buildUnifideckCss, launchTargets, ThemeClasses } from '../../src/styles/themeCss';
+import { buildAccentCss, buildArrivingCss, buildCleanCss, buildSteamEnterOffCss, steamFooterSelector, buildDownloadCss, buildLaunchCss, buildThemeCss, buildUnifideckCss, launchTargets, ThemeClasses } from '../../src/styles/themeCss';
 import { PAGE_LAYOUT, PAGE_SCRIM_LAYERS, PAGE_SCRIMS, pageDUnit, STEAM_LEGEND_PX } from '../../src/styles/themeCss';
 
 const full: ThemeClasses = {
@@ -750,5 +750,14 @@ describe('buildSteamEnterOffCss', () => {
         expect(buildSteamEnterOffCss({ ...full, transition: { TopLevelTransition: 'a', Enter: 'b', EnterActive: 'c' } }))
             .toBe('.a.b, .a.c { opacity: 1 !important; transform: none !important; transition: none !important; }');
         expect(buildSteamEnterOffCss(full)).toBe('');
+    });
+});
+
+describe('steamFooterSelector', () => {
+    it("Steam's footer (BasicFooter, one element over every page): the open transition's bridge carries a copy", () => {
+        expect(steamFooterSelector({ ...full, footer: { BasicFooter: 'f1', FooterLegend: 'f2' } })).toBe('.f1');
+    });
+    it('null when Steam renamed it', () => {
+        expect(steamFooterSelector(full)).toBeNull();
     });
 });

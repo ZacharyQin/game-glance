@@ -77,6 +77,16 @@ export function memoAchievements(appId: number): { achieved: number; total: numb
     return achievementMemo.get(appId);
 }
 
+/**
+ * `game` with the remembered achievement counts when Steam's store has none for it (a game Steam did not load itself, or
+ * a game page's first frame before Steam has loaded its details); Steam's own counts and shortcuts are left as they are.
+ */
+export function withKnownAchievements<T extends { appId: number; isShortcut: boolean; achievements: { achieved: number; total: number } | null }>(game: T): T {
+    if (game.achievements || game.isShortcut) return game;
+    const known = memoAchievements(game.appId);
+    return known ? { ...game, achievements: known } : game;
+}
+
 /** The remembered assets for `appId`, or undefined. */
 export function memoDetails(appId: number): LibraryAssets | undefined {
     return memo.get(appId);

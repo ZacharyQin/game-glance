@@ -6,7 +6,7 @@ import { FRIEND_COLOURS } from './friends';
 import { FEED_ROW2_HEADER } from './feedLayout';
 import { PERSONA_DOT, PERSONA_DOT_COLOURS, PersonaDot, STATUS_BAR, STATUS_FADE_MS } from './statusItems';
 import { ACCENT_MS, CAP_ART_FADE_MS, CAP_STATE_MS, FEED_ART_FADE_MS, FEED_SCROLL, HERO_FADE_MS, MORPH_EASE, OPEN_TIMINGS, SHEET, SHEET_MS, SLIDE } from './motion';
-import { PAGE_SCRIMS } from '../styles/themeCss';
+import { PAGE_LAYOUT, PAGE_SCRIMS } from '../styles/themeCss';
 import { CARD_SCALE_HANDHELD, GLOW as CAP_GLOW, RECENTS_BOTTOM, recentsGeometry } from './recentsLayout';
 import { PILL_INSET, ROW_OFFSET, SIDE_INSET } from './insets';
 
@@ -34,6 +34,9 @@ const GLOW = '0 0 0 1px var(--glance-accent), 0 16px 40px -12px var(--glance-acc
  * (at most `maxTitleLines` lines, never above the 52 px safe area) and nothing below it moves: the block never grows
  * past titleBlockBottom().
  */
+/** Inside the Play pill: the glyph's inset, the glyph, the gap to the label, the label's type size (canvas px). */
+export const HOME_PILL = { padX: 22, icon: 18, gap: 13, font: 19 } as const;
+
 export const TITLE_BLOCK = {
     top: 118,
     gap: 18,
@@ -278,6 +281,8 @@ export function homeCss(cardScale: number = CARD_SCALE_HANDHELD): string {
             backdrop-filter: blur(12px); box-shadow: none; transform: none; outline: none; cursor: pointer;
             transition: transform 250ms, box-shadow 250ms, background ${ACCENT_MS}ms, border-color ${ACCENT_MS}ms`),
         rule('.gh-btn-circle', 'width: 54px; flex: 0 0 54px; font-size: 22px'),
+        // Steam's own controller and gear icons (steamIcons), at the page's size, so the open transition's hand-over changes nothing.
+        rule('.gh-steam-icon svg', `width: ${PAGE_LAYOUT.circleIcon}px; height: ${PAGE_LAYOUT.circleIcon}px; margin: 0; fill: currentColor`),
         // Cloud circle: the same circle as the others; only its icon is coloured by the sync state (cloud.CLOUD_COLOURS,
         // light tints for the dark translucent fill) with a dark halo so it reads over bright art too.
         rule('.gh-btn-cloud svg', 'width: 26px; height: 26px; margin: 0; fill: currentColor; filter: drop-shadow(0 0 1.5px rgba(0,0,0,.7))'),
@@ -291,10 +296,10 @@ export function homeCss(cardScale: number = CARD_SCALE_HANDHELD): string {
         rule('.gh-btn-fill', `position: absolute; left: 0; top: 0; bottom: 0; background: ${DOWNLOAD_FILL_COLOR}; pointer-events: none; transition: width ${DOWNLOAD_FILL_MS}ms linear`),
         rule('.gh-btn-play > .gh-btn-icon, .gh-btn-play > .gh-btn-label', 'position: relative'),
         // The Play pill, laid out as the details page's: the glyph at the left, the label left-aligned after it.
-        rule('.gh-btn-play', 'justify-content: flex-start; padding: 0 22px; gap: 13px'),
-        rule('.gh-btn-play svg', 'width: 18px; height: 18px; margin: 0'),
+        rule('.gh-btn-play', `justify-content: flex-start; padding: 0 ${HOME_PILL.padX}px; gap: ${HOME_PILL.gap}px; font-size: ${HOME_PILL.font}px`),
+        rule('.gh-btn-play svg', `width: ${HOME_PILL.icon}px; height: ${HOME_PILL.icon}px; margin: 0`),
         rule('.gh-btn-icon', 'display: flex; align-items: center; justify-content: center; line-height: 1'),
-        rule('.gh-btn-play .gh-btn-icon', 'font-size: 18px'),
+        rule('.gh-btn-play .gh-btn-icon', `font-size: ${HOME_PILL.icon}px`),
         rule('.gh-btn.gh-focus', `box-shadow: 0 0 0 2px rgba(255,255,255,.9), 0 14px 40px -8px var(--glance-accent); transform: scale(1.04)`),
 
         // Recents row (handoff: left 44, 140 tall; times the card scale, its bottom stays at 688 and it grows upwards
@@ -493,6 +498,13 @@ export function openingRules(): string[] {
         // The page focuses Play (Steam's lighter fill and white ring): a layer with that look fades in as the pill grows.
         rule(`${M} ${play}::after`, "content: ''; position: absolute; left: 0; top: 0; width: 100%; height: 100%; border-radius: 999px; background: rgba(255,255,255,.28); box-shadow: 0 0 0 2px rgba(255,255,255,.9), 0 14px 40px -8px var(--glance-accent); transform-origin: 0 0; pointer-events: none; opacity: 0"),
         rule(`${MT} ${play}`, `transform: var(--gho-play-fg); transition: ${move}`),
+        // Its glyph and label grow to the page's, from the pill's left edge and centre line. The label turns white as the
+        // page's focused Play's: a white copy of its words (data-text) fades in over it.
+        rule([`${M} ${play} > .gh-btn-icon`, `${M} ${play} > .gh-btn-label`].join(', '), 'transform-origin: 0 50%'),
+        rule(`${MT} ${play} > .gh-btn-icon`, `transform: var(--gho-play-icon); transition: ${move}`),
+        rule(`${MT} ${play} > .gh-btn-label`, `transform: var(--gho-play-label); transition: ${move}`),
+        rule(`${M} ${play} > .gh-btn-label::after`, 'content: attr(data-text); position: absolute; left: 0; top: 0; color: #fff; opacity: 0; pointer-events: none'),
+        rule(`${MT} ${play} > .gh-btn-label::after`, `opacity: 1; transition: opacity ${T.morph}ms ease`),
         rule(`${MT} ${play}::before`, `transform: var(--gho-play-bg); transition: ${move}`),
         rule(`${MT} ${play}::after`, `transform: var(--gho-play-bg); opacity: 1; transition: ${move}, opacity ${T.morph}ms ease`),
         ...[0, 1, 2, 3].map((i) => rule(`${MT} .gh-actions > .gh-btn:nth-child(${i + 2})`, `transform: var(--gho-circle-${i}, none); transition: ${move}`)),

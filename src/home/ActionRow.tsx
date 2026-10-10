@@ -1,6 +1,6 @@
 import { Focusable } from '@decky/ui';
 import type { GamepadEvent, NavEntryPositionPreferences } from '@decky/ui';
-import { ReactNode, useRef } from 'react';
+import { ComponentType, ReactNode, useRef } from 'react';
 import { IoCloudDoneOutline, IoCloudOfflineOutline, IoCloudOutline, IoCloudUploadOutline, IoDownload, IoGrid, IoGameControllerOutline, IoInformationCircleOutline, IoPause, IoPlay, IoSettingsOutline } from 'react-icons/io5';
 import { LOG_PREFIX } from '../constants';
 import { markLaunch } from '../data/launchIntent';
@@ -8,6 +8,7 @@ import type { CloudState } from './cloud';
 import { opensGameMenu, PREFERRED_CHILD } from './focusZones';
 import { openGameMenu } from './gameMenu';
 import { pressCloud, steamCloudIcon } from './steamCloud';
+import { steamControllerIcon, steamGearIcon } from './steamIcons';
 import { readSteamPill } from './steamPill';
 import { openGame, openLibrary, openPage } from './homeNav';
 import type { DownloadState } from './downloadProgress';
@@ -127,6 +128,12 @@ function CloudIcon({ cloud }: { cloud: CloudState }) {
     return <IoCloudOutline />;
 }
 
+/** Steam's own icon for a circle (as the game page draws it), ours if Steam's is not found. */
+function SteamIcon({ steam, fallback }: { steam: ComponentType<Record<string, unknown>> | null; fallback: ReactNode }) {
+    const Steam = steam;
+    return Steam ? <span className="gh-btn-icon gh-steam-icon"><Steam /></span> : <span className="gh-btn-icon">{fallback}</span>;
+}
+
 /** The row's gamepad handlers: L1/R1 (bumper navigation, useBumperSelect), given by SpotlightHome. */
 export interface RowButtons {
     onButtonDown?(evt: GamepadEvent): void;
@@ -218,6 +225,7 @@ export function ActionRow({ game, running = false, download = null, preferred, b
     const play = playAction(game.installed, running, download);
     // Steam's own pill for the game (its action, word, glyph and handler), as on the game page; ours if that is unavailable.
     const steamPill = readSteamPill(game.appId);
+    const playWord = pillWord(steamPill?.label ?? play.label);
     const fill = steamPill ? (download ? play.fill : null) : play.fill;
     const appId = game.appId;
     // Steam's game context menu, as the game page's gear opens it (gameMenu); Properties if it is unavailable.
@@ -227,7 +235,7 @@ export function ActionRow({ game, running = false, download = null, preferred, b
             <ActionButton
                 key="primary"
                 className={`gh-btn-play${fill === null ? '' : ' gh-btn-dl'}`}
-                label={pillWord(steamPill?.label ?? play.label)}
+                label={playWord}
                 fill={fill}
                 preferredFocus={preferred}
                 action="play"
@@ -253,7 +261,8 @@ export function ActionRow({ game, running = false, download = null, preferred, b
                 }}
             >
                 <span className="gh-btn-icon">{steamPill ? steamPill.icon : play.label === 'Pause' ? <IoPause /> : play.label === 'Download' || play.label === 'Update' ? <IoDownload /> : <IoPlay />}</span>
-                <span className="gh-btn-label">{pillWord(steamPill?.label ?? play.label)}</span>
+                {/* data-text: the open transition draws a white copy of the words over them (homeCss.openingRules) */}
+                <span className="gh-btn-label" data-text={playWord}>{playWord}</span>
             </ActionButton>
             <ActionButton
                 className="gh-btn-circle"
@@ -265,10 +274,10 @@ export function ActionRow({ game, running = false, download = null, preferred, b
                     return true;
                 })}
             >
-                <span className="gh-btn-icon"><IoGameControllerOutline /></span>
+                <SteamIcon steam={steamControllerIcon()} fallback={<IoGameControllerOutline />} />
             </ActionButton>
             <ActionButton className="gh-btn-circle" label={tr('manage')} action="menu" setRef={(el) => { gear.current = el; }} onPress={(el) => openMenu(el)}>
-                <span className="gh-btn-icon"><IoSettingsOutline /></span>
+                <SteamIcon steam={steamGearIcon()} fallback={<IoSettingsOutline />} />
             </ActionButton>
             <ActionButton
                 className="gh-btn-circle"
