@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+    statusCss,
     FEED_SHEET, hexAlpha, homeCss, MAX_STACK_SHIFT, sourcePillTop, stackShift, TITLE_BLOCK, titleBlockBottom, titleBlockLayout,
 } from '../../src/home/homeCss';
 import { sourcePillLook } from '../../src/styles/sourcePill';
@@ -513,6 +514,13 @@ describe('homeCss logo', () => {
         const body = /\.gh-logo \{([^}]*)\}/.exec(homeCss())?.[1] ?? '';
         expect(body).not.toBe('');
         for (const prop of ['width', 'height', 'max-width', 'max-height']) expect(body, prop).not.toMatch(new RegExp(`(^|[;\\s])${prop}:`));
+    });
+});
+
+describe('statusCss', () => {
+    it("one status bar at a time: while Home's is up, the page's (mounted later, on the same body) stays invisible", () => {
+        // Two stacked bars drew their white text twice, brighter, as Home's frozen copy faded over them (Michael: it blinked white).
+        expect(statusCss()).toMatch(/\.gg-status-host ~ \.gg-status-host \{[^}]*visibility: hidden/);
     });
 });
 

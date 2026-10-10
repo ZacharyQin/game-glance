@@ -158,6 +158,7 @@ function clampedShift(logicalHeight: number, legendReserve: number): number {
  */
 export function statusRules(): string[] {
     return [
+
         // Status bar (clock, battery, connection) in Steam's top strip: the store pill's glass pill, then your online status
         // dot over Steam's top-bar avatar (StatusBar sets --gh-status-right / --gh-status-cy from statusPlacement; STATUS_BAR is the fallback), above the page (the raised feed slides under it). It all fades out while
         // focus is in Steam's own top bar (`.gh-status-away`, set by SpotlightHome).
@@ -180,7 +181,13 @@ export function statusRules(): string[] {
 
 /** The status bar's CSS on its own, for the game page. */
 export function statusCss(): string {
-    return statusRules().join('\n');
+    return [
+        ...statusRules(),
+        // One status bar at a time (components/GameStatusBar portals each host to the body): while Home's is up, the page's,
+        // mounted later, stays invisible and takes over in place when Home's goes (two stacked drew their white text twice,
+        // brighter, as the open transition's copy faded over them).
+        rule('.gg-status-host ~ .gg-status-host', 'visibility: hidden'),
+    ].join('\n');
 }
 
 /**
