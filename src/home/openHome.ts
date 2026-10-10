@@ -38,8 +38,9 @@ export function viewportSize(win: { innerWidth: number; innerHeight: number; vis
 }
 
 /** The page's stat columns (Play time, Achievements, HowLongToBeat Main) Home showed no chip for, by Home's chip keys. Pure. */
-export function missingStats(chipKeys: string[]): string[] {
-    return ['played', 'achievements', 'hltb'].filter((key) => !chipKeys.includes(key));
+export function missingStats(chipKeys: string[], drawn = ''): string[] {
+    const extras = drawn.split(/\s+/);
+    return ['played', 'achievements', 'hltb'].filter((key) => !chipKeys.includes(key) && !extras.includes(key));
 }
 
 /** Home's boxes for openMotion (CSS px), or null when anything required is missing (no game selected, nothing laid out). */
@@ -172,13 +173,15 @@ export function readChipTexts(root: Element): ChipText[] {
  * The page's parts Home can draw as it turns into the page's Spotlight look (SpotlightHome's .gh-open-extras), as
  * data-gh-extras words: `desc` when it has the description's text, `hltb` when HowLongToBeat found the game with a Main
  * time (without one the page writes "—" there, which Home's chip would not cover), `pills` when it knows the store (the
- * page's own store pill, and family pill, drawn at the page's size: Home's scaled one is a little narrower). Pure.
+ * page's own store pill, and family pill, drawn at the page's size: Home's scaled one is a little narrower), `played` when
+ * Home shows no Play time chip (a new game's Added chip): the page's Play time column, so it is there at the hand-over. Pure.
  */
-export function extrasParts(description: string | null | undefined, hltb: HltbResult | undefined, source?: string | null): string {
+export function extrasParts(description: string | null | undefined, hltb: HltbResult | undefined, source?: string | null, playedMissing = false): string {
     const parts: string[] = [];
     if (description && description.trim()) parts.push('desc');
     if (hltb?.status === 'found' && hltb.times.main !== null) parts.push('hltb');
     if (source) parts.push('pills');
+    if (playedMissing) parts.push('played');
     return parts.join(' ');
 }
 

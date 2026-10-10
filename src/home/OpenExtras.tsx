@@ -1,5 +1,7 @@
 import type { HltbResult } from '../data/hltb';
 import { HLTB_TITLE, hltbFoundView } from '../logic/hltbCardView';
+import { formatHours, minutesToHours } from '../logic/format';
+import { tr } from '../i18n/steamText';
 import { extrasParts } from './openHome';
 import { FamilyPill, SourcePill } from '../components/SourcePill';
 
@@ -11,6 +13,8 @@ interface Props {
     /** The store's name (the store pill) and the family library pill's words, when known. */
     source?: string;
     family?: string | null;
+    /** Home shows no Play time chip (a new game's Added chip): the page's Play time column is drawn here. */
+    playedMissing?: boolean;
 }
 
 /**
@@ -19,8 +23,8 @@ interface Props {
  * the page's store pill (the family pill in it) at the page's own size.
  * Hidden until opening (homeCss.openingRules); openMotion places it; the page then shows the same at once (intent).
  */
-export function OpenExtras({ description, hltb, playedMinutes, locale, source, family }: Props) {
-    const parts = extrasParts(description, hltb, source);
+export function OpenExtras({ description, hltb, playedMinutes, locale, source, family, playedMissing = false }: Props) {
+    const parts = extrasParts(description, hltb, source, playedMissing);
     const view = parts.includes('hltb') && hltb?.status === 'found' ? hltbFoundView(hltb.times, playedMinutes, locale, true) : null;
     return (
         <div className="gh-open-extras" data-parts={parts}>
@@ -38,6 +42,12 @@ export function OpenExtras({ description, hltb, playedMinutes, locale, source, f
                     </div>
                     {view.bar !== null && <div className="gh-x-bar"><div style={{ width: `${view.bar}%` }} /></div>}
                     {view.caption !== null && <div className="gh-x-caption">{view.caption}</div>}
+                </div>
+            )}
+            {playedMissing && (
+                <div className="gh-x-played">
+                    <div className="gh-x-label">{tr('played')}</div>
+                    <div className="gh-x-value">{formatHours(minutesToHours(playedMinutes), locale)}</div>
                 </div>
             )}
             {source && (

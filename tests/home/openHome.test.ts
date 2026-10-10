@@ -143,6 +143,8 @@ describe('missingStats', () => {
         expect(missingStats(['added', 'achievements', 'hltb'])).toEqual(['played']);
         expect(missingStats(['played', 'achievements', 'hltb'])).toEqual([]);
         expect(missingStats(['played'])).toEqual(['achievements', 'hltb']);
+        // A column Home drew in its extras layer is there at the hand-over: it does not arrive.
+        expect(missingStats(['added', 'achievements', 'hltb'], 'desc played')).toEqual([]);
     });
 });
 
@@ -156,6 +158,11 @@ describe('extrasParts', () => {
     });
     it('no Main time: no card (the page\'s "—" there would have nothing of Home\'s under it)', () => {
         expect(extrasParts(null, found(null))).toBe('');
+    });
+    it("a new game's Play time (Home shows its Added chip instead): Home draws the page's column, so it is there at the hand-over", () => {
+        expect(extrasParts(null, undefined, undefined, true)).toBe('played');
+        expect(extrasParts('Text', undefined, 'Steam', true)).toBe('desc pills played');
+        expect(extrasParts(null, undefined, undefined, false)).toBe('');
     });
     it("the page's own store pill (and family pill in it) when Home knows the store: drawn at the page's size, it hands over unchanged", () => {
         expect(extrasParts(null, undefined, 'Steam')).toBe('pills');

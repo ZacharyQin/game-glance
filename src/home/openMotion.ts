@@ -141,6 +141,13 @@ export function openMotion(home: HomeRects, page: PageTargets, look: PageLook, c
     out['--gho-x-d'] = k(d);
     out['--gho-x-pill-x'] = px(page.store.x + page.store.w - ox);
     out['--gho-x-pill-y'] = px(page.store.y - oy);
+    // The Play time column (a new game's: Home shows its Added chip instead), by its top-left corner, in the look's value size.
+    const played = page.stats.played;
+    if (played) {
+        out['--gho-x-played-x'] = px(played.label.x - ox);
+        out['--gho-x-played-y'] = px(played.label.y - oy);
+        out['--gho-x-played-font'] = px((look === 'clean' ? PAGE_LAYOUT.cleanInfo.value : PAGE_LAYOUT.stats.value) * d);
+    }
     if (page.extras) {
         const at = (name: string, b: Box) => {
             out[`--gho-x-${name}-x`] = px(b.x - ox);

@@ -562,6 +562,10 @@ export function openingRules(): string[] {
         rule(`${X} .gh-x-family`, `position: absolute; right: calc(100% + ${dd(10)}); top: 50%; transform: translateY(-50%); display: inline-flex; align-items: center;
             margin: 0; border-radius: 999px; border: 1px solid; color: #fff; line-height: 1; white-space: nowrap; ${sourcePillLook(dd)}`),
         rule(`${X} .gh-x-family-icon`, `flex: 0 0 auto; ${sourcePillIcon(dd)}`),
+        // A new game's Play time column (Home shows its Added chip instead), as the page draws it, at its place.
+        rule(`${X} .gh-x-played`, `display: none; position: absolute; left: var(--gho-x-played-x); top: var(--gho-x-played-y); flex-direction: column; gap: ${dd(L.stats.rowGap)}`),
+        rule('.gh-root[data-gh-extras~="played"] .gh-x-played', 'display: flex'),
+        rule(`${X} .gh-x-played .gh-x-value`, 'font-size: var(--gho-x-played-font)'),
         rule(`${MT}[data-gh-extras~="pills"] .gh-source`, `opacity: 0; transition: ${move}, opacity ${T.extras}ms ease-in ${T.morph - T.extras}ms`),
         rule(`${X} .gh-x-label`, `font-size: ${dd(L.stats.label)}; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; line-height: ${PAGE_LINES.label}; white-space: nowrap; color: rgba(255,255,255,.62)`),
         rule(`${X} .gh-x-stats`, `display: flex; gap: ${dd(L.stats.colGapHltb)}`),

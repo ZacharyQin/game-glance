@@ -476,6 +476,14 @@ describe('homeCss open transition', () => {
         expect(home).toContain('opacity: 0');
         expect(home).toMatch(/transition: transform \d+ms cubic-bezier\([^)]*\), opacity \d+ms/);
     });
+    it("the extras layer's Play time column: the page's label and value, at its place, in the page's value size", () => {
+        const all = rules(css);
+        const body = (sel: string) => all.find(([s]) => s === sel)?.[1] ?? '';
+        expect(body('.gh-open-extras .gh-x-played')).toContain('display: none');
+        for (const decl of ['left: var(--gho-x-played-x)', 'top: var(--gho-x-played-y)']) expect(body('.gh-open-extras .gh-x-played')).toContain(decl);
+        expect(body('.gh-open-extras .gh-x-played .gh-x-value')).toContain('font-size: var(--gho-x-played-font)');
+        expect(all.some(([sel, b]) => sel === '.gh-root[data-gh-extras~="played"] .gh-x-played' && b.includes('display: flex'))).toBe(true);
+    });
     it('the extras fade in (opacity only) during the morph and are complete at the hand-over', () => {
         const to = rules(css).find(([sel]) => sel === '.gh-root[data-gh-opening="morph"][data-gh-phase="to"][data-gh-extras] .gh-open-extras')?.[1];
         expect(to).toMatch(/opacity: 1/);
