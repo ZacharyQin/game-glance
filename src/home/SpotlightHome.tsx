@@ -8,7 +8,7 @@ import { isTvScreen } from '../styles/screenScale';
 import { focusElement, focusElementSettled, openGame, openLibrary } from './homeNav';
 import { LOG_PREFIX } from '../constants';
 import { useSettings } from '../data/settings';
-import { recentsButton, repeatStep, RepeatState, selectionForButton, type Zone } from './focusZones';
+import { recentsButton, selectionForButton, type Zone } from './focusZones';
 import { HeroBackground } from './HeroBackground';
 import { neighbourIds } from './heroLayers';
 import { HERO_PRELOAD_DELAY_MS, HERO_PRELOAD_RADIUS } from './motion';
@@ -28,8 +28,7 @@ import { noteDisplay } from './artShrink';
 import { canvasStyle, homeCanvas } from './scale';
 import { OpenExtras } from './OpenExtras';
 import { TitleBlock } from './TitleBlock';
-import { useBumperSelect } from './useBumperSelect';
-import { gameStepSound, playNavSound } from './navSound';
+import { useBumperSelect, useDirectionSelect } from './useBumperSelect';
 import { useCloud } from './useCloud';
 import { useHomeData } from './useHomeData';
 import { collectionEyebrow } from './collections';
@@ -202,32 +201,26 @@ export function SpotlightHome() {
     // The game cards (focusZones.recentsButton): Left/Right select the previous / next game and focus stays on the
     // cards; L1/R1 move focus to the Play pill first, then select as on the action row (its held-bumper repeat goes on
     // there); View/Menu open the selected game's menu at its card.
-    // A held Left/Right steps at a held bumper's pace (focusZones.repeatStep), not at Steam's own faster repeat.
-    const heldDirection = useRef<RepeatState | null>(null);
+    // Left/Right on the cards, held: Home's own timer at a held bumper's pace (useBumperSelect.useDirectionSelect).
+    const directions = useDirectionSelect(recentsRef, focusIndex, data.games.length, setRecentIndex);
     const onRecentsButtonDown = (evt: GamepadEvent) => {
         try {
             const isRepeat = Boolean(evt?.detail?.is_repeat);
             const what = recentsButton(Number(evt?.detail?.button), focusIndex, data.games.length, isRepeat);
             if (what === null) return;
             if (what === 'bumper') {
+                directions.stop();
                 focusElement(actionButtons()[0], 'the Play pill');
                 bumpers.onButtonDown(evt);
                 return;
             }
-            evt.preventDefault?.();
-            evt.stopPropagation?.();
             if (what === 'menu') {
+                evt.preventDefault?.();
+                evt.stopPropagation?.();
                 if (!evt?.detail?.is_repeat && !onLibrary && data.focused) openGameActions(data.focused.appId, selectedCard());
                 return;
             }
-            const paced = repeatStep(Date.now(), heldDirection.current, isRepeat);
-            heldDirection.current = paced.next;
-            if (paced.step) {
-                setRecentIndex(what.select);
-                // Home took the press, so Steam plays no move sound for it: play its own (navSound.gameStepSound).
-                const sound = gameStepSound(focusIndex, what.select, 'dpad');
-                if (sound) playNavSound(sound);
-            }
+            directions.onButtonDown(evt);
         } catch (error) {
             console.warn(`${LOG_PREFIX} Home: game card navigation failed`, error);
         }
@@ -283,6 +276,7 @@ export function SpotlightHome() {
             setFocusedOnce(true);
         },
         onButtonDown: onRecentsButtonDown,
+        onButtonUp: directions.onButtonUp,
         onActivate: onRecentsActivate,
     };
     // Which action button holds focus (its index among the row's buttons), remembered for the way back.

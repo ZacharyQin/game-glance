@@ -106,6 +106,8 @@ export interface RecentsRowNav {
     onFocus(): void;
     /** Left/Right, L1/R1, View/Menu (focusZones.recentsButton). */
     onButtonDown(evt: GamepadEvent): void;
+    /** A held Left/Right let go: its repeat stops. */
+    onButtonUp?(evt: GamepadEvent): void;
     /** A: the selected game's page, or the Library on the Library card. */
     onActivate(): void;
 }
@@ -139,6 +141,7 @@ export function RecentsRow({ games, selected, geometry, nav, expand = true, snap
             onFocus={nav.onFocus}
             onGamepadFocus={nav.onFocus}
             onButtonDown={nav.onButtonDown}
+            onButtonUp={nav.onButtonUp}
             onActivate={nav.onActivate}
             role="listbox"
             aria-label={tr('recentGames')}
