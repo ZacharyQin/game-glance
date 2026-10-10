@@ -6,7 +6,7 @@ import { FRIEND_COLOURS } from './friends';
 import { FEED_ROW2_HEADER } from './feedLayout';
 import { PERSONA_DOT, PERSONA_DOT_COLOURS, PersonaDot, STATUS_BAR, STATUS_FADE_MS } from './statusItems';
 import { ACCENT_MS, CAP_ART_FADE_MS, CAP_STATE_MS, FEED_ART_FADE_MS, FEED_SCROLL, HERO_FADE_MS, MORPH_EASE, OPEN_TIMINGS, SHEET, SHEET_MS, SLIDE } from './motion';
-import { PAGE_LAYOUT, PAGE_SCRIMS } from '../styles/themeCss';
+import { PAGE_LAYOUT, PAGE_SCRIMS, STEAM_TOP_GRADIENT } from '../styles/themeCss';
 import { CARD_SCALE_HANDHELD, GLOW as CAP_GLOW, RECENTS_BOTTOM, recentsGeometry } from './recentsLayout';
 import { PILL_INSET, ROW_OFFSET, SIDE_INSET } from './insets';
 
@@ -223,7 +223,7 @@ export function homeCss(cardScale: number = CARD_SCALE_HANDHELD): string {
         // so the art looks the same on both and opening a game never changes it; a flat dim only under the feed sheet.
         rule('.gh-scrim', 'position: absolute; inset: 0; pointer-events: none'),
         rule('.gh-scrim-dim', `background: rgba(${SCRIM},var(--gh-dim)); transition: background ${SHEET_MS}ms`),
-        rule('.gh-scrim-page', `background: ${PAGE_SCRIMS}`),
+        rule('.gh-scrim-page', `background: ${STEAM_TOP_GRADIENT}, ${PAGE_SCRIMS}`),
 
         // Scaled canvas; width, height and transform are set inline from homeCanvas().
         rule('.gh-canvas', 'position: absolute; left: 0; top: 0; transform-origin: 0 0'),

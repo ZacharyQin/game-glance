@@ -54,6 +54,11 @@ const HANDOFF_SCRIM_LEFT = 'linear-gradient(90deg, rgba(5, 7, 10, 0.6) 0%, rgba(
 const HANDOFF_SCRIM_BOTTOM = 'linear-gradient(180deg, rgba(5, 7, 10, 0) 55%, rgba(5, 7, 10, 0.6) 100%)';
 /** The restyled header's scrim layers, top to bottom (the handoff's over the 1.1.1 ones); also Home's page scrim in the open transition. */
 export const PAGE_SCRIM_LAYERS = [HANDOFF_SCRIM_LEFT, HANDOFF_SCRIM_BOTTOM, SCRIM_BOTTOM, SCRIM_LEFT] as const;
+/**
+ * Steam's own shadow along the top of the game page (its header module's TopGradient: 75 px, black .5 to clear;
+ * probed on the Ally). Steam draws it on the page itself; Spotlight Home draws it too (homeCss .gh-scrim-page).
+ */
+export const STEAM_TOP_GRADIENT = 'linear-gradient(180deg, rgba(0, 0, 0, 0.5) 0px, rgba(0, 0, 0, 0) 75px)';
 /** The same layers as one CSS background value. */
 export const PAGE_SCRIMS = PAGE_SCRIM_LAYERS.join(', ');
 
