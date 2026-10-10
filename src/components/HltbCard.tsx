@@ -1,6 +1,5 @@
 import { HltbResult } from '../data/hltb';
-import { formatHours, minutesToHours } from '../logic/format';
-import { beyondCaption, computeProgress, mainStoryProgress, Tier, towardCaption } from '../logic/progress';
+import { HLTB_COLUMNS, hltbFoundView } from '../logic/hltbCardView';
 import { tr } from '../i18n/steamText';
 
 interface Props {
@@ -11,15 +10,6 @@ interface Props {
     restyle?: boolean;
 }
 
-/** A column's key for the open transition (data-stat): Main is `hltb`, as Home's chip and the Clean look's stat. */
-const statKey = (tier: Tier) => (tier === 'main' ? 'hltb' : tier);
-
-const COLUMNS: Array<{ tier: Tier; label: string }> = [
-    { tier: 'main', label: 'Main' },
-    { tier: 'mainExtras', label: '+ Extras' },
-    { tier: 'completionist', label: '100%' },
-];
-
 export function HltbCard({ result, playedMinutes, locale, restyle = false }: Props) {
     const header = <div className="gg-label">HowLongToBeat</div>;
 
@@ -28,8 +18,8 @@ export function HltbCard({ result, playedMinutes, locale, restyle = false }: Pro
             <div className="gg-card gg-hltb">
                 {header}
                 <div className="gg-stats">
-                    {COLUMNS.map((c) => (
-                        <div key={c.tier} data-stat={statKey(c.tier)}>
+                    {HLTB_COLUMNS.map((c) => (
+                        <div key={c.tier} data-stat={c.key}>
                             <div className="gg-label">{c.label}</div>
                             <div className="gg-value"><span className="gg-skeleton" /></div>
                         </div>
@@ -62,44 +52,20 @@ export function HltbCard({ result, playedMinutes, locale, restyle = false }: Pro
         );
     }
 
-    const played = minutesToHours(playedMinutes);
-    const progress = restyle ? mainStoryProgress(played, result.times) : computeProgress(played, result.times);
-    const goalTier = !restyle && progress.kind === 'toward' ? progress.tier : null;
+    const view = hltbFoundView(result.times, playedMinutes, locale, restyle);
     return (
         <div className="gg-card gg-hltb">
             {header}
             <div className="gg-stats">
-                {COLUMNS.map((c) => {
-                    const hours = result.times[c.tier];
-                    return (
-                        <div key={c.tier} className={c.tier === goalTier ? 'gg-goal' : undefined} data-stat={statKey(c.tier)}>
-                            <div className="gg-label">{c.label}</div>
-                            <div className="gg-value">{hours === null ? '—' : formatHours(hours, locale)}</div>
-                        </div>
-                    );
-                })}
-            </div>
-            {progress.kind === 'toward' && (
-                <>
-                    <div className="gg-bar"><div style={{ width: `${progress.percent}%` }} /></div>
-                    <div className="gg-caption">
-                        {towardCaption(played, progress.goalHours, progress.tier, locale)}
+                {view.columns.map((c) => (
+                    <div key={c.tier} className={c.goal ? 'gg-goal' : undefined} data-stat={c.key}>
+                        <div className="gg-label">{c.label}</div>
+                        <div className="gg-value">{c.value}</div>
                     </div>
-                </>
-            )}
-            {progress.kind === 'beyond' && (
-                <>
-                    <div className="gg-bar"><div style={{ width: '100%' }} /></div>
-                    <div className="gg-caption">{beyondCaption(progress.lastTier)}</div>
-                </>
-            )}
-            {progress.kind === 'complete' && (
-                <>
-                    <div className="gg-bar"><div style={{ width: '100%' }} /></div>
-                    <div className="gg-caption">Main story complete</div>
-                </>
-            )}
-            {progress.kind === 'notPlayed' && <div className="gg-caption">Not played yet</div>}
+                ))}
+            </div>
+            {view.bar !== null && <div className="gg-bar"><div style={{ width: `${view.bar}%` }} /></div>}
+            {view.caption !== null && <div className="gg-caption">{view.caption}</div>}
         </div>
     );
 }
