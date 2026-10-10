@@ -257,6 +257,17 @@ describe('mountOpenBridge', () => {
         bridge.remove();
         expect(box.remove).toHaveBeenCalled();
     });
+    it('fades in over live Home from transparent, so the copy cross-fades instead of replacing Home in one frame', () => {
+        const f = fakeDom();
+        const bridge = mountOpenBridge(f.root);
+        const box = f.appended[0];
+        const seen: string[] = [];
+        let value = '';
+        Object.defineProperty(box.style, 'opacity', { get: () => value, set: (v: string) => { seen.push(v); value = v; }, configurable: true });
+        bridge.fadeIn(150);
+        expect(seen).toEqual(['0', '1']);
+        expect(box.style.transition).toBe('opacity 150ms ease-in-out');
+    });
     it("carries the given stylesheet while it is up (Steam's page-enter fade switched off)", () => {
         const f = fakeDom();
         mountOpenBridge(f.root, '.x { opacity: 1 }');

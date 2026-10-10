@@ -13,6 +13,8 @@ import type { OpenVariant } from './openHome';
  */
 
 export interface OpenBridge {
+    /** Fades the copy in over live Home (from transparent). */
+    fadeIn(ms: number): void;
     fadeOut(ms: number): void;
     remove(): void;
 }
@@ -36,6 +38,11 @@ export interface OpenDeps {
 export interface OpenTransition {
     open(appId: number, variant: OpenVariant): void;
     cancel(): void;
+}
+
+/** How long the copy fades in over live Home before the page opens: the morph's (its moved text is drawn soft live). */
+export function bridgeInFor(variant: OpenVariant): number {
+    return variant === 'morph' ? OPEN_TIMINGS.bridgeIn : 0;
 }
 
 /** When Home hands over to the page, per variant (ms after the press). */
@@ -112,13 +119,20 @@ export function createOpenTransition(deps: OpenDeps): OpenTransition {
         if (!later(() => finish(true), OPEN_TIMINGS.bridgeFade)) finish(true);
     };
 
-    const handOver = (path: string) => {
+    const handOver = (path: string, fadeIn: number) => {
         try {
             bridge = deps.mountBridge();
         } catch (error) {
             warn('could not place the bridge', error);
             bridge = null;
         }
+        const b = bridge;
+        if (!b || fadeIn <= 0) return openPage(path);
+        safely('could not fade the bridge in', () => b.fadeIn(fadeIn));
+        if (!later(() => openPage(path), fadeIn)) openPage(path);
+    };
+
+    const openPage = (path: string) => {
         safely('could not mark the open', () => deps.markOpen());
         if (!navigate(path)) return finish(true);
         if (!bridge) return finish(false);
@@ -148,7 +162,7 @@ export function createOpenTransition(deps: OpenDeps): OpenTransition {
                 navigate(path);
                 return;
             }
-            if (!later(() => handOver(path), handOverAt(variant))) {
+            if (!later(() => handOver(path, bridgeInFor(variant)), handOverAt(variant))) {
                 finish(true);
                 navigate(path);
             }

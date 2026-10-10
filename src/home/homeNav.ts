@@ -227,7 +227,7 @@ function controller(): OpenTransition {
             const bridge = mountOpenBridge(c.root, steamEnterOffCss(), extras);
             if (c.intent.look !== 'steam') return bridge;
             // Steam's own page draws no status bar of ours: give Steam's top bar back once the bridge is gone.
-            return { fadeOut: (ms: number) => bridge.fadeOut(ms), remove: () => { bridge.remove(); clearSteamBarCover(doc); } };
+            return { fadeIn: (ms: number) => bridge.fadeIn(ms), fadeOut: (ms: number) => bridge.fadeOut(ms), remove: () => { bridge.remove(); clearSteamBarCover(doc); } };
         },
         markOpen: () => {
             if (active) markOpen(active.appId, active.intent);

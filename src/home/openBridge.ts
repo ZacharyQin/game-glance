@@ -46,6 +46,15 @@ export function mountOpenBridge(root: HTMLElement, css = '', extras: Element[] =
     parent.appendChild(box);
     let removed = false;
     return {
+        fadeIn(ms: number) {
+            // From transparent, committed before the transition starts, so the copy cross-fades over live Home (whose moved
+            // text is drawn soft) instead of replacing it in one frame.
+            box.style.transition = 'none';
+            box.style.opacity = '0';
+            void (box as HTMLElement).offsetWidth;
+            box.style.transition = `opacity ${ms}ms ease-in-out`;
+            box.style.opacity = '1';
+        },
         fadeOut(ms: number) {
             // Front-loaded, so the page's new parts show through soon, and soft at the end: the copy and the page differ only
             // in sub-pixel rendering, which a slow tail hides.

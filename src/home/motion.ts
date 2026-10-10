@@ -58,6 +58,11 @@ export const OPEN_TIMINGS = {
     feedHero: 300,
     feedUi: 220,
     bridgeFade: 300,
+    /**
+     * The morph's copy of Home fades in over live Home before the page opens: live Home's moved text and logo are drawn
+     * soft (an animated layer's raster), the copy crisp, and replacing one by the other in a frame read as a pop.
+     */
+    bridgeIn: 150,
     readyCap: 500,
     revealDelay: 0,
     reveal: 200,
