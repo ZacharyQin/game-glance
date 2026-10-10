@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { applyOpening, measureHome, openVariant, pageStatsFromChips } from '../../src/home/openHome';
-import { mountOpenBridge } from '../../src/home/openBridge';
+import { BRIDGE_FADE_EASE, mountOpenBridge } from '../../src/home/openBridge';
 
 describe('openVariant', () => {
     it('morphs only the selected game with its full hero art onto the restyled page', () => {
@@ -179,7 +179,9 @@ describe('mountOpenBridge', () => {
         expect(f.clone.classList.add).toHaveBeenCalledWith('gh-bridge');
         bridge.fadeOut(120);
         expect(box.style.opacity).toBe('0');
-        expect(box.style.transition).toBe('opacity 120ms ease-in-out');
+        expect(box.style.transition).toBe(`opacity 120ms ${BRIDGE_FADE_EASE}`);
+        // Front-loaded (the page's new parts show through soon) and soft at the end.
+        expect(BRIDGE_FADE_EASE).toBe('cubic-bezier(.2,.65,.3,1)');
         bridge.remove();
         expect(box.remove).toHaveBeenCalled();
     });

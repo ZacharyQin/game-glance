@@ -9,6 +9,9 @@ import type { OpenBridge } from './openTransition';
  * measured box, never the window size (SharedJSContext's window is 1x1). `css`: a stylesheet that applies while the
  * bridge is up; `extras`: other layers of Home's to copy on top (the status bar). Throws when there is nowhere to put it.
  */
+/** The bridge's fade: most of it early (the page's new parts show through soon), a long soft tail. */
+export const BRIDGE_FADE_EASE = 'cubic-bezier(.2,.65,.3,1)';
+
 export function mountOpenBridge(root: HTMLElement, css = '', extras: Element[] = []): OpenBridge {
     const doc = root.ownerDocument;
     const parent = doc?.body;
@@ -44,8 +47,9 @@ export function mountOpenBridge(root: HTMLElement, css = '', extras: Element[] =
     let removed = false;
     return {
         fadeOut(ms: number) {
-            // Eased at both ends: the copy and the page differ only in sub-pixel rendering, which a soft, slow fade hides.
-            box.style.transition = `opacity ${ms}ms ease-in-out`;
+            // Front-loaded, so the page's new parts show through soon, and soft at the end: the copy and the page differ only
+            // in sub-pixel rendering, which a slow tail hides.
+            box.style.transition = `opacity ${ms}ms ${BRIDGE_FADE_EASE}`;
             box.style.opacity = '0';
         },
         remove() {

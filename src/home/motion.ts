@@ -57,7 +57,7 @@ export const OPEN_TIMINGS = {
     feedUi: 220,
     bridgeFade: 300,
     readyCap: 500,
-    revealDelay: 60,
+    revealDelay: 0,
     reveal: 200,
     leaveDrop: 70,
     feedRise: 14,
