@@ -293,6 +293,11 @@ export function accentNow(appId: number | null, resting: number | null, memo: Ma
     return { fetch: resting === appId };
 }
 
+/** The accent Home shows: the selected game's known colour from the first frame, else the current one. Pure. */
+export function shownAccent(appId: number | null, memo: Map<number, string>, current: string): string {
+    return (appId !== null ? memo.get(appId) : undefined) ?? current;
+}
+
 function useAccent(appId: number | null, resting: number | null): string {
     const [accent, setAccent] = useState(() => (appId !== null ? accentMemo.get(appId) : undefined) ?? DEFAULT_ACCENT);
     useEffect(() => {
@@ -314,7 +319,8 @@ function useAccent(appId: number | null, resting: number | null): string {
             active = false;
         };
     }, [appId, resting]);
-    return accent;
+    // Known already: shown in this render (the state only catches up an effect later: Home came back on B in its default).
+    return shownAccent(appId, accentMemo, accent);
 }
 
 /** How long after the selection first rests the remaining recents' accents are looked up, in the background. */

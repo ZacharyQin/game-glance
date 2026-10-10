@@ -1,7 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { HeroLayer, neighbourIds, nextHeroLayers } from '../../src/home/heroLayers';
+import { HeroLayer, initialHeroLayers, neighbourIds, nextHeroLayers } from '../../src/home/heroLayers';
 
 const layer = (id: number, start: number, settled = false): HeroLayer<string> => ({ id, art: `a${id}`, start, settled });
+
+describe('initialHeroLayers', () => {
+    it("Home coming back with the game's art already known shows it at once, settled (it faded in from black: a pop on B)", () => {
+        expect(initialHeroLayers('art', 0)).toEqual([{ id: 0, art: 'art', start: 0, settled: true }]);
+    });
+    it('nothing known yet: no layer (the art fades in once loaded, as before)', () => {
+        expect(initialHeroLayers(null, 0)).toEqual([]);
+    });
+});
 
 describe('nextHeroLayers', () => {
     it('the first art is a single fading layer', () => {

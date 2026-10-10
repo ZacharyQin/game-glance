@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { LOG_PREFIX } from '../constants';
 import { browserStores, capsuleUrls, heroUrls } from './artwork';
 import { loadWithTimeout } from './accentSample';
-import { HeroLayer, nextHeroLayers } from './heroLayers';
+import { HeroLayer, initialHeroLayers, nextHeroLayers } from './heroLayers';
 import { heroSources, shouldMemoArt } from './homeView';
 import { HERO_FADE_MS, HERO_PRELOAD_DELAY_MS } from './motion';
 
@@ -133,9 +133,10 @@ function Layer({ art, settled }: { art: Art; settled: boolean }) {
  * pre-loaded (local steamloopback files, at most 2 x HERO_PRELOAD_RADIUS, deduplicated), so the next switch starts at once.
  */
 export function HeroBackground({ appId, detailsVersion, neighbours = [] }: { appId: number | null; detailsVersion: number; neighbours?: number[] }) {
-    const [layers, setLayers] = useState<Array<HeroLayer<Art>>>([]);
+    // Home coming back (B from the game page): the game's art, when already known, is there from the first frame.
+    const [layers, setLayers] = useState<Array<HeroLayer<Art>>>(() => initialHeroLayers(appId === null ? null : artMemo.get(appId) ?? null, Date.now()));
     const nextId = useRef(0);
-    const shown = useRef<Art | undefined>(undefined);
+    const shown = useRef<Art | undefined>(layers[0]?.art);
 
     useEffect(() => {
         if (appId === null) {
