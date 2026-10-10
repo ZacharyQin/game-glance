@@ -35,14 +35,14 @@ describe('openTransition', () => {
         vi.useRealTimers();
     });
 
-    it('morph: Home moves at once; at 360 the bridge goes up, the intent is marked, then the page opens', () => {
+    it('morph: Home moves at once; at 450 the bridge goes up, the intent is marked, then the page opens', () => {
         const { t, log } = setup();
         t.open(620, 'morph');
         expect(log).toEqual(['startHome@0']);
-        vi.advanceTimersByTime(359);
+        vi.advanceTimersByTime(449);
         expect(log).toHaveLength(1);
         vi.advanceTimersByTime(1);
-        expect(log).toEqual(['startHome@0', 'mountBridge@360', 'markOpen@360', 'navigate /library/app/620@360']);
+        expect(log).toEqual(['startHome@0', 'mountBridge@450', 'markOpen@450', 'navigate /library/app/620@450']);
     });
 
     it('the hand-over comes at 300 for a feed card (heroFade) and 220 for a plain fade', () => {
@@ -59,32 +59,32 @@ describe('openTransition', () => {
     it('ready before the cap fades the bridge at once, then removes it', () => {
         const { t, log, fireReady } = setup();
         t.open(620, 'morph');
-        vi.advanceTimersByTime(400);
+        vi.advanceTimersByTime(500);
         fireReady();
-        expect(log).toContain('fadeOut(120)@400');
-        vi.advanceTimersByTime(120);
-        expect(log).toContain('remove@520');
+        expect(log).toContain('fadeOut(300)@500');
+        vi.advanceTimersByTime(300);
+        expect(log).toContain('remove@800');
     });
 
     it("once the bridge is gone Home's opening state is undone (Steam may keep Home, or bring it back on B: it was left mid-open)", () => {
         const { t, undo, fireReady } = setup();
         t.open(620, 'morph');
-        vi.advanceTimersByTime(400);
+        vi.advanceTimersByTime(500);
         fireReady();
         expect(undo).not.toHaveBeenCalled();
-        vi.advanceTimersByTime(120);
+        vi.advanceTimersByTime(300);
         expect(undo).toHaveBeenCalledTimes(1);
     });
 
     it('no ready: the bridge leaves at the cap (500 ms after the hand-over)', () => {
         const { t, log } = setup();
         t.open(620, 'morph');
-        vi.advanceTimersByTime(859);
+        vi.advanceTimersByTime(949);
         expect(log.some((l) => l.startsWith('fadeOut'))).toBe(false);
         vi.advanceTimersByTime(1);
-        expect(log).toContain('fadeOut(120)@860');
-        vi.advanceTimersByTime(120);
-        expect(log).toContain('remove@980');
+        expect(log).toContain('fadeOut(300)@950');
+        vi.advanceTimersByTime(300);
+        expect(log).toContain('remove@1250');
     });
 
     it('Home cannot be measured: the page opens at once, nothing mounted', () => {
@@ -98,8 +98,8 @@ describe('openTransition', () => {
     it('a bridge that cannot be mounted still lets the page open at the hand-over', () => {
         const { t, log } = setup({ mountBridge: vi.fn(() => { throw new Error('no body'); }) });
         t.open(620, 'morph');
-        vi.advanceTimersByTime(360);
-        expect(log).toContain('navigate /library/app/620@360');
+        vi.advanceTimersByTime(450);
+        expect(log).toContain('navigate /library/app/620@450');
     });
 
     it('a second open while one runs is ignored', () => {
@@ -125,7 +125,7 @@ describe('openTransition', () => {
     it('cancel after the hand-over removes the bridge and restores Home; a later ready does nothing', () => {
         const { t, bridge, undo, fireReady } = setup();
         t.open(620, 'morph');
-        vi.advanceTimersByTime(400);
+        vi.advanceTimersByTime(500);
         t.cancel();
         expect(bridge.remove).toHaveBeenCalledTimes(1);
         expect(undo).toHaveBeenCalledTimes(1);

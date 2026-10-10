@@ -179,7 +179,7 @@ describe('mountOpenBridge', () => {
         expect(f.clone.classList.add).toHaveBeenCalledWith('gh-bridge');
         bridge.fadeOut(120);
         expect(box.style.opacity).toBe('0');
-        expect(box.style.transition).toBe('opacity 120ms ease');
+        expect(box.style.transition).toBe('opacity 120ms ease-in-out');
         bridge.remove();
         expect(box.remove).toHaveBeenCalled();
     });

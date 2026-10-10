@@ -50,17 +50,20 @@ export const HERO_PRELOAD_DELAY_MS = 150;
 export const OPEN_TIMINGS = {
     leave: 220,
     infoFade: 180,
-    morph: 360,
+    morph: 450,
     /** The morph's last part, as it comes to rest: the page's exact look (the glass's blur, the pill's round ends) fades in. */
-    settle: 140,
+    settle: 180,
     feedHero: 300,
     feedUi: 220,
-    bridgeFade: 120,
+    bridgeFade: 300,
     readyCap: 500,
     revealDelay: 60,
     reveal: 200,
     leaveDrop: 70,
     feedRise: 14,
 } as const;
-/** The morph's easing (the prototype's; SLIDE_EASE's family). */
-export const MORPH_EASE = 'cubic-bezier(.2,.8,.2,1)';
+/**
+ * The morph's easing: a gentle start and a long, soft landing (the prototype's .2,.8,.2,1 jumped off the press and
+ * still crept at the end; Michael on the device: slower and smoother, so the hand-over cannot be seen).
+ */
+export const MORPH_EASE = 'cubic-bezier(.3,.55,.15,1)';

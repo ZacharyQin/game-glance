@@ -44,7 +44,8 @@ export function mountOpenBridge(root: HTMLElement, css = '', extras: Element[] =
     let removed = false;
     return {
         fadeOut(ms: number) {
-            box.style.transition = `opacity ${ms}ms ease`;
+            // Eased at both ends: the copy and the page differ only in sub-pixel rendering, which a soft, slow fade hides.
+            box.style.transition = `opacity ${ms}ms ease-in-out`;
             box.style.opacity = '0';
         },
         remove() {

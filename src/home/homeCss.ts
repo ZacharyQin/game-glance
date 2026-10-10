@@ -468,7 +468,7 @@ export function openingRules(): string[] {
         rule(`${MT}${i === 1 ? '[data-gh-shells="2"]' : ''} .gh-open-shell[data-i="${i}"]`, `transform: none; opacity: 1; transition: ${move}, opacity ${T.morph}ms ease`),
     ];
     // The morph's last part: the page's exact look fades in as the movers come to rest (opacity only).
-    const settle = `opacity ${T.settle}ms ease ${T.morph - T.settle}ms`;
+    const settle = `opacity ${T.settle}ms ease-in-out ${T.morph - T.settle}ms`;
     return [
         // Always there, hidden: the page's scrims over Home's, the opened game's hero (heroFade), the glass panels.
         rule('.gh-scrim-page', `background: ${PAGE_SCRIMS}; opacity: 0`),

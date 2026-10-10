@@ -410,7 +410,7 @@ describe('homeCss open transition', () => {
     it("the morph ends on the page's own look: the glass gets the page's tint and blur, the pill its exact round shape (opacity only)", () => {
         const all = rules(css);
         const body = (pred: (sel: string) => boolean) => all.filter(([sel]) => pred(sel)).map(([, b]) => b).join(' ');
-        const settle = 'opacity 140ms ease 220ms';
+        const settle = 'opacity 180ms ease-in-out 270ms';
         // The glass: a dark unblurred layer while moving, the page's (.38 and a 16 px blur) as it settles.
         expect(body((sel) => sel === '.gh-open-shell::after')).toMatch(/background:\s*rgba\(12,16,22,\.38\)/);
         expect(body((sel) => sel === '.gh-open-shell::after')).toMatch(/backdrop-filter:\s*blur\(16px\)/);

@@ -203,7 +203,7 @@ describe('openMotion', () => {
 
 describe('open timings', () => {
     it('match the spec', () => {
-        expect(OPEN_TIMINGS).toEqual({ leave: 220, infoFade: 180, morph: 360, settle: 140, feedHero: 300, feedUi: 220, bridgeFade: 120, readyCap: 500, revealDelay: 60, reveal: 200, leaveDrop: 70, feedRise: 14 });
-        expect(MORPH_EASE).toBe('cubic-bezier(.2,.8,.2,1)');
+        expect(OPEN_TIMINGS).toEqual({ leave: 220, infoFade: 180, morph: 450, settle: 180, feedHero: 300, feedUi: 220, bridgeFade: 300, readyCap: 500, revealDelay: 60, reveal: 200, leaveDrop: 70, feedRise: 14 });
+        expect(MORPH_EASE).toBe('cubic-bezier(.3,.55,.15,1)');
     });
 });
