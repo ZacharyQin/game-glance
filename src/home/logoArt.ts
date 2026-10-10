@@ -1,4 +1,4 @@
-import { loadWithTimeout } from './accentSample';
+import { displayInfo, loadDecoded, logoCopy, makeCopy } from './artShrink';
 import { browserStores, logoUrls } from './artwork';
 import { alphaBounds, knownLogo, LogoChoice, LogoTrim, measureSize, rememberLogo, scaleTrim } from './logo';
 
@@ -7,8 +7,6 @@ import { alphaBounds, knownLogo, LogoChoice, LogoTrim, measureSize, rememberLogo
  * loads is decoded and measured), shared by everyone asking at the same time, remembered for the session (home/logo),
  * and pre-loaded for the games either side of the selection, so L1/R1 draw the next logo on the very step.
  */
-
-const LOAD_TIMEOUT_MS = 4000;
 
 /** Lookups in flight, by game and url list, so a pre-load and the selection share one load. */
 const inFlight = new Map<string, Promise<LogoChoice | null>>();
@@ -21,24 +19,7 @@ export function logoList(appId: number): { urls: string[]; key: string } {
 
 /** Loads and decodes `url` (readable pixels: Steam's own files are the page's origin, its image server allows any). */
 function loadImage(url: string): Promise<HTMLImageElement | null> {
-    try {
-        return loadWithTimeout<HTMLImageElement>((done) => {
-            const img = new Image();
-            img.crossOrigin = 'anonymous';
-            img.onload = () => {
-                try {
-                    if (typeof img.decode === 'function') img.decode().then(() => done(img), () => done(img));
-                    else done(img);
-                } catch {
-                    done(img);
-                }
-            };
-            img.onerror = () => done(null);
-            img.src = url;
-        }, LOAD_TIMEOUT_MS);
-    } catch {
-        return Promise.resolve(null);
-    }
+    return loadDecoded(url, true);
 }
 
 /** The visible part of a loaded logo, read from a smaller copy of its pixels; null when they cannot be read. */
@@ -63,7 +44,11 @@ async function lookup(appId: number, urls: string[], key: string): Promise<LogoC
     for (const url of urls) {
         const img = await loadImage(url);
         if (!img || !(img.naturalWidth > 0)) continue;
-        const choice: LogoChoice = { url, trim: measure(img), natural: { width: img.naturalWidth, height: img.naturalHeight } };
+        const file: LogoChoice = { url, trim: measure(img), natural: { width: img.naturalWidth, height: img.naturalHeight } };
+        // A logo far bigger than it is drawn (custom art: 3841x5405) is drawn from a smaller copy (home/artShrink).
+        const copy = logoCopy(file, displayInfo().perCanvas);
+        const src = copy ? await makeCopy(url, copy.natural, 'image/png') : null;
+        const choice: LogoChoice = copy && src ? { ...copy, src } : file;
         rememberLogo(appId, key, choice);
         return choice;
     }

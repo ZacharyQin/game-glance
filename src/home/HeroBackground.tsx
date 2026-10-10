@@ -1,40 +1,26 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { LOG_PREFIX } from '../constants';
 import { browserStores, capsuleUrls, heroUrls } from './artwork';
-import { loadWithTimeout } from './accentSample';
+import { displayInfo, loadArt } from './artShrink';
 import { HeroLayer, nextHeroLayers, settledHeroLayers } from './heroLayers';
 import { heroSources, shouldMemoArt } from './homeView';
 import { HERO_FADE_MS, HERO_PRELOAD_DELAY_MS } from './motion';
 
 export type Art = { mode: 'full'; url: string } | { mode: 'fallback'; url: string } | { mode: 'none' };
 
-const LOAD_TIMEOUT_MS = 4000;
 /** Games whose resolved art is kept (more than any recents row). */
 const ART_MEMO_MAX = 48;
 
-function loads(url: string): Promise<boolean> {
-    try {
-        return loadWithTimeout<boolean>((done) => {
-            const img = new Image();
-            // Decoded before it is used, so the crossfade starts on a ready image (the background reuses the decode).
-            img.onload = () => {
-                try {
-                    if (typeof img.decode === 'function') img.decode().then(() => done(true), () => done(true));
-                    else done(true);
-                } catch {
-                    done(true);
-                }
-            };
-            img.onerror = () => done(false);
-            img.src = url;
-        }, LOAD_TIMEOUT_MS).then((ok) => ok === true, () => false);
-    } catch {
-        return Promise.resolve(false);
-    }
-}
-
+/**
+ * The first url that loads, decoded, as the url to draw: a smaller copy when the file is far bigger than the screen or a
+ * big PNG (home/artShrink), so showing it never waits on a long decode.
+ */
 async function firstThatLoads(urls: string[]): Promise<string | null> {
-    for (const url of urls) if (await loads(url)) return url;
+    const screen = displayInfo();
+    for (const url of urls) {
+        const drawn = await loadArt(url, screen);
+        if (drawn) return drawn;
+    }
     return null;
 }
 

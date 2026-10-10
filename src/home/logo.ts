@@ -18,6 +18,8 @@ export interface LogoTrim {
 /** What a game's logo ended on: the url, its visible part (null when its pixels could not be read) and the file's size. */
 export interface LogoChoice {
     url: string;
+    /** What to draw when not the file itself: a smaller copy (home/artShrink); `natural` and `trim` are then the copy's. */
+    src?: string;
     trim: LogoTrim | null;
     natural: { width: number; height: number };
 }

@@ -22,7 +22,9 @@ import { FamilyPill, SourcePill } from '../components/SourcePill';
 import { familyPillLabel } from '../data/family';
 import { GameStatusBar } from '../components/GameStatusBar';
 import { RecentsRow } from './RecentsRow';
-import { CARD_SCALE_HANDHELD, cardScaleFor, clampFocus, isLibraryFocus, recentsGeometry } from './recentsLayout';
+import { CARD_SCALE_HANDHELD, cardScaleFor, clampFocus, heroIndex, isLibraryFocus, recentsGeometry } from './recentsLayout';
+import { useFastCycle } from './fastCycle';
+import { noteDisplay } from './artShrink';
 import { canvasStyle, homeCanvas } from './scale';
 import { OpenExtras } from './OpenExtras';
 import { TitleBlock } from './TitleBlock';
@@ -132,6 +134,14 @@ export function SpotlightHome() {
     const data = useHomeData(recentIndex);
     const focusIndex = clampFocus(data.games.length, recentIndex);
     const onLibrary = isLibraryFocus(data.games.length, focusIndex);
+    // A fast run of L1/R1 or Left/Right (home/fastCycle): the hero, the accent and the wide card hold what they showed
+    // while only the selection moves along the narrow cards; the run ends on the selection, shown at once.
+    const cycle = useFastCycle(focusIndex);
+    const shownAt = heroIndex(data.games.length, cycle.shown);
+    const shownGame = shownAt === null ? null : data.games[shownAt] ?? null;
+    const heldAccent = useRef(data.accent);
+    if (!cycle.cycling) heldAccent.current = data.accent;
+    const accent = heldAccent.current;
     // The zone holding gamepad focus, as reported by each zone's focus events; tabs/feed raise the sheet.
     const [zone, setZone] = useState<Zone>('recents');
     // Set once Home has had focus in this mount: until then the game cards claim Steam's preferred focus (Home opens on
@@ -221,8 +231,14 @@ export function SpotlightHome() {
             console.warn(`${LOG_PREFIX} Home: game card navigation failed`, error);
         }
     };
-    // The expanded (selected) card: the open transition's source and the menu's anchor; the row itself if not found.
-    const selectedCard = () => (recentsRef.current?.querySelector<HTMLElement>('.gh-cap-wide') ?? recentsRef.current);
+    // The expanded (selected) card: the open transition's source and the menu's anchor (narrow during a fast run); the row itself if not found.
+    const selectedCard = () => (recentsRef.current?.querySelector<HTMLElement>('.gh-cap-wide') ?? recentsRef.current?.querySelector<HTMLElement>('.gh-cap-sel') ?? recentsRef.current);
+    // After the next frames in Big Picture's window (a run just ended: the wide card and the hero first have to be up).
+    const afterFrames = (run: () => void) => {
+        const view = rootRef.current?.ownerDocument?.defaultView;
+        if (view?.requestAnimationFrame) view.requestAnimationFrame(() => view.requestAnimationFrame(run));
+        else setTimeout(run, 50);
+    };
     // A on the cards: the selected game's page (expanding from its card), or the Library on the Library card. One
     // action per press (A and a touch can both arrive).
     const lastOpen = useRef(0);
@@ -232,7 +248,14 @@ export function SpotlightHome() {
         lastOpen.current = now;
         try {
             if (onLibrary || !data.focused) return openLibrary();
-            openGame(data.focused.appId, selectedCard());
+            const appId = data.focused.appId;
+            // In a fast run Home still shows another game: it shows the selected one first, then opens it from there.
+            if (cycle.cycling) {
+                cycle.settle();
+                afterFrames(() => openGame(appId, selectedCard()));
+                return;
+            }
+            openGame(appId, selectedCard());
         } catch (error) {
             console.warn(`${LOG_PREFIX} Home: opening the selected game failed`, error);
         }
@@ -292,6 +315,10 @@ export function SpotlightHome() {
     }, [resolved, zone, focusIndex, gameIds]);
     const size = useBoxSize(rootRef);
     const canvas = homeCanvas(size?.width ?? 0, size?.height ?? 0);
+    // The screen in device px, for the size art is loaded at (home/artShrink).
+    useLayoutEffect(() => {
+        if (size) noteDisplay(size.width, size.height, rootRef.current?.ownerDocument?.defaultView?.devicePixelRatio ?? 1, canvas.scale);
+    }, [size, canvas.scale]);
     // Width is the authored one; height follows the real screen so the reserved bars sit on Steam's bars, and the
     // whole stack moves down into the slack under the tab strip (homeCss.stackShift), or with the bottom section hidden
     // into the tab strip's place too.
@@ -337,10 +364,10 @@ export function SpotlightHome() {
     }, [contentUp, restoring]);
 
     return (
-        <div ref={rootRef} className="gh-root" style={{ '--glance-accent': data.accent, '--glance-accent-text': legibleAccent(data.accent), '--gh-dim': sheetUp ? DIM_SHEET : DIM_REST, '--gh-side': `${side}px`, '--gh-row': `${rowInset(side, tv)}px`, '--gh-pill': `${pillInset(tv)}px`, '--gh-bottom': `${legend}px`, '--gh-shift': `${stackShift(logicalHeight, legend, false)}px`, '--gh-raise': `${FEED_SHEET.raise + raiseDelta}px` } as CSSProperties}>
+        <div ref={rootRef} className="gh-root" style={{ '--glance-accent': accent, '--glance-accent-text': legibleAccent(accent), '--gh-dim': sheetUp ? DIM_SHEET : DIM_REST, '--gh-side': `${side}px`, '--gh-row': `${rowInset(side, tv)}px`, '--gh-pill': `${pillInset(tv)}px`, '--gh-bottom': `${legend}px`, '--gh-shift': `${stackShift(logicalHeight, legend, false)}px`, '--gh-raise': `${FEED_SHEET.raise + raiseDelta}px` } as CSSProperties}>
             <style>{css}</style>
             {/* No game until the restore is applied (Home back on B): the first game's art would flash before the selected one's. */}
-            <HeroBackground appId={resolved ? game?.appId ?? null : null} detailsVersion={data.detailsVersion} neighbours={heroNeighbours} />
+            <HeroBackground appId={resolved ? shownGame?.appId ?? null : null} detailsVersion={data.detailsVersion} neighbours={heroNeighbours} />
             {/* The opened game's hero (a feed card's, homeCss.openingRules), the feed sheet's dim, and the page's shading. */}
             <div className="gh-hero-open" />
             <div className="gh-scrim gh-scrim-dim" />
@@ -365,7 +392,7 @@ export function SpotlightHome() {
                                     {onLibrary ? (
                                         <TitleBlock eyebrow={eyebrowText(null, true)} title={tr('viewLibrary')} chips={data.libraryChips} />
                                     ) : (
-                                        <TitleBlock eyebrow={collectionEyebrow(data.rowCollection, eyebrowText(data.lastPlayedLabel, false, data.focusedIsNew, data.rowCollection !== null))} title={game.name} chips={data.chips} appId={game.appId} logo={gameLogo} version={data.detailsVersion} />
+                                        <TitleBlock eyebrow={collectionEyebrow(data.rowCollection, eyebrowText(data.lastPlayedLabel, false, data.focusedIsNew, data.rowCollection !== null))} title={game.name} chips={data.chips} appId={game.appId} logo={gameLogo} version={data.detailsVersion} resolve={!cycle.cycling} />
                                     )}
                                     <ActionRow
                                         game={onLibrary ? null : game}
@@ -384,7 +411,7 @@ export function SpotlightHome() {
                                         {family && <FamilyPill label={family} className="gh-family" iconClassName="gh-family-icon" />}
                                     </SourcePill>
                                 )}
-                                <RecentsRow games={data.games} selected={focusIndex} geometry={geometry} nav={recentsNav} />
+                                <RecentsRow games={data.games} selected={focusIndex} geometry={geometry} nav={recentsNav} expand={!cycle.cycling} />
                                 <FeedSheet
                                         data={data}
                                         raised={sheetUp}
@@ -406,8 +433,8 @@ export function SpotlightHome() {
                     </div>
                 </div>
             </div>
-            {/* Open transition: the page's parts Home draws as it turns into the page (hidden until opening). */}
-            {game && <OpenExtras description={data.description} hltb={data.hltb} playedMinutes={data.playedMinutes} locale={data.locale} source={data.source} family={family} playedMissing={!data.chips.some((c) => c.key === 'played')} />}
+            {/* Open transition: the page's parts Home draws as it turns into the page (hidden until opening; not built during a fast run). */}
+            {game && !cycle.cycling && <OpenExtras description={data.description} hltb={data.hltb} playedMinutes={data.playedMinutes} locale={data.locale} source={data.source} family={family} playedMissing={!data.chips.some((c) => c.key === 'played')} />}
         </div>
     );
 }

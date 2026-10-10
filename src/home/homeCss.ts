@@ -344,6 +344,9 @@ export function homeCss(cardScale: number = CARD_SCALE_HANDHELD): string {
         // outside it and an accent glow even on every side (no downward offset, no bar along its bottom edge: on the Ally
         // those read as the card being cut at the bottom). Unfocused it keeps its resting look.
         rule('.gh-recents-focus .gh-cap-wide, .gh-recents-focus .gh-cap-lib-on', `box-shadow: 0 0 0 2px rgba(255,255,255,.9), 0 0 ${k(28)}px ${k(2)}px var(--glance-accent); --gh-edge: rgba(255,255,255,.35)`),
+        // A fast L1/R1 run (home/fastCycle): the selected card stays narrow and is ringed the same way.
+        rule('.gh-cap-sel', '--gh-edge: rgba(255,255,255,.35)'),
+        rule('.gh-recents-focus .gh-cap-sel', `box-shadow: 0 0 0 2px rgba(255,255,255,.9), 0 0 ${k(28)}px ${k(2)}px var(--glance-accent); --gh-edge: rgba(255,255,255,.35)`),
         // "View more in your Library" card.
         rule('.gh-cap-lib', '--gh-edge: rgba(255,255,255,.14)'),
         rule('.gh-cap-lib.gh-cap-lib-on', '--gh-edge: rgba(255,255,255,.35)'),
