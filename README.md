@@ -26,7 +26,7 @@ came from), and can replace Steam's Home with **Spotlight Home**: your games, on
   buttons, and Steam Cloud as a small icon coloured by its sync state.
 - **Store pill.** Where the game comes from, with the store's icon: Steam, GOG, Epic, Amazon, Battle.net, Ubisoft,
   Xbox Cloud or Heroic. A game borrowed through **Steam Families** gets a second pill with the owner's name
-  ("Family Sharing · Grave").
+  ("Family Sharing · Lender").
 - **Clean look** (optional): only the art and one row at the bottom (Play, the buttons, and a small card with your play
   time, achievements and HowLongToBeat's main story), without the description and HowLongToBeat cards.
 - **Non-Steam games.** Games added by [Heroic](https://heroicgameslauncher.com) or

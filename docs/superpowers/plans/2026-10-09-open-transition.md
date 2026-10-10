@@ -30,8 +30,8 @@
 - **Positions:** every target position derives from constants exported by `src/styles/themeCss.ts`. The theme's CSS output must stay byte-identical (`tests/styles/themeCss.test.ts` snapshots).
 - **Failure behaviour:** anything that can't be measured, mounted or scheduled still opens the page at once; a press during a transition is ignored; `cancelOpen()` removes every trace.
 - **Commits:**
-  - identity from env vars `GIT_AUTHOR_NAME/EMAIL` and `GIT_COMMITTER_NAME/EMAIL` = `Michael Palma <18511803+michpalm@users.noreply.github.com>` (the clone's own git config has a personal address)
-  - every message ends with both `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>` and `Co-Authored-By: Michael Palma <18511803+michpalm@users.noreply.github.com>`
+  - identity from env vars `GIT_AUTHOR_NAME/EMAIL` and `GIT_COMMITTER_NAME/EMAIL` set to the maintainer's public noreply address (not the clone's own git config)
+  - every message ends with a `Co-Authored-By: Claude` line for the model used
 - **Builds:** no zip and no push unless Michael asks. Test builds go to the Ally through `scripts/package.sh` + `scripts/serve.sh`.
 - **Captures:** device captures (fixtures, screenshots) must never include the Friends tab, friends' names or Steam IDs.
 
@@ -399,7 +399,7 @@ The hand-over happens at `morph` (morph), `feedHero` (heroFade) or `feedUi` (fad
 
 - [ ] **Step 1: Build and serve a test zip.** Only when Michael asks; the rule is no zip until told.
   Run: `scripts/package.sh && cp out/game-glance.zip out/game-glance-test-$(git rev-parse --short HEAD).zip`. The server on port 8765 serves `out/`.
-  Expected: Decky installs from `http://192.168.1.11:8765/game-glance.zip`.
+  Expected: Decky installs from the test build's local URL (`http://<dev-machine-LAN-ip>:8765/game-glance.zip`).
 - [ ] **Step 2: Frame timing on the real build.** Rerun Task 1's rAF measurement on a real open (docked and handheld).
   Expected: max frame ≤ 16.7 ms during the morph, and the bridge gone within 500 ms of the hand-over.
 - [ ] **Step 3: Michael's pass:**

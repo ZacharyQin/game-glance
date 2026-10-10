@@ -1,7 +1,7 @@
 # Open transition: Home to the game page
 
 Date: 2026-10-09. Status: design agreed with Michael after the interactive prototype
-(private claude.ai page "Game Glance open transition"); waiting for spec review.
+(interactive prototype, shared privately); waiting for spec review.
 
 ## Why
 
