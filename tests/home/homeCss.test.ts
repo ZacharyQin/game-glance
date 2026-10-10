@@ -525,6 +525,16 @@ describe('homeCss logo', () => {
     });
 });
 
+describe('homeCss accent on hidden bars', () => {
+    it('bars nobody sees take a new accent at once (no colour transition): an unselected card, the hidden feed and tabs', () => {
+        const css = homeCss();
+        // Each L1/R1 step changes the accent: these ran ~30 colour transitions a step, all invisible (measured on the Ally).
+        expect(css).toMatch(/\.gh-cap:not\(\.gh-cap-focus\) \.gh-cap-bar \{ transition: opacity 250ms !important; \}/);
+        expect(css).toMatch(/\.gh-card:not\(\.gh-card-focus\) \.gh-card-bar \{ transition: opacity 250ms !important; \}/);
+        expect(css).toMatch(/\.gh-page:not\(\.gh-page-up\) \.gh-tab-line \{ transition: none !important; \}/);
+    });
+});
+
 describe('statusCss', () => {
     it("one status bar at a time: while Home's is up, the page's (mounted later, on the same body) stays invisible", () => {
         // Two stacked bars drew their white text twice, brighter, as Home's frozen copy faded over them (Michael: it blinked white).

@@ -334,6 +334,8 @@ export function homeCss(cardScale: number = CARD_SCALE_HANDHELD): string {
         rule('.gh-cap-cover', `position: absolute; right: 0; top: 0; width: ${geo.capsuleW}px; height: 100%; background-size: cover; background-position: center; background-repeat: no-repeat; opacity: 1`),
         rule('.gh-cap-bar', `position: absolute; left: 0; right: 0; bottom: 0; height: ${k(3)}px; background: var(--glance-accent); opacity: 0; transition: opacity 250ms, background ${ACCENT_MS}ms`),
         rule('.gh-cap.gh-cap-focus .gh-cap-bar', 'opacity: 1'),
+        // A bar nobody sees takes a new accent at once (each L1/R1 step changes it: ~30 invisible colour transitions a step).
+        rule('.gh-cap:not(.gh-cap-focus) .gh-cap-bar', 'transition: opacity 250ms'),
         // "New" badge on a game new to the library: a small light pill at the top left, over the art.
         rule('.gh-cap-new', `position: absolute; left: ${k(8)}px; top: ${k(8)}px; margin: 0; padding: ${k(3)}px ${k(7)}px; border-radius: 999px;
             font-size: ${k(8.5)}px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; line-height: 1.2; white-space: nowrap;
@@ -367,6 +369,8 @@ export function homeCss(cardScale: number = CARD_SCALE_HANDHELD): string {
         rule('.gh-tab-line', `position: absolute; left: 0; right: 0; bottom: 0; height: 3px; border-radius: 2px; background: var(--glance-accent); opacity: 0; box-shadow: none;
             transition: opacity 250ms, box-shadow 250ms, background ${ACCENT_MS}ms`),
         rule('.gh-tab.gh-tab-on .gh-tab-line', 'opacity: .55'),
+        // The tabs are out of sight while the sheet is down: their line takes a new accent at once.
+        rule('.gh-page:not(.gh-page-up) .gh-tab-line', 'transition: none'),
         rule('.gh-tab.gh-tab-focus .gh-tab-line', 'opacity: 1; box-shadow: 0 0 14px 2px var(--glance-accent)'),
         // Friends tab: people icon and the number of friends online, after the label.
         rule('.gh-tab-count', `display: inline-flex; align-items: center; gap: 4px; margin: 0 0 0 8px; font-size: 11px; letter-spacing: .04em; line-height: 1;
@@ -435,6 +439,7 @@ export function homeCss(cardScale: number = CARD_SCALE_HANDHELD): string {
             display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden`),
         rule('.gh-card-bar', `position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: var(--glance-accent); opacity: 0; transition: opacity 250ms, background ${ACCENT_MS}ms`),
         rule('.gh-card.gh-card-focus .gh-card-bar', 'opacity: 1'),
+        rule('.gh-card:not(.gh-card-focus) .gh-card-bar', 'transition: opacity 250ms'),
         // Friend avatar: a 42px square with Steam's slightly rounded corners, top-left, with a square presence ring (the
         // box-shadow follows the radius; see below).
         rule('.gh-avatar', `position: absolute; left: 14px; top: 14px; width: 42px; height: 42px; border-radius: ${AVATAR_RADIUS}px; overflow: hidden;
