@@ -761,6 +761,12 @@ describe('the page arriving after the open transition', () => {
         // The other new parts still arrive.
         for (const sel of ['.gg-family', '[data-stat="size"]']) expect(buildArrivingCss(full, 'spotlight', 'parts', false, { desc: true, hltb: true }), sel).toContain(sel);
     });
+    it('the family pill is there at once when Home showed one (it moves with the store pill), and arrives otherwise', () => {
+        for (const look of ['spotlight', 'clean'] as const) {
+            expect(buildArrivingCss(full, look, 'parts', false, { family: true }), look).not.toContain('.gg-family');
+            expect(buildArrivingCss(full, look, 'parts', false), look).toContain('.gg-family');
+        }
+    });
     it("revealing 'parts' fades opacity only: a part placed by its own transform keeps it (the family pill's translateY(-50%) next to the store pill)", () => {
         for (const look of ['spotlight', 'clean'] as const) {
             const css = buildArrivingCss(full, look, 'parts', true);

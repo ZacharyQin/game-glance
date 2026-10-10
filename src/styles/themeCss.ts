@@ -571,14 +571,15 @@ const ARRIVE_RISE_PX = 14;
  */
 export function buildArrivingCss(
     classes: ThemeClasses, look: 'spotlight' | 'clean', mode: 'parts' | 'all', revealed = false,
-    extra: { cloud?: boolean; bars?: string[]; desc?: boolean; hltb?: boolean } = {},
+    extra: { cloud?: boolean; bars?: string[]; desc?: boolean; hltb?: boolean; family?: boolean } = {},
 ): string {
     const { header, details, root, play } = classes;
     if (!(cls(header, 'TopCapsule') && cls(details, 'InnerContainer') && cls(details, 'AppDetailsOverviewPanel') && cls(root, 'AppDetailsContainer'))) return '';
     // Not the cloud button: Home's moves into its place, so the page's own must be there at once. Unless Home showed
     // none (`extra.cloud`: its state was not known yet), when the page's arrives like the other new parts.
     const cloud = extra.cloud ? cls(play, 'CloudStatusRow') : null;
-    const shared = ['[data-stat="size"]', '.gg-family', ...(cloud ? [cloud] : [])];
+    // Nor the family pill when Home showed one (`extra.family`): it moved in with Home's store pill.
+    const shared = ['[data-stat="size"]', ...(extra.family ? [] : ['.gg-family']), ...(cloud ? [cloud] : [])];
     // Spotlight: the description and the HowLongToBeat card's rest, unless Home drew them as it opened (`extra.desc`,
     // `extra.hltb`: home/OpenExtras), when the page's are there at once under Home's copy.
     const desc = extra.desc ? [] : ['.gg-desc'];

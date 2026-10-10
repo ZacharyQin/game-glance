@@ -265,7 +265,9 @@ export function openGame(appId: number, source?: HTMLElement | null) {
         const homeBars = variant === 'morph' && look === 'clean' && root ? readChipTexts(root).filter((c) => c.bar).map((c) => c.key) : undefined;
         // Spotlight: the description and the HowLongToBeat card's rest Home draws as it turns into the page (OpenExtras).
         const extras = variant === 'morph' && look === 'spotlight' && root ? root.querySelector('.gh-open-extras')?.getAttribute('data-parts') ?? '' : '';
-        const intent: OpenIntent = { look: pageRestyled ? look : 'steam', mode: variant === 'morph' ? 'parts' : 'all', eyebrow, homeCloud, homeBars, ...extrasFlags(extras) };
+        // The family library pill moves in with Home's store pill: the page's must not arrive again (it blinked).
+        const homeFamily = variant === 'morph' && root ? root.querySelector('.gh-family') !== null : undefined;
+        const intent: OpenIntent = { look: pageRestyled ? look : 'steam', mode: variant === 'morph' ? 'parts' : 'all', eyebrow, homeCloud, homeBars, homeFamily, ...extrasFlags(extras) };
         next = { root, appId, variant, look, heroUrl, intent, extras };
         controller().open(appId, variant);
     } catch (error) {
