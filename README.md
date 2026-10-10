@@ -54,8 +54,12 @@ An optional new Home screen, off by default (Quick Access → Game Glance → Sp
   row below). Games new to your library join the recent games, marked NEW. The selected game opens into a wide card;
   the row ends in a Library card.
 - **Controls.** Left and Right pick a game, A opens its page, up reaches Play and the buttons. **L1 and R1** pick the
-  previous or next game from anywhere above the tabs and put focus on Play (hold to keep going), so a game starts in two presses. The
-  gear button, or View/Select, opens Steam's own menu for the game.
+  previous or next game from anywhere above the tabs and put focus on Play (hold to keep going), so a game starts in two presses. Held,
+  the d-pad and stick go at the same steady pace as L1 and R1. While you press quickly through the games only the
+  highlight moves; the art and colour catch up once you stop. The gear button, or View/Select, opens Steam's own menu
+  for the game.
+- **Opening a game.** Home turns into the game's page: the art stays put while the title, Play and the buttons move to
+  their places on the page and the chips grow into its cards.
 - **Steam Cloud.** For games with cloud saves, Steam's and Unifideck's, a cloud button shows the sync state and opens
   Steam's sync dialog when there is a problem.
 - **Status bar.** The time (12 or 24 hours, as set in Steam's Settings → System), battery (a bolt while charging, red
