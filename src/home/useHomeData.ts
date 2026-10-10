@@ -18,6 +18,7 @@ import { BUMPER_REPEAT_MS } from './focusZones';
 import { steamLanguageToLocale } from '../logic/format';
 import { heroicStoreLabel } from '../logic/heroic';
 import { accentFor, DEFAULT_ACCENT } from './accent';
+import { accentMemo } from './accentMemo';
 import { sampleAccent } from './accentSample';
 import { DownloadState } from './downloadProgress';
 import { useDownload } from './useDownload';
@@ -244,7 +245,7 @@ function readSteamId(): string | null {
 }
 
 // Session memory so a re-opened Home paints the last known values at once, then refreshes.
-const accentMemo = new Map<number, string>();
+// (The accents are in home/accentMemo, shared with the game page.)
 let recommendedMemo: RecommendedCard[] = [];
 /** The last wishlist deal cards, for an instant second row on the next Home open. */
 let dealsMemo: DealCard[] = [];

@@ -28,6 +28,7 @@ import { useLaunchOverlay } from '../styles/launchOverlay';
 import { useOpenArrival } from '../hooks/useOpenArrival';
 import { openPending } from '../data/openIntent';
 import { knownDescription, peekHltb, rememberDescription, rememberHltb } from '../home/warmup';
+import { accentMemo, knownAccent } from '../home/accentMemo';
 import { accentCss, arrivingCss, cleanCss, downloadCss, launchCss, launchSelectors, themeCss, unifideckCss } from '../styles/theme';
 import { CleanInfo } from './CleanInfo';
 import { ErrorBoundary } from './ErrorBoundary';
@@ -48,8 +49,6 @@ interface Props {
     details: unknown;
 }
 
-/** Accents resolved this session, so a page opened again starts on its game's colour instead of the default. */
-const accentMemo = new Map<number, string>();
 
 /** The game's accent (same source and cache as Spotlight Home), only while restyled; undefined until known. */
 function useGameAccent(appId: number, active: boolean): string | undefined {
@@ -58,7 +57,8 @@ function useGameAccent(appId: number, active: boolean): string | undefined {
         accentMemo.set(appId, color);
         return color;
     });
-    return active ? (loaded ?? accentMemo.get(appId)) : undefined;
+    // Until it answers, the colour already known this session (Home's too: home/accentMemo), so the first frame has it.
+    return active ? knownAccent(loaded, appId) : undefined;
 }
 
 /** "Last played · Today" from Steam's overview (Unix seconds); null if never played or unreadable. */
