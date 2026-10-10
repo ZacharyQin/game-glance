@@ -268,6 +268,18 @@ describe('mountOpenBridge', () => {
         expect(seen).toEqual(['0', '1']);
         expect(box.style.transition).toBe('opacity 150ms ease-in-out');
     });
+    it('leaves out the parts of Home that are gone by the hand-over (the game row, tabs and feed): half the layout work', () => {
+        const f = fakeDom();
+        const dropped = [{ remove: vi.fn() }, { remove: vi.fn() }];
+        const asked: string[] = [];
+        (f.clone as unknown as { querySelectorAll(sel: string): unknown[] }).querySelectorAll = (sel: string) => {
+            asked.push(sel);
+            return dropped;
+        };
+        mountOpenBridge(f.root, '', [], ['.gh-recents', '.gh-feed']);
+        expect(asked).toEqual(['.gh-recents, .gh-feed']);
+        for (const d of dropped) expect(d.remove).toHaveBeenCalled();
+    });
     it("carries the given stylesheet while it is up (Steam's page-enter fade switched off)", () => {
         const f = fakeDom();
         mountOpenBridge(f.root, '.x { opacity: 1 }');

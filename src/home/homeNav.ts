@@ -224,7 +224,8 @@ function controller(): OpenTransition {
             // Steam's footer is one element over every page: the copy would cover it, so it carries a copy of it too.
             const footer = steamFooter();
             const extras = [...doc.querySelectorAll('.gg-status-host'), ...(footer ? [...doc.querySelectorAll(footer)] : [])];
-            const bridge = mountOpenBridge(c.root, steamEnterOffCss(), extras);
+            // Home's game row, tabs and feed have left (or faded with the rest) by the hand-over: the copy goes without them.
+            const bridge = mountOpenBridge(c.root, steamEnterOffCss(), extras, ['.gh-recents', '.gh-tabs', '.gh-feed']);
             if (c.intent.look !== 'steam') return bridge;
             // Steam's own page draws no status bar of ours: give Steam's top bar back once the bridge is gone.
             return { fadeIn: (ms: number) => bridge.fadeIn(ms), fadeOut: (ms: number) => bridge.fadeOut(ms), remove: () => { bridge.remove(); clearSteamBarCover(doc); } };

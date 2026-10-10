@@ -12,7 +12,7 @@ import type { OpenBridge } from './openTransition';
 /** The bridge's fade: most of it early (the page's new parts show through soon), a long soft tail. */
 export const BRIDGE_FADE_EASE = 'cubic-bezier(.2,.65,.3,1)';
 
-export function mountOpenBridge(root: HTMLElement, css = '', extras: Element[] = []): OpenBridge {
+export function mountOpenBridge(root: HTMLElement, css = '', extras: Element[] = [], drop: string[] = []): OpenBridge {
     const doc = root.ownerDocument;
     const parent = doc?.body;
     if (!doc || !parent) throw new Error('Home has no document');
@@ -40,6 +40,9 @@ export function mountOpenBridge(root: HTMLElement, css = '', extras: Element[] =
     }
     const copy = root.cloneNode(true) as HTMLElement;
     copy.classList.add('gh-bridge');
+    // Parts already gone by the hand-over (`drop`: Home's game row, tabs and feed) are left out: on the Ally they were
+    // half the copy's style and layout work, in the frame Steam is busiest.
+    if (drop.length > 0) for (const el of [...copy.querySelectorAll(drop.join(', '))]) el.remove();
     box.appendChild(copy);
     // Layers Home draws outside its root (our status bar, which also keeps Steam's top bar hidden), copied over the top.
     for (const extra of extras) box.appendChild(extra.cloneNode(true));
