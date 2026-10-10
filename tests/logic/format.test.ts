@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { formatAchievements, formatHours, minutesToHours, steamLanguageToLocale } from '../../src/logic/format';
 
 describe('formatHours', () => {
@@ -42,5 +42,19 @@ describe('steamLanguageToLocale', () => {
 describe('formatAchievements', () => {
     it('one form everywhere (Home, the Clean panel and the Spotlight card), so the open transition never rewrites it', () => {
         expect(formatAchievements({ achieved: 4, total: 13 })).toBe('4 / 13');
+    });
+});
+
+describe('formatHours reuses its number formatter', () => {
+    it('builds one Intl.NumberFormat per locale and decimals, not one per call (Home formats on every L1/R1 step)', () => {
+        const spy = vi.spyOn(Intl, 'NumberFormat');
+        try {
+            for (let i = 0; i < 5; i++) formatHours(12.5 + i, 'sv-SE');
+            for (let i = 0; i < 5; i++) formatHours(12 + i, 'sv-SE');
+            expect(spy.mock.calls.length).toBeLessThanOrEqual(2);
+            expect(formatHours(12.5, 'sv-SE')).toBe('12,5 h');
+        } finally {
+            spy.mockRestore();
+        }
     });
 });
