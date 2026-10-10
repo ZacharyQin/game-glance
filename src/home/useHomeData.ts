@@ -589,7 +589,10 @@ export function useHomeData(focusIndex = 0): HomeData {
     useNeighbourDetails(restNeighbours);
     useAccentWarmup(gameIds, restNeighbours);
     const overrideVersion = useOverrideVersion();
-    useWarmup(games, focusIndex, recentsSettled && games.length > 0, (id) => readGameInfo(overview(id), undefined).isShortcut, bumpWarm);
+    useWarmup(games, focusIndex, recentsSettled && games.length > 0, (id) => {
+        const game = readGameInfo(overview(id), undefined);
+        return { isShortcut: game.isShortcut, heroic: game.heroic };
+    }, bumpWarm);
     // A new HowLongToBeat match for a game: what was remembered for the old one is dropped.
     const seenOverrides = useRef(overrideVersion);
     useEffect(() => {

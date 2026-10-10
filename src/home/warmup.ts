@@ -106,6 +106,91 @@ export async function warmHltb(games: HltbGame[], deps: HltbWarmDeps, isCancelle
     }
 }
 
+// ---- Descriptions --------------------------------------------------------------------------------------------------
+
+/** Pause after each description fetched online (the store), as the installed-games pre-load does. */
+export const DESCRIPTION_WARM_DELAY_MS = 1000;
+
+export interface DescriptionWarmGame {
+    appId: number;
+    name: string;
+    isShortcut: boolean;
+}
+
+export interface DescriptionWarmDeps {
+    /** A Steam game's description from the disk cache: the text, null for a cached "none", undefined when nothing is cached. */
+    readCached(appId: number, lang: string): Promise<string | null | undefined>;
+    /** Fetches (and caches) a game's description: the store, or for a non-Steam game Heroic's copy or the store. */
+    fetch(game: DescriptionWarmGame, lang: string): Promise<string | null>;
+    /** Whether going online is allowed (the "pre-load in the background" setting). */
+    allowNetwork(): boolean;
+    sleep(ms: number): Promise<void>;
+}
+
+/**
+ * Fills the description memo for `games` (in the order to do them), so the open transition can draw a game's description
+ * however soon it is opened: the disk cache first, which is instant; a game with nothing cached is fetched one at a time
+ * when the setting allows it, pausing after each. `onResult` is called for each game whose description it learned.
+ */
+export async function warmDescriptions(
+    games: DescriptionWarmGame[],
+    lang: string,
+    deps: DescriptionWarmDeps,
+    isCancelled: () => boolean,
+    onResult: (appId: number) => void = () => undefined,
+): Promise<void> {
+    for (const game of games) {
+        if (isCancelled()) return;
+        if (peekDescription(game.appId, lang) !== undefined) continue;
+        if (!game.isShortcut) {
+            const cached = await deps.readCached(game.appId, lang);
+            if (isCancelled()) return;
+            if (cached === null) continue;
+            if (typeof cached === 'string') {
+                rememberDescription(game.appId, lang, cached);
+                if (peekDescription(game.appId, lang) !== undefined) onResult(game.appId);
+                continue;
+            }
+        }
+        if (!deps.allowNetwork()) continue;
+        const text = await deps.fetch(game, lang);
+        if (isCancelled()) return;
+        if (text) {
+            rememberDescription(game.appId, lang, text);
+            onResult(game.appId);
+        }
+        await deps.sleep(DESCRIPTION_WARM_DELAY_MS);
+    }
+}
+
+// ---- Hero art ------------------------------------------------------------------------------------------------------
+
+/** Pause between two games' hero art (each a large image to load and decode), so they never arrive in a burst. */
+export const ART_WARM_GAP_MS = 250;
+
+export interface ArtWarmDeps {
+    /** Whether the game's art is already resolved this session. */
+    has(appId: number): boolean;
+    /** Resolves (loads and decodes) the game's art; never rejects. */
+    resolve(appId: number): Promise<unknown>;
+    sleep(ms: number): Promise<void>;
+}
+
+/**
+ * Resolves the hero art of every game in `ids` (in the order to do them), one at a time, so whichever is selected next, and
+ * opened, already has its art: Home shows it at once and the open transition morphs over it (only the games either side of
+ * the selection were ready before).
+ */
+export async function warmArt(ids: number[], deps: ArtWarmDeps, isCancelled: () => boolean): Promise<void> {
+    for (const id of ids) {
+        if (isCancelled()) return;
+        if (deps.has(id)) continue;
+        await deps.resolve(id);
+        if (isCancelled()) return;
+        await deps.sleep(ART_WARM_GAP_MS);
+    }
+}
+
 // ---- Achievements --------------------------------------------------------------------------------------------------
 
 /** How long to wait for Steam's details of one game before moving on (it answers in about 0.4 s when it has them). */

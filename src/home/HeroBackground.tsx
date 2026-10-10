@@ -52,8 +52,13 @@ function remember(appId: number, art: Art) {
     }
 }
 
+/** Whether a game's art is already resolved this session (the warm-up skips it). */
+export function artKnown(appId: number): boolean {
+    return artMemo.has(appId);
+}
+
 /** Hero art when the game has it; else the blurred-capsule fallback; else nothing (ink). Never rejects. */
-function resolveArt(appId: number): Promise<Art> {
+export function resolveArt(appId: number): Promise<Art> {
     const memo = artMemo.get(appId);
     if (memo) return Promise.resolve(memo);
     const pending = inFlight.get(appId);

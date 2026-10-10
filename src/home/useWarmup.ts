@@ -4,8 +4,12 @@ import { attempt } from '../data/attempt';
 import { cache, TTL } from '../data/cache';
 import { lookupHltb } from '../data/hltb';
 import { settings } from '../data/settings';
+import { getShortcutDescription } from '../data/shortcutDescription';
+import { getDescription, getSteamLanguage } from '../data/steam';
+import type { HeroicRef } from '../logic/heroic';
+import { artKnown, resolveArt } from './HeroBackground';
 import { memoAchievements, noteDetails, seedAchievements, setAchievementSink } from './detailsMemo';
-import { DetailsWarmDeps, HltbWarmDeps, warmAchievements, warmHltb, warmOrder } from './warmup';
+import { ArtWarmDeps, DescriptionWarmDeps, DetailsWarmDeps, HltbWarmDeps, warmAchievements, warmArt, warmDescriptions, warmHltb, warmOrder } from './warmup';
 
 /** Waits this long after Home is up before warming, so the first paint and the selected game's own requests go first. */
 const WARMUP_DELAY_MS = 1200;
@@ -22,17 +26,24 @@ export interface WarmGame {
     name: string;
 }
 
+/** What the warm-up needs to know of a game beyond its id: a non-Steam shortcut, and Heroic's reference for it. */
+export interface WarmInfo {
+    isShortcut: boolean;
+    heroic: HeroicRef | null;
+}
+
 /**
- * Warms what the selected game's chips need, for every game in the recents row, nearest the selection first: HowLongToBeat
- * (the disk cache at once, online for the games with nothing cached when the pre-load setting allows) and the Achievements
- * counts (Steam's details, one game at a time; also kept in the plugin cache for a week, so after a restart they are there
- * at once). Starts WARMUP_DELAY_MS after Home is up and again when the list of games changes; stops on unmount. `onChange` is
- * called as results come in, so the chips of the selected game refresh. Never throws.
+ * Warms what the selected game's chips and the open transition need, for every game in the recents row, nearest the
+ * selection first: HowLongToBeat (the disk cache at once, online for the games with nothing cached when the pre-load
+ * setting allows), the Achievements counts (Steam's details, one game at a time; also kept in the plugin cache for a week,
+ * so after a restart they are there at once), the description (likewise; the Spotlight look only) and the hero art (loaded
+ * and decoded, one game at a time). Starts WARMUP_DELAY_MS after Home is up and again when the list of games changes;
+ * stops on unmount. `onChange` is called as results come in, so the selected game refreshes. Never throws.
  */
-export function useWarmup(games: WarmGame[], centre: number, ready: boolean, isShortcut: (appId: number) => boolean, onChange: () => void) {
+export function useWarmup(games: WarmGame[], centre: number, ready: boolean, info: (appId: number) => WarmInfo, onChange: () => void) {
     const idsKey = games.map((g) => g.appId).join(',');
-    const latest = useRef({ games, centre, isShortcut, onChange });
-    latest.current = { games, centre, isShortcut, onChange };
+    const latest = useRef({ games, centre, info, onChange });
+    latest.current = { games, centre, info, onChange };
     useEffect(() => {
         setAchievementSink((appId, counts) => {
             void attempt('achievements cache write', () => cache.put(achievementKey(appId), counts, TTL.achievements), undefined);
@@ -44,7 +55,8 @@ export function useWarmup(games: WarmGame[], centre: number, ready: boolean, isS
         let cancelled = false;
         const isCancelled = () => cancelled;
         const run = async () => {
-            const { games: list, centre: at, isShortcut: shortcut, onChange: changed } = latest.current;
+            const { games: list, centre: at, info: infoOf, onChange: changed } = latest.current;
+            const shortcut = (appId: number) => infoOf(appId).isShortcut;
             const ordered = warmOrder(list, at);
             // The persisted counts first: no delay, so the chip is there on the very first selection after a restart.
             let seeded = false;
@@ -71,7 +83,26 @@ export function useWarmup(games: WarmGame[], centre: number, ready: boolean, isS
                 register: (appId, onDetails) => steamApps()?.RegisterForAppDetails?.(appId, onDetails),
                 sleep,
             };
+            const descriptionDeps: DescriptionWarmDeps = {
+                readCached: async (appId, lang) => {
+                    const entry = await attempt('description cache read', () => cache.get<{ text: string | null }>(`desc:${appId}:${lang}`), null);
+                    return entry ? entry.text : undefined;
+                },
+                fetch: (game, lang) =>
+                    game.isShortcut ? getShortcutDescription({ name: game.name, heroic: infoOf(game.appId).heroic }, lang) : getDescription(game.appId, lang),
+                allowNetwork: () => settings.get().autoPreload,
+                sleep,
+            };
+            const artDeps: ArtWarmDeps = { has: artKnown, resolve: resolveArt, sleep };
+            // The Clean look shows no description: none to warm.
+            const descriptions = async () => {
+                if (settings.get().cleanPage) return;
+                const lang = await attempt('Steam language', () => getSteamLanguage(), 'english');
+                await warmDescriptions(ordered.map((g) => ({ appId: g.appId, name: g.name, isShortcut: shortcut(g.appId) })), lang, descriptionDeps, isCancelled, changed);
+            };
             await Promise.all([
+                descriptions(),
+                warmArt(ordered.map((g) => g.appId), artDeps, isCancelled),
                 warmHltb(ordered.map((g) => ({ appId: g.appId, name: g.name, isShortcut: shortcut(g.appId) })), hltbDeps, isCancelled, changed),
                 warmAchievements(ordered.filter((g) => !shortcut(g.appId)).map((g) => g.appId), detailsDeps, isCancelled, (appId, details) => {
                     noteDetails(appId, details);
