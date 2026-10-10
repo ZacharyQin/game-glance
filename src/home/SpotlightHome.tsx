@@ -23,7 +23,7 @@ import { familyPillLabel } from '../data/family';
 import { GameStatusBar } from '../components/GameStatusBar';
 import { RecentsRow } from './RecentsRow';
 import { CARD_SCALE_HANDHELD, cardScaleFor, clampFocus, isLibraryFocus, recentsGeometry } from './recentsLayout';
-import { homeCanvas } from './scale';
+import { canvasStyle, homeCanvas } from './scale';
 import { TitleBlock } from './TitleBlock';
 import { useBumperSelect } from './useBumperSelect';
 import { gameStepSound, playNavSound } from './navSound';
@@ -347,13 +347,7 @@ export function SpotlightHome() {
             <div className="gh-scrim gh-scrim-page" />
             <div
                 className="gh-canvas"
-                style={{
-                    width: `${canvas.logicalWidth}px`,
-                    height: `${logicalHeight}px`,
-                    transform: `scale(${canvas.scale})`,
-                    // Not shown until the box has a real size, so it never flashes at the wrong scale.
-                    visibility: size ? 'visible' : 'hidden',
-                }}
+                style={canvasStyle(canvas, logicalHeight, Boolean(size))}
             >
                 {/* In Steam's top strip, above the safe area: clock, battery, connection and your online status. */}
                 {/* The status bar is drawn above Steam's menu layers, outside this root (components/GameStatusBar): the menus blur everything under them. */}
