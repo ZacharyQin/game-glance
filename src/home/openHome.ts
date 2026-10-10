@@ -48,6 +48,7 @@ export function measureHome(root: Element | null): HomeRects | null {
         return {
             canvas,
             titleSlot,
+            titleText: root.querySelector('.gh-title-slot .gh-title') !== null,
             eyebrow,
             play,
             circles: circleEls.map((c) => boxOf(c)!),

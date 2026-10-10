@@ -80,7 +80,7 @@ export const PAGE_LAYOUT = {
     cards: { gridGap: 18, padX: 24, padY: 20, colGap: 12, hltbGap: 10, split: [1.1, 1] as const },
     stats: { label: 11, value: 30, colGapInfo: 40, colGapHltb: 36, rowGap: 4 },
     /** The title block: the gap between title and eyebrow, and the eyebrow's type size. */
-    titleBlock: { gap: 14, eyebrow: 12 },
+    titleBlock: { gap: 14, eyebrow: 12, title: 64 },
     cleanInfo: { padX: 24, padY: 14, colGap: 28, value: 22, barW: 96, barH: 4, barTop: 2 },
     /** The store pill's top above the cards block (.gg-hero), Spotlight look. */
     storePillTop: 82,
@@ -466,7 +466,7 @@ function restyleRules({ header, details, root, play, shared }: ThemeClasses, lay
         `.gg-titleblock { display: none; flex-direction: column; gap: ${d(PAGE_LAYOUT.titleBlock.gap)}; max-width: ${d(640)}; margin: 1vh var(--gg-side); color: #fff; font-family: inherit; }`,
         `.gg-eyebrow { font-size: ${d(PAGE_LAYOUT.titleBlock.eyebrow)}; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; line-height: 1.2; color: var(--glance-accent-text); }`,
         // The clip gets a bleed for descenders and the shadow; equal negative margins keep the box at two lines.
-        `.gg-title { margin: calc(-1 * ${d(16)}); padding: ${d(16)}; font-size: ${d(64)}; line-height: 1; font-weight: 800; letter-spacing: -0.02em;
+        `.gg-title { margin: calc(-1 * ${d(16)}); padding: ${d(16)}; font-size: ${d(PAGE_LAYOUT.titleBlock.title)}; line-height: 1; font-weight: 800; letter-spacing: -0.02em;
             text-wrap: balance; text-shadow: 0 ${d(4)} ${d(30)} rgba(0, 0, 0, 0.4); overflow-wrap: anywhere;
             display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }`,
 
@@ -540,15 +540,15 @@ const ARRIVE_RISE_PX = 14;
 /**
  * The game page arriving after Spotlight Home's open transition (data/openIntent). 'parts': Home morphed into the page,
  * so only what Home had no counterpart for is hidden (Spotlight: the description, the HowLongToBeat title, its other
- * tiers, caption and bar; both looks: a size column, the family pill, the cloud button; Clean: the bars). 'all': the
+ * tiers, caption and bar; both looks: a size column, the family pill; Clean: the bars). 'all': the
  * whole page but its art (our title block and cards, Steam's Play row), lowered by the rise. `revealed`: the same
  * elements back to visible over ARRIVE_MS. Its own stylesheet, only with the full-screen layout; '' otherwise.
  */
 export function buildArrivingCss(classes: ThemeClasses, look: 'spotlight' | 'clean', mode: 'parts' | 'all', revealed = false): string {
-    const { header, details, root, play } = classes;
+    const { header, details, root } = classes;
     if (!(cls(header, 'TopCapsule') && cls(details, 'InnerContainer') && cls(details, 'AppDetailsOverviewPanel') && cls(root, 'AppDetailsContainer'))) return '';
-    const cloud = cls(play, 'CloudStatusRow');
-    const shared = present(['[data-stat="size"]', '.gg-family', cloud]);
+    // Not the cloud button: Home's moves into its place, so the page's own must be there at once.
+    const shared = ['[data-stat="size"]', '.gg-family'];
     const parts = look === 'spotlight'
         ? ['.gg-desc', '.gg-hltb > .gg-label', '.gg-hltb [data-stat="mainExtras"]', '.gg-hltb [data-stat="completionist"]', '.gg-caption', '.gg-muted', '.gg-hltb .gg-bar', ...shared]
         : [...shared, '.gg-clean-info .gg-bar'];

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { clearOpen, markOpen, onOpenReady, OPEN_INTENT_MS, openPending, reportOpenReady } from '../../src/data/openIntent';
+import { clearOpen, markOpen, onOpenReady, OPEN_INTENT_MS, openPending, openUnderway, reportOpenReady } from '../../src/data/openIntent';
 
 describe('openIntent', () => {
     afterEach(clearOpen);
@@ -46,5 +46,19 @@ describe('openIntent', () => {
         expect(heard).not.toHaveBeenCalled();
         expect(openPending(3)).not.toBeNull();
         stop();
+    });
+});
+
+describe('openIntent while an open is under way', () => {
+    afterEach(clearOpen);
+    it("carries Home's eyebrow so the page shows the same words", () => {
+        markOpen(9, { look: 'clean', mode: 'parts', eyebrow: 'Favorites · Last played · Today' }, 0);
+        expect(openPending(9, 10)?.eyebrow).toBe('Favorites · Last played · Today');
+    });
+    it('openUnderway: any open within OPEN_INTENT_MS (Home must not uncover Steam\'s bar as it leaves)', () => {
+        expect(openUnderway(0)).toBe(false);
+        markOpen(9, { look: 'clean', mode: 'parts' }, 0);
+        expect(openUnderway(100)).toBe(true);
+        expect(openUnderway(OPEN_INTENT_MS)).toBe(false);
     });
 });

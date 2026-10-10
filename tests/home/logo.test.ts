@@ -84,11 +84,11 @@ describe('logo choice', () => {
 });
 
 describe('logo box (the same on Home and the game page)', () => {
-    it('Home: at most 560 x 180 canvas px, bottom-left in the title slot', async () => {
+    it("Home: bottom-left in the title slot, sized inline by logoFit (at most LOGO_BOX, tested above) as on the game page", async () => {
         const { homeCss } = await import('../../src/home/homeCss');
         const css = homeCss();
-        expect(css).toMatch(/\.gh-logo \{[^}]*max-width: 560px !important; max-height: 180px !important/);
         expect(css).toMatch(/\.gh-logo \{[^}]*object-position: left bottom/);
+        expect(css).not.toMatch(/\.gh-logo \{[^}]*max-width/);
     });
 });
 

@@ -405,3 +405,23 @@ describe('homeCss bridge', () => {
         expect(homeCss()).toContain('.gh-root.gh-bridge, .gh-root.gh-bridge * { animation: none !important; transition: none !important; }');
     });
 });
+
+describe('homeCss logo', () => {
+    it("leaves the logo's size to GameTitle's inline area sizing, as on the game page (an !important size here overrode it)", () => {
+        const body = /\.gh-logo \{([^}]*)\}/.exec(homeCss())?.[1] ?? '';
+        expect(body).not.toBe('');
+        for (const prop of ['width', 'height', 'max-width', 'max-height']) expect(body, prop).not.toMatch(new RegExp(`(^|[;\\s])${prop}:`));
+    });
+});
+
+describe('homeCss Play pill while opening', () => {
+    it("takes on the page's focused look over the morph (Steam focuses Play there): a ring layer fading in as it grows", () => {
+        const css = homeCss();
+        const after = /\.gh-root\[data-gh-opening="morph"\] \.gh-actions > \.gh-btn\[data-action="play"\]::after \{([^}]*)\}/.exec(css)?.[1] ?? '';
+        expect(after).toContain('box-shadow: 0 0 0 2px rgba(255,255,255,.9)');
+        expect(after).toContain('opacity: 0');
+        const to = /\[data-gh-phase="to"\] \.gh-actions > \.gh-btn\[data-action="play"\]::after \{([^}]*)\}/.exec(css)?.[1] ?? '';
+        expect(to).toContain('transform: var(--gho-play-bg)');
+        expect(to).toContain('opacity: 1');
+    });
+});

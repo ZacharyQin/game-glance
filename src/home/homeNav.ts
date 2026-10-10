@@ -13,6 +13,7 @@ import { homeMode } from './mode';
 import { settings } from '../data/settings';
 import { clearOpen, markOpen, onOpenReady, OpenIntent } from '../data/openIntent';
 import { pageArrivalSelectors, steamEnterOffCss } from '../styles/theme';
+import { clearSteamBarCover } from './useHideSteamBar';
 
 /** Opens a game's page directly, without the transition (Play pill fallbacks, Steam call fallbacks). */
 export function openPage(appId: number) {
@@ -214,7 +215,16 @@ function controller(): OpenTransition {
             next = null;
             return active ? startHome(active) : null;
         },
-        mountBridge: () => (active?.root ? mountOpenBridge(active.root, steamEnterOffCss()) : null),
+        mountBridge: () => {
+            const c = active;
+            if (!c?.root) return null;
+            const doc = c.root.ownerDocument;
+            // Our status bar lives outside Home's root; its copy also keeps Steam's top bar hidden until the page's own takes over.
+            const bridge = mountOpenBridge(c.root, steamEnterOffCss(), [...doc.querySelectorAll('.gg-status-host')]);
+            if (c.intent.look !== 'steam') return bridge;
+            // Steam's own page draws no status bar of ours: give Steam's top bar back once the bridge is gone.
+            return { fadeOut: (ms: number) => bridge.fadeOut(ms), remove: () => { bridge.remove(); clearSteamBarCover(doc); } };
+        },
         markOpen: () => {
             if (active) markOpen(active.appId, active.intent);
         },
@@ -243,7 +253,9 @@ export function openGame(appId: number, source?: HTMLElement | null) {
         const pageRestyled = mode.gamePage && mode.restyleDetails;
         const variant = openVariant({ sameGame: heroShownApp() === appId, heroMode: art?.mode ?? 'none', pageRestyled });
         const heroUrl = art?.mode === 'full' ? art.url : (urls(() => heroUrls(appId, browserStores))[0] ?? null);
-        next = { root, appId, variant, look, heroUrl, intent: { look: pageRestyled ? look : 'steam', mode: variant === 'morph' ? 'parts' : 'all' } };
+        // The page shows Home's eyebrow words when Home morphed into it, so they do not change at the hand-over.
+        const eyebrow = variant === 'morph' ? root?.querySelector('.gh-eyebrow')?.textContent?.trim() || undefined : undefined;
+        next = { root, appId, variant, look, heroUrl, intent: { look: pageRestyled ? look : 'steam', mode: variant === 'morph' ? 'parts' : 'all', eyebrow } };
         controller().open(appId, variant);
     } catch (error) {
         // Not reached in practice (the controller never throws); the page must open regardless.

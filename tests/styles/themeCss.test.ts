@@ -698,15 +698,18 @@ describe('the page arriving after the open transition', () => {
     const play = full.play as Record<string, string>;
     it("'parts' hides only what Home had no counterpart for (Spotlight)", () => {
         const css = buildArrivingCss(full, 'spotlight', 'parts');
-        for (const sel of ['.gg-desc', '.gg-hltb > .gg-label', '.gg-hltb [data-stat="mainExtras"]', '.gg-hltb [data-stat="completionist"]', '.gg-caption', '.gg-muted', '.gg-hltb .gg-bar', '.gg-family', `.${play.CloudStatusRow}`, '[data-stat="size"]']) {
+        for (const sel of ['.gg-desc', '.gg-hltb > .gg-label', '.gg-hltb [data-stat="mainExtras"]', '.gg-hltb [data-stat="completionist"]', '.gg-caption', '.gg-muted', '.gg-hltb .gg-bar', '.gg-family', '[data-stat="size"]']) {
             expect(css, sel).toContain(sel);
         }
+        // Home's cloud button moves into the page's: the page's own is there at once (it blinked when hidden).
+        expect(css).not.toContain(`.${play.CloudStatusRow}`);
         expect(css).toContain('opacity: 0 !important');
         expect(css).not.toContain('.gg-titleblock');
     });
     it("'parts' on Clean: the size column, family pill, cloud and the bars", () => {
         const css = buildArrivingCss(full, 'clean', 'parts');
-        for (const sel of ['[data-stat="size"]', '.gg-family', `.${play.CloudStatusRow}`, '.gg-clean-info .gg-bar']) expect(css, sel).toContain(sel);
+        for (const sel of ['[data-stat="size"]', '.gg-family', '.gg-clean-info .gg-bar']) expect(css, sel).toContain(sel);
+        expect(css).not.toContain(`.${play.CloudStatusRow}`);
         expect(css).not.toContain('.gg-desc');
     });
     it("'all' hides the whole page but the art, lowered by the rise", () => {

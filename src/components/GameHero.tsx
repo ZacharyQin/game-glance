@@ -25,6 +25,8 @@ import { sizeStat } from '../logic/sizeStat';
 import { useDownload } from '../home/useDownload';
 import { useLaunchOverlay } from '../styles/launchOverlay';
 import { useOpenArrival } from '../hooks/useOpenArrival';
+import { openPending } from '../data/openIntent';
+import { peekHltb, rememberHltb } from '../home/warmup';
 import { accentCss, arrivingCss, cleanCss, downloadCss, launchCss, launchSelectors, themeCss, unifideckCss } from '../styles/theme';
 import { CleanInfo } from './CleanInfo';
 import { ErrorBoundary } from './ErrorBoundary';
@@ -88,9 +90,17 @@ function Hero({ overview, details, restyle, clean }: Props & { restyle: boolean;
     const description = useAsync(lang === undefined ? null : `desc:${game.appId}:${lang}`, () =>
         game.isShortcut ? getShortcutDescription(game, lang ?? 'english') : getDescription(game.appId, lang ?? 'english'),
     );
-    const hltb = useAsync(`hltb:${game.appId}:${overrideVersion}`, () =>
+    const looked = useAsync(`hltb:${game.appId}:${overrideVersion}`, () =>
         lookupHltb({ appId: game.appId, name: game.name, isShortcut: game.isShortcut }),
     );
+    // Until the lookup answers, the times Spotlight Home already knows (its session memo, home/warmup), so the first frame
+    // is complete (the Clean panel no longer narrows for a moment at the open transition's hand-over).
+    const hltb = looked ?? peekHltb(game.appId);
+    useEffect(() => {
+        if (looked) rememberHltb(game.appId, looked);
+    }, [game.appId, looked]);
+    // Opened from Spotlight Home's open transition: Home's eyebrow words, kept for this visit (data/openIntent).
+    const [openedFrom] = useState(() => openPending(game.appId));
 
     const { homeStatusBar: statusBar, gameLogo } = useSettings();
     const accent = useGameAccent(game.appId, restyle);
@@ -125,7 +135,7 @@ function Hero({ overview, details, restyle, clean }: Props & { restyle: boolean;
     // The Clean look, only where its layout applies (Steam's classes found); otherwise the page keeps its cards.
     const cleanStyle = clean ? cleanCss() : '';
     const family = restyle ? familyPillLabel(game.appId) : null;
-    const eyebrow = restyle ? lastPlayedEyebrow(overview, locale, unifideck?.lastPlayed ?? null) : null;
+    const eyebrow = restyle ? openedFrom?.eyebrow ?? lastPlayedEyebrow(overview, locale, unifideck?.lastPlayed ?? null) : null;
     return (
         <>
             {/* Spotlight Home's status bar, over Steam's top strip, with the restyled page (not while Steam's launch screen is up). */}

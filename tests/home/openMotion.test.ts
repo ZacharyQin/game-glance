@@ -59,6 +59,18 @@ describe('openMotion', () => {
         expect(e.ty).toBeCloseTo((455.6 - (r.eyebrow.y + r.eyebrow.h)) / s, 1);
     });
 
+    it("a text title grows from Home's size to the page's, keeping its bottom-left corner on the target", () => {
+        const text = { ...homeRects(), titleText: true };
+        const t = parse(vars(openMotion(text, spotlight(), 'spotlight', s))['--gho-title']);
+        const k = 64 / 58;
+        expect(t.sx).toBeCloseTo(k, 3);
+        const slot = text.titleSlot;
+        // origin top-left: the scaled bottom is y + h * k
+        expect(t.ty).toBeCloseTo((426 - slot.y - slot.h * k) / s, 1);
+        const logo = parse(vars(openMotion(homeRects(), spotlight(), 'spotlight', s))['--gho-title']);
+        expect(logo.sx).toBe(1);
+    });
+
     it('a taller title (a logo, three lines) still lands with the same bottom', () => {
         const tall = homeRects();
         tall.titleSlot = { ...tall.titleSlot, y: tall.titleSlot.y - 80, h: tall.titleSlot.h + 80 };

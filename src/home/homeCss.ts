@@ -8,7 +8,6 @@ import { PERSONA_DOT, PERSONA_DOT_COLOURS, PersonaDot, STATUS_BAR, STATUS_FADE_M
 import { ACCENT_MS, CAP_ART_FADE_MS, CAP_STATE_MS, FEED_ART_FADE_MS, FEED_SCROLL, HERO_FADE_MS, MORPH_EASE, OPEN_TIMINGS, SHEET, SHEET_MS, SLIDE } from './motion';
 import { PAGE_SCRIMS } from '../styles/themeCss';
 import { CARD_SCALE_HANDHELD, GLOW as CAP_GLOW, RECENTS_BOTTOM, recentsGeometry } from './recentsLayout';
-import { LOGO_BOX } from '../styles/logoBox';
 import { PILL_INSET, ROW_OFFSET, SIDE_INSET } from './insets';
 
 /**
@@ -249,9 +248,10 @@ export function homeCss(cardScale: number = CARD_SCALE_HANDHELD): string {
         rule('.gh-title', `margin: -${t.titleBleed}px; padding: ${t.titleBleed}px; font-size: ${t.titleSize}px; line-height: 1; font-weight: 800; letter-spacing: -.02em; text-wrap: balance;
             text-shadow: 0 4px 30px rgba(0,0,0,.4); color: #fff; overflow-wrap: anywhere;
             display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: ${t.maxTitleLines}; overflow: hidden; flex: 0 0 auto`),
-        // The logo option (GameTitle): the game's logo in the title's place, bottom-left in the slot, at most LOGO_BOX; it
-        // rises like a longer title (components/GameTitle sizes it inline).
-        rule('.gh-logo', `display: block; flex: 0 0 auto; width: auto; height: auto; max-width: ${LOGO_BOX.width}px; max-height: ${LOGO_BOX.height}px; margin: 0; padding: 0;
+        // The logo option (GameTitle): the game's logo in the title's place, bottom-left in the slot; it rises like a longer
+        // title. Its size is GameTitle's inline area sizing (at most LOGO_BOX), the same as on the game page: no size here,
+        // since every declaration of this sheet is !important and would override it.
+        rule('.gh-logo', `display: block; flex: 0 0 auto; margin: 0; padding: 0;
             object-fit: contain; object-position: left bottom; align-self: flex-start; filter: drop-shadow(0 4px 24px rgba(0,0,0,.45))`),
         // One row of fixed height, present even with no chips yet, so the actions never move.
         rule('.gh-chips', `height: ${t.chipRow}px; display: flex; gap: 10px; flex-wrap: nowrap; align-items: stretch; margin: 0; padding: 0`),
@@ -490,9 +490,11 @@ export function openingRules(): string[] {
         // stops clipping it, and keeps its focus ring on that layer).
         rule(`${M} ${play}`, 'overflow: visible; background: transparent; border-color: transparent; box-shadow: none'),
         rule(`${M} ${play}::before`, "content: ''; position: absolute; left: 0; top: 0; width: 100%; height: 100%; border-radius: 999px; background: var(--glance-accent); transform-origin: 0 0; pointer-events: none"),
-        rule(`${M} ${play}.gh-focus::before`, 'box-shadow: 0 0 0 2px rgba(255,255,255,.9), 0 14px 40px -8px var(--glance-accent)'),
+        // The page focuses Play (Steam's lighter fill and white ring): a layer with that look fades in as the pill grows.
+        rule(`${M} ${play}::after`, "content: ''; position: absolute; left: 0; top: 0; width: 100%; height: 100%; border-radius: 999px; background: rgba(255,255,255,.28); box-shadow: 0 0 0 2px rgba(255,255,255,.9), 0 14px 40px -8px var(--glance-accent); transform-origin: 0 0; pointer-events: none; opacity: 0"),
         rule(`${MT} ${play}`, `transform: var(--gho-play-fg); transition: ${move}`),
         rule(`${MT} ${play}::before`, `transform: var(--gho-play-bg); transition: ${move}`),
+        rule(`${MT} ${play}::after`, `transform: var(--gho-play-bg); opacity: 1; transition: ${move}, opacity ${T.morph}ms ease`),
         ...[0, 1, 2, 3].map((i) => rule(`${MT} .gh-actions > .gh-btn:nth-child(${i + 2})`, `transform: var(--gho-circle-${i}, none); transition: ${move}`)),
         // Chips: their glass gives way to the panels at once; texts move and grow; the bars and unmatched chips fade.
         rule(`${M} .gh-chip`, 'background: transparent; border-color: transparent; backdrop-filter: none; box-shadow: none'),

@@ -7,9 +7,9 @@ import type { OpenBridge } from './openTransition';
  * rendered by React. The copy carries `gh-bridge` (homeCss: no animations or transitions inside it, so nothing replays,
  * e.g. the hero layer's fade-in); the fade is on its own container, which no stylesheet touches. Geometry is Home's
  * measured box, never the window size (SharedJSContext's window is 1x1). `css`: a stylesheet that applies while the
- * bridge is up. Throws when there is nowhere to put it.
+ * bridge is up; `extras`: other layers of Home's to copy on top (the status bar). Throws when there is nowhere to put it.
  */
-export function mountOpenBridge(root: HTMLElement, css = ''): OpenBridge {
+export function mountOpenBridge(root: HTMLElement, css = '', extras: Element[] = []): OpenBridge {
     const doc = root.ownerDocument;
     const parent = doc?.body;
     if (!doc || !parent) throw new Error('Home has no document');
@@ -38,6 +38,8 @@ export function mountOpenBridge(root: HTMLElement, css = ''): OpenBridge {
     const copy = root.cloneNode(true) as HTMLElement;
     copy.classList.add('gh-bridge');
     box.appendChild(copy);
+    // Layers Home draws outside its root (our status bar, which also keeps Steam's top bar hidden), copied over the top.
+    for (const extra of extras) box.appendChild(extra.cloneNode(true));
     parent.appendChild(box);
     let removed = false;
     return {

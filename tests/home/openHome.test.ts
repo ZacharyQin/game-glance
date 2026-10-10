@@ -67,6 +67,13 @@ describe('measureHome', () => {
         expect(r!.chips[1].bar).toEqual({ x: 159, y: 419, w: 70, h: 3 });
         expect(r!.canvas.w).toBe(1500);
     });
+    it('knows a text title from a logo (a text title grows to the page size, a logo does not)', () => {
+        const withText = home();
+        const q = withText.querySelector;
+        withText.querySelector = (sel: string) => (sel === '.gh-title-slot .gh-title' ? el(25, 250, 300, 58) : q(sel));
+        expect(measureHome(withText as unknown as Element)!.titleText).toBe(true);
+        expect(measureHome(home() as unknown as Element)!.titleText).toBe(false);
+    });
     it('is null when something required is missing (no Play pill: the Library card)', () => {
         expect(measureHome(home(false) as unknown as Element)).toBeNull();
         expect(measureHome(null)).toBeNull();
@@ -181,6 +188,13 @@ describe('mountOpenBridge', () => {
         mountOpenBridge(f.root, '.x { opacity: 1 }');
         const box = f.appended[0] as unknown as { children: Array<{ textContent?: string }> };
         expect(box.children.some((c) => c.textContent === '.x { opacity: 1 }')).toBe(true);
+    });
+    it('carries copies of the given extra layers (our status bar) above the copy of Home', () => {
+        const f = fakeDom();
+        const bar = { cloneNode: vi.fn(() => ({ id: 'bar-copy' })) };
+        mountOpenBridge(f.root, '', [bar as unknown as Element]);
+        const box = f.appended[0] as unknown as { children: unknown[] };
+        expect(box.children[box.children.length - 1]).toEqual({ id: 'bar-copy' });
     });
     it('throws when Home has no usable box (the controller then opens the page without it)', () => {
         const f = fakeDom();

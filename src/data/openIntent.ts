@@ -13,8 +13,11 @@ export const OPEN_INTENT_MS = 3000;
 
 /** 'parts': Home morphed into the page, only the page's new parts arrive; 'all': the whole page arrives (fades in). */
 export type ArriveMode = 'parts' | 'all';
-/** The page's look the open was made for ('steam': the Game Glance page is off, Steam's own page opens). */
-export interface OpenIntent { look: PageLook | 'steam'; mode: ArriveMode }
+/**
+ * The page's look the open was made for ('steam': the Game Glance page is off, Steam's own page opens), how it arrives,
+ * and `eyebrow`: Home's eyebrow words at the open (the page shows the same, so nothing changes at the hand-over).
+ */
+export interface OpenIntent { look: PageLook | 'steam'; mode: ArriveMode; eyebrow?: string }
 
 let pending: { appId: number; at: number; intent: OpenIntent } | null = null;
 const listeners = new Set<(appId: number) => void>();
@@ -28,6 +31,11 @@ export function markOpen(appId: number, intent: OpenIntent, now: number = Date.n
 export function openPending(appId: number, now: number = Date.now()): OpenIntent | null {
     if (pending === null || pending.appId !== appId || now < pending.at || now - pending.at >= OPEN_INTENT_MS) return null;
     return pending.intent;
+}
+
+/** Whether any open is under way (Home leaving for a page must not undo what the page will need, e.g. Steam's bar hidden). */
+export function openUnderway(now: number = Date.now()): boolean {
+    return pending !== null && now >= pending.at && now - pending.at < OPEN_INTENT_MS;
 }
 
 /** Hears when the page being opened is ready; returns the unsubscribe. */

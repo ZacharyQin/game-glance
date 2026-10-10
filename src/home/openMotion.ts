@@ -1,4 +1,5 @@
 import { PAGE_LAYOUT } from '../styles/themeCss';
+import { TITLE_BLOCK } from './homeCss';
 import type { Box, PageLook, PageTargets, StatKey } from './openTargets';
 
 /**
@@ -16,6 +17,8 @@ export interface HomeRects {
     /** `.gh-canvas` on screen (its origin; Home's canvas px start there). */
     canvas: Box;
     titleSlot: Box;
+    /** The title is text (not a logo): it grows from Home's type size to the page's (a logo is the same size on both). */
+    titleText?: boolean;
     eyebrow: Box;
     play: Box;
     circles: Box[];
@@ -53,7 +56,10 @@ export function openMotion(home: HomeRects, page: PageTargets, look: PageLook, c
     const d = s;
     const out: Record<string, string> = {};
 
-    out['--gho-title'] = translate((page.titleBottomLeft.x - home.titleSlot.x) / s, (page.titleBottomLeft.y - (home.titleSlot.y + home.titleSlot.h)) / s);
+    // From the top-left origin, scaled by k: the title's bottom ends at y + h * k, which must be the page's bottom.
+    const tk = home.titleText ? PAGE_LAYOUT.titleBlock.title / TITLE_BLOCK.titleSize : 1;
+    const titleMove = translate((page.titleBottomLeft.x - home.titleSlot.x) / s, (page.titleBottomLeft.y - (home.titleSlot.y + home.titleSlot.h * tk)) / s);
+    out['--gho-title'] = tk === 1 ? titleMove : `${titleMove} scale(${k(tk)})`;
     out['--gho-eyebrow'] = translate((page.eyebrowBottomLeft.x - home.eyebrow.x) / s, (page.eyebrowBottomLeft.y - (home.eyebrow.y + home.eyebrow.h)) / s);
 
     // The pill itself only moves (by its left edge and centre line); its background layer, inside it, grows to the page

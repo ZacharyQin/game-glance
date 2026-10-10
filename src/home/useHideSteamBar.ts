@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { openUnderway } from '../data/openIntent';
 import { findTopBar } from './topBar';
 
 export const COVERED = 'data-gg-covered';
@@ -40,11 +41,22 @@ export function useHideSteamBar(doc: Document | null, away: boolean): void {
         }, QUICK_MS);
         return () => {
             clearInterval(timer);
-            clear();
+            // Home leaving for a game page with the open transition: the page's bar takes the cover over (the bridge
+            // carries a copy of ours meanwhile); clearing here showed Steam's bar for a moment.
+            if (!openUnderway()) clear();
         };
     }, [doc, away]);
 }
 
+
+/** Gives Steam's top bar back (the marker removed), e.g. after the open transition to Steam's own page. */
+export function clearSteamBarCover(doc: Document | null | undefined) {
+    try {
+        doc?.querySelectorAll(`[${COVERED}]`).forEach((el) => el.removeAttribute(COVERED));
+    } catch {
+        // leave it
+    }
+}
 
 /** The rule the marker triggers; shipped with the status bar so it holds on every page it is drawn on. */
 export const COVER_CSS = `[${COVERED}] { opacity: 0 !important; transition: none !important; }`;
