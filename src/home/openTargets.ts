@@ -25,6 +25,26 @@ export interface PageTargets {
     shells: Box[];
     /** Each stat's label and value; on Clean, the progress bar under a stat that has one. */
     stats: Partial<Record<StatKey, { label: Box; value: Box; bar?: Box }>>;
+    /** Spotlight look, when asked for: the description and the rest of the HowLongToBeat card. */
+    extras?: PageExtras;
+}
+/** One of the HowLongToBeat card's columns after Main (Spotlight look), with the texts it shows. */
+export interface ExtraColumn { key: 'mainExtras' | 'completionist'; label: string; value: string }
+/** What Spotlight Home draws as it turns into the page's Spotlight look, besides the stats: the cards' other parts. */
+export interface ExtrasAsked {
+    /** The HowLongToBeat card's columns after Main, in order. */
+    columns: ExtraColumn[];
+    /** Whether the card has a progress bar (not when the game was never played); its caption follows it. */
+    bar: boolean;
+}
+export interface PageExtras {
+    /** The info card's description: three lines (it is clamped to them). */
+    desc: Box;
+    /** The HowLongToBeat card's title label. */
+    hltbTitle: Box;
+    columns: Partial<Record<ExtraColumn['key'], { label: Box; value: Box }>>;
+    bar?: Box;
+    caption: Box;
 }
 /** A text's width in CSS px as the page draws it: a stat label (uppercase, its letter spacing), a card value or a Clean value. */
 export type Measure = (text: string, role: 'label' | 'value' | 'cleanValue', fontPx: number) => number;
@@ -34,10 +54,14 @@ const BORDER = 1;
 /** Line heights: labels inherit Steam's 1.5, values are set to 1.2 (themeCss). */
 const LABEL_LINE = 1.5;
 const VALUE_LINE = 1.2;
+/** The caption's line height: it inherits the font's normal one (measured on the device: 1.45). */
+const CAPTION_LINE = 1.45;
 /** The Spotlight cards' height with three description lines (handoff px; the theme's TV_CARDS_H). */
 const CARDS_H = PAGE_LAYOUT.playTop.tvCards;
 
-export function pageTargets(look: PageLook, screen: { width: number; height: number }, stats: PageStat[], measure: Measure, storeSize: { w: number; h: number }): PageTargets {
+export function pageTargets(
+    look: PageLook, screen: { width: number; height: number }, stats: PageStat[], measure: Measure, storeSize: { w: number; h: number }, asked?: ExtrasAsked,
+): PageTargets {
     const L = PAGE_LAYOUT;
     const W = screen.width;
     const H = screen.height;
@@ -82,6 +106,7 @@ export function pageTargets(look: PageLook, screen: { width: number; height: num
 
     let shells: Box[];
     let store: Box;
+    let extras: PageExtras | undefined;
     if (look === 'spotlight') {
         const top = playTop + L.rowH * d;
         const inner = W - 2 * side - L.cards.gridGap * d;
@@ -94,7 +119,26 @@ export function pageTargets(look: PageLook, screen: { width: number; height: num
         row(stats.filter((s) => s.key !== 'hltb'), i0.x, i0.y, L.stats.colGapInfo * d);
         const h0 = pad(hltb);
         // The HowLongToBeat card: its title label, then the tiers (Main is the `hltb` stat; the others are the page's own).
-        row(stats.filter((s) => s.key === 'hltb'), h0.x, h0.y + labelH + L.cards.hltbGap * d, L.stats.colGapHltb * d);
+        const tiersY = h0.y + labelH + L.cards.hltbGap * d;
+        const mainW = row(stats.filter((s) => s.key === 'hltb'), h0.x, tiersY, L.stats.colGapHltb * d);
+        if (asked) {
+            // Each card is a column: its children one gap apart (the info card's gap, the HowLongToBeat card's smaller one).
+            const statsH = labelH + L.stats.rowGap * d + valueH;
+            const inner = (card: Box) => card.w - 2 * (BORDER + L.cards.padX * d);
+            const infoStats = stats.some((s) => s.key !== 'hltb');
+            const desc: Box = { x: i0.x, y: i0.y + (infoStats ? statsH + L.cards.colGap * d : 0), w: inner(info), h: L.cardText.desc * L.cardText.descLine * L.cardText.descLines * d };
+            const columns: PageExtras['columns'] = {};
+            let at = h0.x + mainW + L.stats.colGapHltb * d;
+            for (const c of asked.columns) {
+                const w = Math.max(measure(c.label, 'label', labelFont), measure(c.value, 'value', valueFont));
+                columns[c.key] = { label: { x: at, y: tiersY, w, h: labelH }, value: { x: at, y: tiersY + labelH + L.stats.rowGap * d, w, h: valueH } };
+                at += w + L.stats.colGapHltb * d;
+            }
+            const afterTiers = tiersY + statsH + L.cards.hltbGap * d;
+            const bar: Box | undefined = asked.bar ? { x: h0.x, y: afterTiers, w: inner(hltb), h: L.cardText.bar * d } : undefined;
+            const caption: Box = { x: h0.x, y: bar ? bar.y + bar.h + L.cards.hltbGap * d : afterTiers, w: inner(hltb), h: L.cardText.caption * CAPTION_LINE * d };
+            extras = { desc, hltbTitle: { x: h0.x, y: h0.y, w: inner(hltb), h: labelH }, columns, bar, caption };
+        }
         store = { x: W - side - storeSize.w, y: top - L.storePillTop * d, w: storeSize.w, h: storeSize.h };
     } else {
         // Measure the row first (at 0, 0), then place the panel right-aligned and centred on the Play pill.
@@ -115,5 +159,5 @@ export function pageTargets(look: PageLook, screen: { width: number; height: num
         shells = [panel];
         store = { x: W - side - storeSize.w, y: playTop - L.clean.storeGap * d - storeSize.h, w: storeSize.w, h: storeSize.h };
     }
-    return { titleBottomLeft, eyebrowBottomLeft, play, circles, store, shells, stats: out };
+    return { titleBottomLeft, eyebrowBottomLeft, play, circles, store, shells, stats: out, extras };
 }

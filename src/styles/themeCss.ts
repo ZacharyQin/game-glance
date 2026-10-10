@@ -94,6 +94,8 @@ export const PAGE_LAYOUT = {
     /** The cloud circle's glyph (Home's size; the page's was in another unit, so its ratio to Home's changed with the screen). */
     cloudIcon: 26,
     cleanInfo: { padX: 24, padY: 14, colGap: 28, value: 22, barW: 96, barH: 4, barTop: 2 },
+    /** Inside the Spotlight cards: the description's type size, line height and lines (clamped), the caption's type size, the HowLongToBeat bar's height. */
+    cardText: { desc: 15, descLine: 1.5, descLines: 3, caption: 15, bar: 6 },
     /** The store pill's top above the cards block (.gg-hero), Spotlight look. */
     storePillTop: 82,
 } as const;
@@ -498,10 +500,10 @@ function restyleRules({ header, details, root, play, shared }: ThemeClasses, lay
         `.gg-stats { gap: ${d(PAGE_LAYOUT.stats.colGapInfo)}; margin-top: 0; }`,
         `.gg-hltb .gg-stats { gap: ${d(PAGE_LAYOUT.stats.colGapHltb)}; }`,
         `.gg-stats > div { display: flex; flex-direction: column; gap: ${d(PAGE_LAYOUT.stats.rowGap)}; }`,
-        `.gg-desc { margin: 0; font-size: ${d(15)}; line-height: 1.5; color: rgba(255, 255, 255, 0.84); }`,
-        `.gg-bar { margin-top: 0; height: ${d(6)}; border-radius: ${d(3)}; }`,
+        `.gg-desc { margin: 0; font-size: ${d(PAGE_LAYOUT.cardText.desc)}; line-height: ${PAGE_LAYOUT.cardText.descLine}; color: rgba(255, 255, 255, 0.84); }`,
+        `.gg-bar { margin-top: 0; height: ${d(PAGE_LAYOUT.cardText.bar)}; border-radius: ${d(3)}; }`,
         `.gg-bar > div { border-radius: ${d(3)}; }`,
-        `.gg-caption, .gg-muted { margin-top: 0; font-size: ${d(15)}; color: rgba(255, 255, 255, 0.72); }`,
+        `.gg-caption, .gg-muted { margin-top: 0; font-size: ${d(PAGE_LAYOUT.cardText.caption)}; color: rgba(255, 255, 255, 0.72); }`,
         // HLTB: MAIN is always the accent (handoff), not the tier the player is working toward.
         `.gg-hltb .gg-stats > div .gg-value { color: inherit; }`,
         `.gg-hltb .gg-stats > div:first-child .gg-value { color: var(--glance-accent-text, var(--gg-accent)); transition: color ${ACCENT_MS}ms; }`,

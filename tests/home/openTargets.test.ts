@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { Box, Measure, pageTargets, PageLook, PageStat, StatKey } from '../../src/home/openTargets';
+import { Box, ExtraColumn, Measure, pageTargets, PageLook, PageStat, StatKey } from '../../src/home/openTargets';
 
 interface Fixture {
     screen: { width: number; height: number };
@@ -25,9 +25,17 @@ function pageStats(look: PageLook, f: Fixture): PageStat[] {
     }));
 }
 
+/** The HowLongToBeat card's other two columns (Spotlight), as the page drew them. */
+const EXTRA_KEYS = ['mainExtras', 'completionist'] as const;
+const extraColumns = (f: Fixture): ExtraColumn[] =>
+    EXTRA_KEYS.map((key) => ({ key, label: f.texts[`stat:${key}:label`], value: f.texts[`stat:${key}:value`] }));
+
 /** Text widths as the page drew them: a column's box is as wide as its widest text (or bar), so each text measures to its own natural width at most that. */
 function measureFrom(look: PageLook, f: Fixture): Measure {
     return (text) => {
+        for (const key of look === 'spotlight' ? EXTRA_KEYS : []) {
+            if (f.texts[`stat:${key}:label`] === text || f.texts[`stat:${key}:value`] === text) return f.rects[`stat:${key}:label`].w;
+        }
         for (const [col] of COLUMNS[look]) {
             const label = f.rects[`stat:${col}:label`];
             const bar = f.rects[`stat:${col}:bar`];
@@ -53,7 +61,9 @@ for (const look of ['spotlight', 'clean'] as const) {
         it(`matches the measured ${look} page at ${size} within 2 px`, () => {
             const f = fixture(`${look}-${size}`);
             const r = f.rects;
-            const t = pageTargets(look, f.screen, pageStats(look, f), measureFrom(look, f), { w: r.store.w, h: r.store.h });
+            // The fixture's game had a bar (its caption: "7.3 h left in main story").
+            const extras = { columns: extraColumns(f), bar: true };
+            const t = pageTargets(look, f.screen, pageStats(look, f), measureFrom(look, f), { w: r.store.w, h: r.store.h }, extras);
             nearBox(t.play, r.play, 'play');
             for (let i = 0; i < 3; i++) nearBox(t.circles[i], r[`circle${i}`], `circle${i}`);
             near(t.store.x, r.store.x, 'store.x');
@@ -65,9 +75,18 @@ for (const look of ['spotlight', 'clean'] as const) {
             if (look === 'spotlight') {
                 nearBox(t.shells[0], r.card0, 'info card');
                 nearBox(t.shells[1], r.card1, 'HLTB card');
+                // What Home draws as it turns into the page: the description (three lines) and the HowLongToBeat card's rest.
+                nearBox(t.extras?.desc, r.desc, 'description');
+                nearBox(t.extras?.hltbTitle, r.hltbTitle, 'HowLongToBeat title');
+                for (const key of EXTRA_KEYS) {
+                    nearBox(t.extras?.columns[key]?.label, r[`stat:${key}:label`], `${key} label`);
+                    nearBox(t.extras?.columns[key]?.value, r[`stat:${key}:value`], `${key} value`);
+                }
+                nearBox(t.extras?.caption, r.caption, 'caption');
             } else {
                 expect(t.shells).toHaveLength(1);
                 nearBox(t.shells[0], r.clean, 'Clean panel');
+                expect(t.extras, 'the Clean look shows no description or HowLongToBeat card').toBeUndefined();
             }
             for (const [col, key] of COLUMNS[look]) {
                 nearBox(t.stats[key]?.label, r[`stat:${col}:label`], `${key} label`);
@@ -85,6 +104,28 @@ describe('pageTargets stats', () => {
     const screen = { width: 1500, height: 844 };
     const measure: Measure = (text) => text.length * 10;
     const store = { w: 100, h: 34 };
+    const played: PageStat = { key: 'played', label: 'Play Time', value: '1 h' };
+    const main: PageStat = { key: 'hltb', label: 'Main', value: '9 h' };
+    const columns: ExtraColumn[] = [{ key: 'mainExtras', label: '+ Extras', value: '12 h' }, { key: 'completionist', label: '100%', value: '24 h' }];
+    it('the HowLongToBeat columns follow Main in order, one gap apart; the bar sits between them and the caption', () => {
+        const t = pageTargets('spotlight', screen, [played, main], measure, store, { columns, bar: true });
+        const m = t.stats.hltb!.label;
+        const e = t.extras!.columns.mainExtras!.label;
+        const c = t.extras!.columns.completionist!.label;
+        expect(e.x).toBeGreaterThan(m.x + m.w);
+        expect(c.x - (e.x + e.w)).toBeCloseTo(e.x - (m.x + m.w), 6);
+        expect(t.extras!.bar!.y).toBeGreaterThan(t.extras!.columns.mainExtras!.value.y);
+        expect(t.extras!.caption.y).toBeGreaterThan(t.extras!.bar!.y + t.extras!.bar!.h);
+    });
+    it('without a bar (not played yet), the caption takes the bar\'s place', () => {
+        const withBar = pageTargets('spotlight', screen, [played, main], measure, store, { columns, bar: true }).extras!;
+        const noBar = pageTargets('spotlight', screen, [played, main], measure, store, { columns, bar: false }).extras!;
+        expect(noBar.bar).toBeUndefined();
+        expect(noBar.caption.y).toBeCloseTo(withBar.bar!.y, 6);
+    });
+    it('no extras asked for: none', () => {
+        expect(pageTargets('spotlight', screen, [played, main], measure, store).extras).toBeUndefined();
+    });
     it('a stat the page lacks has no target', () => {
         const t = pageTargets('spotlight', screen, [{ key: 'played', label: 'Play Time', value: '1 h' }, { key: 'hltb', label: 'Main', value: '9 h' }], measure, store);
         expect(t.stats.achievements).toBeUndefined();
