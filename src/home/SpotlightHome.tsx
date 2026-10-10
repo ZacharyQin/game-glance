@@ -33,8 +33,8 @@ import { collectionEyebrow } from './collections';
 import { preloadLogos } from './logoArt';
 import { tr } from '../i18n/steamText';
 
-/** Hero dim (handoff heroDim): .15 at rest, +.30 while the feed sheet is up. */
-const DIM_REST = 0.15;
+/** Hero dim: none at rest (the art is shaded as on the game page, homeCss .gh-scrim-page), .45 while the feed sheet is up. */
+const DIM_REST = 0;
 const DIM_SHEET = 0.45;
 
 interface Size {
@@ -339,11 +339,9 @@ export function SpotlightHome() {
         <div ref={rootRef} className="gh-root" style={{ '--glance-accent': data.accent, '--glance-accent-text': legibleAccent(data.accent), '--gh-dim': sheetUp ? DIM_SHEET : DIM_REST, '--gh-side': `${side}px`, '--gh-row': `${rowInset(side, tv)}px`, '--gh-pill': `${pillInset(tv)}px`, '--gh-bottom': `${legend}px`, '--gh-shift': `${stackShift(logicalHeight, legend, false)}px`, '--gh-raise': `${FEED_SHEET.raise + raiseDelta}px` } as CSSProperties}>
             <style>{css}</style>
             <HeroBackground appId={game?.appId ?? null} detailsVersion={data.detailsVersion} neighbours={heroNeighbours} />
-            {/* Open transition (homeCss.openingRules): the opened game's hero (a feed card's game) and the page's scrims. */}
+            {/* The opened game's hero (a feed card's, homeCss.openingRules), the feed sheet's dim, and the page's shading. */}
             <div className="gh-hero-open" />
             <div className="gh-scrim gh-scrim-dim" />
-            <div className="gh-scrim gh-scrim-v" />
-            <div className="gh-scrim gh-scrim-l" />
             <div className="gh-scrim gh-scrim-page" />
             <div
                 className="gh-canvas"

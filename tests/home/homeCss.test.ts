@@ -429,10 +429,16 @@ describe('homeCss open transition', () => {
         expect(pill).not.toContain('transform: var(--gho-play-bg)');
         expect(body((sel) => sel.includes('data-gh-phase="to"') && sel.endsWith('[data-action="play"]::after'))).toContain(settle);
     });
-    it("the page's scrims are drawn by Home, hidden until opening", () => {
-        const page = rules(css).find(([sel]) => sel === '.gh-scrim-page');
+    it("Home shades its art as the game page does, at rest (Michael: Cronos's page shading, by default), so opening never changes it", () => {
+        const all = rules(css);
+        const page = all.find(([sel]) => sel === '.gh-scrim-page');
         expect(page?.[1]).toContain(`background: ${PAGE_SCRIMS}`);
-        expect(page?.[1]).toContain('opacity: 0');
+        expect(page?.[1]).not.toMatch(/opacity:\s*0/);
+        // Home's own gradients are gone, and nothing about the shading changes while opening.
+        expect(all.some(([sel]) => sel.includes('.gh-scrim-v') || sel.includes('.gh-scrim-l'))).toBe(false);
+        expect(all.some(([sel]) => sel.includes('data-gh-opening') && sel.includes('.gh-scrim-page'))).toBe(false);
+        // No dimming at rest (the page has none); the feed sheet still dims (SpotlightHome's DIM_SHEET).
+        expect(all.find(([sel]) => sel === '.gh-root')?.[1]).toMatch(/--gh-dim:\s*0;/);
     });
     it('the glass panels are hidden until opening, and the second only when there are two', () => {
         const all = rules(css);

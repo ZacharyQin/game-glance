@@ -200,7 +200,7 @@ export function homeCss(cardScale: number = CARD_SCALE_HANDHELD): string {
         `@property --glance-accent { syntax: '<color>'; inherits: true; initial-value: ${DEFAULT_ACCENT}; }`,
         `@property --gh-card-accent { syntax: '<color>'; inherits: true; initial-value: ${DEFAULT_ACCENT}; }`,
         `@keyframes gh-fade-in { from { opacity: 0; } to { opacity: 1; } }`,
-        rule('.gh-root', `--gh-side: ${SIDE_INSET.handheld}px; --gh-row: ${SIDE_INSET.handheld - ROW_OFFSET}px; --gh-pill: ${PILL_INSET.handheld}px; --glance-accent: ${DEFAULT_ACCENT}; --glance-accent-text: ${DEFAULT_ACCENT}; --gh-top: 52px; --gh-bottom: ${FEED_SHEET.legendReserve}px; --gh-shift: 0px; --gh-dim: .15;
+        rule('.gh-root', `--gh-side: ${SIDE_INSET.handheld}px; --gh-row: ${SIDE_INSET.handheld - ROW_OFFSET}px; --gh-pill: ${PILL_INSET.handheld}px; --glance-accent: ${DEFAULT_ACCENT}; --glance-accent-text: ${DEFAULT_ACCENT}; --gh-top: 52px; --gh-bottom: ${FEED_SHEET.legendReserve}px; --gh-shift: 0px; --gh-dim: 0;
             --gh-ink: #07090c; --gh-on-accent: #0b0d10; --gh-r-capsule: 8px; --gh-r-card: 12px; --gh-r-panel: 16px; --gh-r-pill: 999px;
             transition: none;
             position: absolute; inset: 0; overflow: hidden; overflow: clip; z-index: 0; background: var(--gh-ink); color: #fff;
@@ -219,11 +219,11 @@ export function homeCss(cardScale: number = CARD_SCALE_HANDHELD): string {
             background-repeat: no-repeat; opacity: .92;
             -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 45%); mask-image: linear-gradient(90deg, transparent 0%, #000 45%)`),
 
-        // Scrims: flat dim, vertical, left.
+        // Scrims: the game page's own shading (themeCss PAGE_SCRIMS; Michael: Cronos's page shading, on Home by default),
+        // so the art looks the same on both and opening a game never changes it; a flat dim only under the feed sheet.
         rule('.gh-scrim', 'position: absolute; inset: 0; pointer-events: none'),
         rule('.gh-scrim-dim', `background: rgba(${SCRIM},var(--gh-dim)); transition: background ${SHEET_MS}ms`),
-        rule('.gh-scrim-v', `background: linear-gradient(180deg, rgba(${SCRIM},.55) 0%, rgba(${SCRIM},0) 14%, rgba(${SCRIM},0) 48%, rgba(${SCRIM},.72) 100%)`),
-        rule('.gh-scrim-l', `background: linear-gradient(90deg, rgba(${SCRIM},.72) 0%, rgba(${SCRIM},.25) 45%, rgba(${SCRIM},0) 70%)`),
+        rule('.gh-scrim-page', `background: ${PAGE_SCRIMS}`),
 
         // Scaled canvas; width, height and transform are set inline from homeCanvas().
         rule('.gh-canvas', 'position: absolute; left: 0; top: 0; transform-origin: 0 0'),
@@ -471,7 +471,6 @@ export function openingRules(): string[] {
     const settle = `opacity ${T.settle}ms ease-in-out ${T.morph - T.settle}ms`;
     return [
         // Always there, hidden: the page's scrims over Home's, the opened game's hero (heroFade), the glass panels.
-        rule('.gh-scrim-page', `background: ${PAGE_SCRIMS}; opacity: 0`),
         rule('.gh-hero-open', 'position: absolute; inset: 0; pointer-events: none; background-image: var(--gho-hero, none); background-size: cover; background-position: center 30%; background-repeat: no-repeat; opacity: 0'),
         rule('.gh-open-shell', 'display: none; position: absolute; left: 0; top: 0; margin: 0; padding: 0; pointer-events: none; transform-origin: 0 0; border-radius: 16px; border: 1px solid rgba(255,255,255,.12)'),
         // The glass: darker and unblurred while it moves (a blur under a moving scale is too slow on the Ally); the page's
@@ -483,11 +482,9 @@ export function openingRules(): string[] {
         // The bridge (openBridge): a frozen copy of Home in its final state; nothing inside it may animate again.
         rule('.gh-root.gh-bridge, .gh-root.gh-bridge *', 'animation: none; transition: none'),
 
-        // Scrims: Home's give way to the page's.
-        rule([`${MT} .gh-scrim-dim`, `${MT} .gh-scrim-v`, `${MT} .gh-scrim-l`].join(', '), `opacity: 0; transition: opacity ${T.morph}ms ease`),
-        rule(`${MT} .gh-scrim-page`, `opacity: 1; transition: opacity ${T.morph}ms ease`),
-        rule(FADES.flatMap((f) => [`${f} .gh-scrim-dim`, `${f} .gh-scrim-v`, `${f} .gh-scrim-l`]).join(', '), `opacity: 0; transition: opacity ${T.feedHero}ms ease`),
-        rule(FADES.map((f) => `${f} .gh-scrim-page`).join(', '), `opacity: 1; transition: opacity ${T.feedHero}ms ease`),
+        // Scrims: Home already shades its art as the page does; only the feed sheet's dim goes.
+        rule(`${MT} .gh-scrim-dim`, `opacity: 0; transition: opacity ${T.morph}ms ease`),
+        rule(FADES.map((f) => `${f} .gh-scrim-dim`).join(', '), `opacity: 0; transition: opacity ${T.feedHero}ms ease`),
 
         // Leave: the game cards row and the tabs drop and fade; the info button fades.
         rule([`${MT} .gh-recents`, `${MT} .gh-tabs`].join(', '), `transform: translateY(${T.leaveDrop}px); opacity: 0; transition: transform ${T.leave}ms cubic-bezier(.4,0,1,1), opacity ${T.leave}ms cubic-bezier(.4,0,1,1)`),
