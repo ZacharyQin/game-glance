@@ -3,13 +3,14 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { LOG_PREFIX } from '../constants';
 import { attempt } from '../data/attempt';
 import { cache, overrides, TTL } from '../data/cache';
-import { hltbCacheKey, lookupHltb } from '../data/hltb';
+import { hltbCacheKey, HltbResult, lookupHltb } from '../data/hltb';
 import { GAME_APP_TYPE, SHORTCUT_APP_TYPE } from '../data/installedGames';
 import { useSettings } from '../data/settings';
 import { getSourceLabel } from '../data/source';
 import { mergePlaytime } from '../data/unifideckPlaytime';
 import { useUnifideckPlaytime } from '../hooks/useUnifideckPlaytime';
-import { getSteamLanguage, peekSteamLanguage, readGameInfo } from '../data/steam';
+import { getDescription, getSteamLanguage, peekSteamLanguage, readGameInfo } from '../data/steam';
+import { getShortcutDescription } from '../data/shortcutDescription';
 import { useAsync } from '../hooks/useAsync';
 import { useOverrideVersion } from '../hooks/useOverrideVersion';
 import { useSettled } from '../hooks/useSettled';
@@ -36,7 +37,7 @@ import { pageHidden } from './pageVisible';
 import { noteDetails, withKnownAchievements } from './detailsMemo';
 import { neighbourIds } from './heroLayers';
 import { useWarmup, useWarmVersion } from './useWarmup';
-import { forgetHltb, peekHltb, rememberHltb } from './warmup';
+import { forgetHltb, peekDescription, peekHltb, rememberDescription, rememberHltb } from './warmup';
 import { HERO_PRELOAD_RADIUS } from './motion';
 
 export interface HomeGame extends RecentGame {
@@ -63,6 +64,10 @@ export interface HomeData {
     /** The collection the games row shows (Quick Access → Games row), null for the recent games. */
     rowCollection: string | null;
     chips: Chip[];
+    /** The focused game's HowLongToBeat result, once known (the open transition draws the page's card from it). */
+    hltb: HltbResult | undefined;
+    /** The focused game's description in Steam's language, once fetched (null: none, or the Clean look, which shows none). */
+    description: string | null;
     /** The focused game's store ("Steam", "GOG", ...), once known; the same label as the details page's source pill. */
     source: string | undefined;
     libraryChips: Chip[];
@@ -552,14 +557,15 @@ function useFriendLastGames(raw: RawFriend[]): LastGames {
  * `focusIndex` is the selected recents item (L1/R1, bumper navigation); an index past the end keeps the last game (the Library card).
  */
 export function useHomeData(focusIndex = 0): HomeData {
-    const { wishlistDeals, homeRow, homeRowSort } = useSettings();
+    const { wishlistDeals, homeRow, homeRowSort, cleanPage } = useSettings();
     const { games, collection: rowCollection, settled: recentsSettled } = useRowGames(homeRow, homeRowSort);
     const focused = games.length > 0 ? games[Math.min(Math.max(0, focusIndex), games.length - 1)] : null;
     const appId = focused?.appId ?? null;
 
     const knownLang = peekSteamLanguage();
     const loadedLang = useAsync(knownLang ? null : 'lang', getSteamLanguage);
-    const locale = steamLanguageToLocale(knownLang ?? loadedLang ?? 'english');
+    const lang = knownLang ?? loadedLang;
+    const locale = steamLanguageToLocale(lang ?? 'english');
 
     const detailsVersion = useAppDetailsVersion(appId);
     // What the background warm-up has learned (HowLongToBeat, achievement counts) for the games in the row: refreshes the chips.
@@ -600,6 +606,21 @@ export function useHomeData(focusIndex = 0): HomeData {
         return result;
     });
     const hltb = warmedHltb ?? liveHltb;
+    // The selected game's description once it rests, for the open transition (Home draws it as it turns into the page's
+    // Spotlight look; the Clean look has none). Kept in the session memo, which the page reads on its first frame.
+    const warmedDescription = focused && lang ? peekDescription(focused.appId, lang) : undefined;
+    const liveDescription = useAsync(
+        !cleanPage && focused && info && lang && resting !== null && !warmedDescription ? `desc:${focused.appId}:${lang}` : null,
+        async () => {
+            if (!focused || !info || !lang) return null;
+            const text = info.isShortcut
+                ? await getShortcutDescription({ name: info.name || focused.name, heroic: info.heroic }, lang)
+                : await getDescription(focused.appId, lang);
+            if (text) rememberDescription(focused.appId, lang, text);
+            return text;
+        },
+    );
+    const description = cleanPage ? null : (warmedDescription ?? liveDescription ?? null);
     const source = useAsync(info ? `src:${info.appId}` : null, () =>
         getSourceLabel(info?.appId ?? 0, info?.isShortcut ?? false, undefined, heroicStoreLabel(info?.heroic ?? null)),
     );
@@ -656,5 +677,5 @@ export function useHomeData(focusIndex = 0): HomeData {
     const { download, installed: installedNow, status: pillStatus } = useDownload(appId, focused?.installed ?? false);
     const focusedLive = useMemo(() => (focused && focused.installed !== installedNow ? { ...focused, installed: installedNow } : focused), [focused, installedNow]);
 
-    return { games, recentsSettled, focused: focusedLive, focusedRunning, download, pillStatus, detailsVersion, locale, lastPlayedLabel, focusedIsNew, rowCollection, chips, source, libraryChips: library, accent, news, updated, friends, friendsOnline, trending, recommended, deals };
+    return { games, recentsSettled, focused: focusedLive, focusedRunning, download, pillStatus, detailsVersion, locale, lastPlayedLabel, focusedIsNew, rowCollection, chips, hltb, description, source, libraryChips: library, accent, news, updated, friends, friendsOnline, trending, recommended, deals };
 }

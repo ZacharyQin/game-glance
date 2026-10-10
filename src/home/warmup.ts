@@ -34,6 +34,39 @@ export function forgetHltb(appId?: number) {
     else hltbMemo.delete(appId);
 }
 
+// ---- Description ---------------------------------------------------------------------------------------------------
+
+/** At most this many descriptions are kept (the oldest goes first). */
+export const DESCRIPTION_MEMO_MAX = 64;
+const descriptionMemo = new Map<string, string>();
+const descriptionKey = (appId: number, lang: string) => `${appId}:${lang}`;
+
+/**
+ * The description Home fetched for a game this session, in Steam's language `lang`, or undefined. Home fetches it for the
+ * selected game so its open transition can draw it, and the game page reads it on its first render (no skeleton).
+ */
+export function peekDescription(appId: number, lang: string): string | undefined {
+    return descriptionMemo.get(descriptionKey(appId, lang));
+}
+
+/** Remembers a description for the session; an empty one is never kept. */
+export function rememberDescription(appId: number, lang: string, text: string) {
+    if (!text.trim()) return;
+    const key = descriptionKey(appId, lang);
+    descriptionMemo.delete(key);
+    descriptionMemo.set(key, text);
+    while (descriptionMemo.size > DESCRIPTION_MEMO_MAX) descriptionMemo.delete(descriptionMemo.keys().next().value as string);
+}
+
+/**
+ * The game page's description: the fetched one once its fetch answers (null: none), until then the one Home already
+ * fetched for the game in that language, so the page's first frame has it. Undefined while unknown (the skeleton).
+ */
+export function knownDescription(fetched: string | null | undefined, appId: number, lang: string | undefined): string | null | undefined {
+    if (fetched !== undefined) return fetched;
+    return lang === undefined ? undefined : peekDescription(appId, lang);
+}
+
 /** Pause after each lookup that went online, to stay gentle on HowLongToBeat (the same pace as the installed-games pre-load). */
 export const HLTB_WARM_DELAY_MS = 1500;
 
@@ -84,6 +117,7 @@ const detailsTried = new Set<number>();
 
 export function resetWarmup() {
     hltbMemo.clear();
+    descriptionMemo.clear();
     detailsTried.clear();
 }
 

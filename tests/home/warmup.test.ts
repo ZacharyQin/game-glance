@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { memoAchievements, noteDetails, resetDetailsMemo, seedAchievements, setAchievementSink } from '../../src/home/detailsMemo';
-import { forgetHltb, HLTB_WARM_DELAY_MS, peekHltb, rememberHltb, resetWarmup, warmAchievements, warmHltb, warmOrder } from '../../src/home/warmup';
+import {
+    DESCRIPTION_MEMO_MAX, forgetHltb, knownDescription, HLTB_WARM_DELAY_MS, peekDescription, peekHltb, rememberDescription, rememberHltb, resetWarmup, warmAchievements,
+    warmHltb, warmOrder,
+} from '../../src/home/warmup';
 
 const game = (appId: number) => ({ appId, name: `Game ${appId}`, isShortcut: false });
 const found = (main: number) => ({ status: 'found' as const, gameId: 1, times: { main, mainExtras: null, completionist: null } });
@@ -31,6 +34,45 @@ describe('the HowLongToBeat memo', () => {
         rememberHltb(3, found(5));
         forgetHltb();
         expect(peekHltb(3)).toBeUndefined();
+    });
+});
+
+describe('the description memo', () => {
+    it('keeps a game’s description per language for the session', () => {
+        rememberDescription(1, 'english', 'A ship in the dark.');
+        expect(peekDescription(1, 'english')).toBe('A ship in the dark.');
+        expect(peekDescription(1, 'spanish')).toBeUndefined();
+        expect(peekDescription(2, 'english')).toBeUndefined();
+        rememberDescription(1, 'english', 'Updated.');
+        expect(peekDescription(1, 'english')).toBe('Updated.');
+    });
+
+    it('never keeps an empty description', () => {
+        rememberDescription(1, 'english', '');
+        rememberDescription(2, 'english', '   ');
+        expect(peekDescription(1, 'english')).toBeUndefined();
+        expect(peekDescription(2, 'english')).toBeUndefined();
+    });
+
+    it('is bounded: the oldest goes first', () => {
+        for (let i = 0; i <= DESCRIPTION_MEMO_MAX; i++) rememberDescription(i, 'english', `text ${i}`);
+        expect(peekDescription(0, 'english')).toBeUndefined();
+        expect(peekDescription(DESCRIPTION_MEMO_MAX, 'english')).toBe(`text ${DESCRIPTION_MEMO_MAX}`);
+    });
+
+    it('the page shows the fetched description once it answers, until then the one Home already fetched', () => {
+        rememberDescription(1, 'english', 'From Home.');
+        expect(knownDescription(undefined, 1, 'english')).toBe('From Home.');
+        expect(knownDescription('Fetched.', 1, 'english')).toBe('Fetched.');
+        expect(knownDescription(null, 1, 'english')).toBeNull();
+        expect(knownDescription(undefined, 1, undefined)).toBeUndefined();
+        expect(knownDescription(undefined, 2, 'english')).toBeUndefined();
+    });
+
+    it('resetWarmup clears it', () => {
+        rememberDescription(1, 'english', 'x');
+        resetWarmup();
+        expect(peekDescription(1, 'english')).toBeUndefined();
     });
 });
 
