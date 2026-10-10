@@ -260,7 +260,9 @@ export function openGame(appId: number, source?: HTMLElement | null) {
         const eyebrow = variant === 'morph' ? root?.querySelector('.gh-eyebrow')?.textContent?.trim() || undefined : undefined;
         // Home without its cloud button (the state was not known yet): the page's arrives instead of popping in.
         const homeCloud = variant === 'morph' && root ? root.querySelector('.gh-actions .gh-btn[data-action="cloud"]') !== null : undefined;
-        next = { root, appId, variant, look, heroUrl, intent: { look: pageRestyled ? look : 'steam', mode: variant === 'morph' ? 'parts' : 'all', eyebrow, homeCloud } };
+        // Clean: the chips whose bar the morph moves onto the panel's (openMotion), so the page's do not fade in again.
+        const homeBars = variant === 'morph' && look === 'clean' && root ? readChipTexts(root).filter((c) => c.bar).map((c) => c.key) : undefined;
+        next = { root, appId, variant, look, heroUrl, intent: { look: pageRestyled ? look : 'steam', mode: variant === 'morph' ? 'parts' : 'all', eyebrow, homeCloud, homeBars } };
         controller().open(appId, variant);
     } catch (error) {
         // Not reached in practice (the controller never throws); the page must open regardless.

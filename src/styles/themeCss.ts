@@ -550,7 +550,7 @@ const ARRIVE_RISE_PX = 14;
  * whole page but its art (our title block and cards, Steam's Play row), lowered by the rise. `revealed`: the same
  * elements back to visible over ARRIVE_MS. Its own stylesheet, only with the full-screen layout; '' otherwise.
  */
-export function buildArrivingCss(classes: ThemeClasses, look: 'spotlight' | 'clean', mode: 'parts' | 'all', revealed = false, extra: { cloud?: boolean } = {}): string {
+export function buildArrivingCss(classes: ThemeClasses, look: 'spotlight' | 'clean', mode: 'parts' | 'all', revealed = false, extra: { cloud?: boolean; bars?: string[] } = {}): string {
     const { header, details, root, play } = classes;
     if (!(cls(header, 'TopCapsule') && cls(details, 'InnerContainer') && cls(details, 'AppDetailsOverviewPanel') && cls(root, 'AppDetailsContainer'))) return '';
     // Not the cloud button: Home's moves into its place, so the page's own must be there at once. Unless Home showed
@@ -559,7 +559,7 @@ export function buildArrivingCss(classes: ThemeClasses, look: 'spotlight' | 'cle
     const shared = ['[data-stat="size"]', '.gg-family', ...(cloud ? [cloud] : [])];
     const parts = look === 'spotlight'
         ? ['.gg-desc', '.gg-hltb > .gg-label', '.gg-hltb [data-stat="mainExtras"]', '.gg-hltb [data-stat="completionist"]', '.gg-caption', '.gg-muted', '.gg-hltb .gg-bar', ...shared]
-        : [...shared, '.gg-clean-info .gg-bar'];
+        : [...shared, cleanBarsArriving(extra.bars)];
     const all = present(['.gg-titleblock', '.gg-hero', cls(root, 'PlaySection')]);
     const list = mode === 'all' ? all : parts;
     // Steam fades every page in by itself (TopLevelTransition: 200 ms delay, then 600 ms; probed on the Ally). Under the
@@ -571,6 +571,12 @@ export function buildArrivingCss(classes: ThemeClasses, look: 'spotlight' | 'cle
             ? ` opacity: 0 !important; transform: translateY(${ARRIVE_RISE_PX}px) !important; `
             : ' opacity: 0 !important; ';
     return [steamFade, rule(list, body)].filter((r) => r.length > 0).join('\n');
+}
+
+/** Clean's bars that arrive: all of them, or (`brought`: the stats whose bar Home's morph moved into place) the others. */
+function cleanBarsArriving(brought: string[] | undefined): string {
+    if (!brought || brought.length === 0) return '.gg-clean-info .gg-bar';
+    return `.gg-clean-info > [data-stat]${brought.map((key) => `:not([data-stat="${key.replace(/[^a-z]/gi, '')}"])`).join('')} .gg-bar`;
 }
 
 /**

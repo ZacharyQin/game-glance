@@ -93,6 +93,11 @@ export function openMotion(home: HomeRects, page: PageTargets, look: PageLook, c
         out[`--gho-chip-${i}-o`] = '1';
         out[`--gho-chip-${i}-label`] = `${translate((to.label.x - chip.label.x) / s, (to.label.y + labelLead - chip.label.y) / s)} scale(${k(labelScale)})`;
         out[`--gho-chip-${i}-value`] = `${translate((to.value.x - chip.value.x) / s, (to.value.y - chip.value.y) / s)} scale(${k(valueScale)})`;
+        // Clean: the chip's bar becomes the panel's (same track, fill and share), instead of one fading out and the other in.
+        if (chip.bar && to.bar) {
+            out[`--gho-chip-${i}-bar`] = mapBox(chip.bar, to.bar, s);
+            out[`--gho-chip-${i}-bar-o`] = '1';
+        }
         sources[shellOf(chip.key)]?.push(chip.shell);
     });
 

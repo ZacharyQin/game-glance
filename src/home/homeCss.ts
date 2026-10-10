@@ -514,7 +514,9 @@ export function openingRules(): string[] {
             rule(`${MT} .gh-chip:nth-child(${i + 1}) .gh-chip-label`, `transform: var(--gho-chip-${i}-label, none); opacity: var(--gho-chip-${i}-o, 0); transition: ${move}, opacity ${T.infoFade}ms ease`),
             rule(`${MT} .gh-chip:nth-child(${i + 1}) .gh-chip-value`, `transform: var(--gho-chip-${i}-value, none); opacity: var(--gho-chip-${i}-o, 0); transition: ${move}, opacity ${T.infoFade}ms ease`),
         ]),
-        rule(`${MT} .gh-chip-bar`, `opacity: 0; transition: opacity ${T.infoFade}ms ease`),
+        // A bar moves onto the page's (Clean's panel) when the morph gives it a place (openMotion), and fades otherwise.
+        rule(`${M} .gh-chip-bar`, 'transform-origin: 0 0'),
+        ...[0, 1, 2, 3].map((i) => rule(`${MT} .gh-chip:nth-child(${i + 1}) .gh-chip-bar`, `transform: var(--gho-chip-${i}-bar, none); opacity: var(--gho-chip-${i}-bar-o, 0); transition: ${move}, opacity ${T.infoFade}ms ease`)),
         ...shell(0),
         ...shell(1),
 

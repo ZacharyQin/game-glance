@@ -23,7 +23,8 @@ export interface PageTargets {
     store: Box;
     /** Spotlight: [info card, HowLongToBeat card]; Clean: [panel]. */
     shells: Box[];
-    stats: Partial<Record<StatKey, { label: Box; value: Box }>>;
+    /** Each stat's label and value; on Clean, the progress bar under a stat that has one. */
+    stats: Partial<Record<StatKey, { label: Box; value: Box; bar?: Box }>>;
 }
 /** A text's width in CSS px as the page draws it: a stat label (uppercase, its letter spacing), a card value or a Clean value. */
 export type Measure = (text: string, role: 'label' | 'value' | 'cleanValue', fontPx: number) => number;
@@ -70,7 +71,10 @@ export function pageTargets(look: PageLook, screen: { width: number; height: num
         let at = x;
         list.forEach((s, i) => {
             const w = columnWidth(s);
-            out[s.key] = { label: { x: at, y, w, h: labelH }, value: { x: at, y: y + labelH + L.stats.rowGap * d, w, h: valueH } };
+            const value: Box = { x: at, y: y + labelH + L.stats.rowGap * d, w, h: valueH };
+            out[s.key] = { label: { x: at, y, w, h: labelH }, value };
+            // Clean's bar: under the value, after the column's gap and its own margin.
+            if (look === 'clean' && s.bar) out[s.key]!.bar = { x: at, y: value.y + valueH + (L.stats.rowGap + L.cleanInfo.barTop) * d, w: barW, h: L.cleanInfo.barH * d };
             at += w + (i < list.length - 1 ? gap : 0);
         });
         return at - x;
@@ -106,6 +110,7 @@ export function pageTargets(look: PageLook, screen: { width: number; height: num
             const s = out[key]!;
             s.label = { ...s.label, x: s.label.x + ox, y: s.label.y + oy };
             s.value = { ...s.value, x: s.value.x + ox, y: s.value.y + oy };
+            if (s.bar) s.bar = { ...s.bar, x: s.bar.x + ox, y: s.bar.y + oy };
         }
         shells = [panel];
         store = { x: W - side - storeSize.w, y: playTop - L.clean.storeGap * d - storeSize.h, w: storeSize.w, h: storeSize.h };

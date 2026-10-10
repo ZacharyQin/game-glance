@@ -118,6 +118,24 @@ describe('openMotion', () => {
         expect(v['--gho-shell-count']).toBe('1');
     });
 
+    it("Clean: Home's chip bars move onto the panel's bars (a chip without a bar, or a page stat without one, has none)", () => {
+        const page = spotlight();
+        page.shells = [box(1073.9, 693.3, 401.1, 90)];
+        const target = box(1250, 760, 100, 4.2);
+        page.stats.hltb = { ...page.stats.hltb!, bar: target };
+        const v = vars(openMotion(homeRects(), page, 'clean', s));
+        const bar = parse(v['--gho-chip-2-bar']);
+        const from = r['chip:chip2:bar'];
+        expect(bar.tx).toBeCloseTo((target.x - from.x) / s, 1);
+        expect(bar.ty).toBeCloseTo((target.y - from.y) / s, 1);
+        expect(bar.sx).toBeCloseTo(target.w / from.w, 3);
+        expect(bar.sy).toBeCloseTo(target.h / from.h, 3);
+        expect(v['--gho-chip-2-bar-o']).toBe('1');
+        // Achievements has a bar on Home but no target here; Played has no bar at all.
+        expect(v['--gho-chip-1-bar']).toBeUndefined();
+        expect(v['--gho-chip-0-bar']).toBeUndefined();
+    });
+
     it('a chip without a page stat fades and does not move', () => {
         const home = homeRects();
         home.chips[0] = { ...home.chips[0], key: 'added' };

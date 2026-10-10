@@ -72,6 +72,10 @@ for (const look of ['spotlight', 'clean'] as const) {
             for (const [col, key] of COLUMNS[look]) {
                 nearBox(t.stats[key]?.label, r[`stat:${col}:label`], `${key} label`);
                 nearBox(t.stats[key]?.value, r[`stat:${col}:value`], `${key} value`);
+                // Clean's progress bars are targets too (Home's chip bars move into them); the Spotlight cards' are not.
+                const bar = r[`stat:${col}:bar`];
+                if (look === 'clean' && bar) nearBox(t.stats[key]?.bar, bar, `${key} bar`);
+                else expect(t.stats[key]?.bar, `${key} bar`).toBeUndefined();
             }
         });
     }

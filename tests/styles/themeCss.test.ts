@@ -718,6 +718,11 @@ describe('the page arriving after the open transition', () => {
             expect(buildArrivingCss(full, look, 'parts', true, { cloud: true }), look).toMatch(new RegExp(`\\.${play.CloudStatusRow}[^{]*\\{ opacity: 1`));
         }
     });
+    it("Clean: only the bars Home did not bring arrive (Home's chip bars moved onto the others)", () => {
+        const css = buildArrivingCss(full, 'clean', 'parts', false, { bars: ['achievements', 'hltb'] });
+        expect(css).toContain('.gg-clean-info > [data-stat]:not([data-stat="achievements"]):not([data-stat="hltb"]) .gg-bar');
+        expect(css).not.toContain('.gg-clean-info .gg-bar');
+    });
     it("'all' hides the whole page but the art, lowered by the rise", () => {
         const css = buildArrivingCss(full, 'spotlight', 'all');
         for (const sel of ['.gg-titleblock', '.gg-hero', '.rt_Play']) expect(css, sel).toContain(sel);

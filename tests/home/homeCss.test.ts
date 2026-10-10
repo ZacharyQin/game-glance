@@ -400,6 +400,13 @@ describe('homeCss open transition', () => {
         const lit = all.find(([sel]) => sel.includes('data-gh-phase="to"') && sel.endsWith('.gh-btn-label::after'));
         expect(lit?.[1]).toMatch(/opacity:\s*1/);
     });
+    it("a chip's bar moves onto the page's when the morph gives it a place, and fades otherwise", () => {
+        const all = rules(css);
+        const bar = all.find(([sel]) => sel.includes('data-gh-phase="to"') && sel.endsWith('.gh-chip:nth-child(3) .gh-chip-bar'));
+        expect(bar?.[1]).toContain('transform: var(--gho-chip-2-bar, none)');
+        expect(bar?.[1]).toContain('opacity: var(--gho-chip-2-bar-o, 0)');
+        expect(all.some(([sel, body]) => sel.includes('data-gh-opening') && sel.includes('.gh-chip-bar') && /transform-origin:\s*0 0/.test(body))).toBe(true);
+    });
     it("the page's scrims are drawn by Home, hidden until opening", () => {
         const page = rules(css).find(([sel]) => sel === '.gh-scrim-page');
         expect(page?.[1]).toContain(`background: ${PAGE_SCRIMS}`);
