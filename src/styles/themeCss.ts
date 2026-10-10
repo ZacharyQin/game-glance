@@ -593,8 +593,9 @@ export function buildSteamEnterOffCss({ transition }: ThemeClasses): string {
     const exitActive = cls(transition, 'ExitActive');
     return [
         rule([`${top}${enter}`, `${top}${enterActive}`], ' opacity: 1 !important; transform: none !important; transition: none !important; '),
-        // The page leaving (Home) goes at once: its exit animation drew it, offset, under the fading bridge.
-        exit && exitActive ? rule([`${top}${exit}`, `${top}${exitActive}`], ' opacity: 0 !important; transition: none !important; ') : '',
+        // The page leaving (Home) is hidden at once: its exit animation drew it, offset, under the fading bridge. Only
+        // hidden: Steam unmounts it when that animation ends, so the animation itself must still run.
+        exit && exitActive ? rule([`${top}${exit}`, `${top}${exitActive}`], ' visibility: hidden !important; ') : '',
     ].filter((r) => r.length > 0).join('\n');
 }
 

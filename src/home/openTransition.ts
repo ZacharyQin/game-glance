@@ -49,7 +49,6 @@ export function createOpenTransition(deps: OpenDeps): OpenTransition {
     let bridge: OpenBridge | null = null;
     let stopReady: (() => void) | null = null;
     let timers: unknown[] = [];
-    let handedOver = false;
 
     const warn = (message: string, error: unknown) => {
         try {
@@ -89,7 +88,6 @@ export function createOpenTransition(deps: OpenDeps): OpenTransition {
         undoHome = null;
         if (undo && u) safely("could not restore Home", u);
         running = false;
-        handedOver = false;
     };
 
     const navigate = (path: string): boolean => {
@@ -109,11 +107,12 @@ export function createOpenTransition(deps: OpenDeps): OpenTransition {
         leaving = true;
         const b = bridge;
         safely('could not fade the bridge', () => b.fadeOut(OPEN_TIMINGS.bridgeFade));
-        if (!later(() => finish(false), OPEN_TIMINGS.bridgeFade)) finish(false);
+        // Home's opening state goes too: Steam normally unmounts Home (hidden under the bridge while it leaves), but if it
+        // keeps it, or brings it back on B, Home must not be left mid-open.
+        if (!later(() => finish(true), OPEN_TIMINGS.bridgeFade)) finish(true);
     };
 
     const handOver = (path: string) => {
-        handedOver = true;
         try {
             bridge = deps.mountBridge();
         } catch (error) {
@@ -155,7 +154,7 @@ export function createOpenTransition(deps: OpenDeps): OpenTransition {
             }
         },
         cancel() {
-            finish(!handedOver);
+            finish(true);
         },
     };
 }

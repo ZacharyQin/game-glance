@@ -66,6 +66,16 @@ describe('openTransition', () => {
         expect(log).toContain('remove@520');
     });
 
+    it("once the bridge is gone Home's opening state is undone (Steam may keep Home, or bring it back on B: it was left mid-open)", () => {
+        const { t, undo, fireReady } = setup();
+        t.open(620, 'morph');
+        vi.advanceTimersByTime(400);
+        fireReady();
+        expect(undo).not.toHaveBeenCalled();
+        vi.advanceTimersByTime(120);
+        expect(undo).toHaveBeenCalledTimes(1);
+    });
+
     it('no ready: the bridge leaves at the cap (500 ms after the hand-over)', () => {
         const { t, log } = setup();
         t.open(620, 'morph');
@@ -112,12 +122,13 @@ describe('openTransition', () => {
         expect(deps.mountBridge).not.toHaveBeenCalled();
     });
 
-    it('cancel after the hand-over removes the bridge; a later ready does nothing', () => {
-        const { t, bridge, fireReady } = setup();
+    it('cancel after the hand-over removes the bridge and restores Home; a later ready does nothing', () => {
+        const { t, bridge, undo, fireReady } = setup();
         t.open(620, 'morph');
         vi.advanceTimersByTime(400);
         t.cancel();
         expect(bridge.remove).toHaveBeenCalledTimes(1);
+        expect(undo).toHaveBeenCalledTimes(1);
         fireReady();
         vi.advanceTimersByTime(2000);
         expect(bridge.fadeOut).not.toHaveBeenCalled();

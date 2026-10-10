@@ -764,7 +764,10 @@ describe('buildSteamEnterOffCss', () => {
     });
     it("hides the page leaving at once (Steam's exit animation drew Home, offset, under the fading bridge; probed on the Ally)", () => {
         const css = buildSteamEnterOffCss({ ...full, transition: { TopLevelTransition: 'a', Enter: 'b', EnterActive: 'c', Exit: 'd', ExitActive: 'e' } });
-        expect(css).toContain('.a.d, .a.e { opacity: 0 !important; transition: none !important; }');
+        // visibility, not opacity with the transition off: Steam unmounts the leaving page when its exit transition
+        // ends, so the transition must still run (without it Home stayed, hidden, and came back mid-open on B).
+        expect(css).toContain('.a.d, .a.e { visibility: hidden !important; }');
+        expect(css).not.toMatch(/\.a\.d[^{]*\{[^}]*transition/);
     });
 });
 
