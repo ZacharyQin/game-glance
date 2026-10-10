@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { DETAILS_MEMO_MAX, memoAchievements, memoDetails, noteDetails, resetDetailsMemo, withKnownAchievements } from '../../src/home/detailsMemo';
+import { DETAILS_MEMO_MAX, memoAchievements, memoCloud, memoDetails, noteDetails, resetDetailsMemo, withKnownAchievements } from '../../src/home/detailsMemo';
 
 describe('detailsMemo', () => {
     afterEach(resetDetailsMemo);
@@ -61,5 +61,27 @@ describe('withKnownAchievements', () => {
         expect(withKnownAchievements(own)).toBe(own);
         expect(withKnownAchievements({ appId: 5, isShortcut: true, achievements: null }).achievements).toBeNull();
         expect(withKnownAchievements({ appId: 6, isShortcut: false, achievements: null }).achievements).toBeNull();
+    });
+});
+
+describe('memoCloud', () => {
+    afterEach(resetDetailsMemo);
+    const cloud = (status: number) => ({ bCloudEnabledForApp: true, bCloudEnabledForAccount: true, bHasAnyLocalContent: true, eCloudStatus: status, nCloudProgressPercent: 0 });
+    it("keeps the cloud fields Steam's details callback carries (its store has none for most games), the latest winning", () => {
+        noteDetails(286690, { ...cloud(6), strDisplayName: 'x' });
+        expect(memoCloud(286690)).toEqual(cloud(6));
+        noteDetails(286690, cloud(3));
+        expect(memoCloud(286690)?.eCloudStatus).toBe(3);
+    });
+    it('ignores details without them', () => {
+        for (const junk of [undefined, null, 5, {}, { libraryAssets: { strHeroImage: 'h' } }, { bCloudEnabledForApp: 'yes' }]) noteDetails(8, junk);
+        expect(memoCloud(8)).toBeUndefined();
+    });
+    it('is bounded like the art memo, and reset clears it', () => {
+        for (let id = 1; id <= DETAILS_MEMO_MAX + 1; id++) noteDetails(id, cloud(3));
+        expect(memoCloud(1)).toBeUndefined();
+        expect(memoCloud(2)).toBeDefined();
+        resetDetailsMemo();
+        expect(memoCloud(2)).toBeUndefined();
     });
 });
