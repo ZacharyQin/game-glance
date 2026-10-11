@@ -37,7 +37,8 @@ const GLOW = '0 0 0 1px var(--glance-accent), 0 16px 40px -12px var(--glance-acc
  */
 /** Inside the Play pill: the glyph's inset, the glyph, the gap to the label, the label's type size (canvas px). */
 /** Home's Play pill in canvas px: its padding, glyph, gap and type, and the 1 px border all .gh-btn have (its content sits inside it). */
-export const HOME_PILL = { padX: 22, icon: 18, gap: 13, font: 19, border: 1 } as const;
+/** `arrow`/`arrowGlyph`: the "Play from" segment (PAGE_LAYOUT.playArrow at Home's 54 px pill height against the page's 60). */
+export const HOME_PILL = { padX: 22, icon: 18, gap: 13, font: 19, border: 1, arrow: 50, arrowGlyph: 13 } as const;
 
 export const TITLE_BLOCK = {
     top: 118,
@@ -311,6 +312,15 @@ export function homeCss(cardScale: number = CARD_SCALE_HANDHELD): string {
         rule('.gh-btn-icon', 'display: flex; align-items: center; justify-content: center; line-height: 1'),
         rule('.gh-btn-play .gh-btn-icon', `font-size: ${HOME_PILL.icon}px`),
         rule('.gh-btn.gh-focus', `box-shadow: 0 0 0 2px rgba(255,255,255,.9), 0 14px 40px -8px var(--glance-accent); transform: scale(${PAGE_LAYOUT.focusScale})`),
+        // A game on more than one device (home/streaming): the pill ends in the page's "Play from" segment (a divider and
+        // Steam's arrow glyph, part of the pill, so it grows with it), and a focusable arrow lies over it, right after Play
+        // in the row (the row's gap pulled back). Focused, the segment lights as the page's does; no ring or growth of its own.
+        rule('.gh-btn-play > .gh-play-arrow', `position: absolute; top: -1px; bottom: -1px; right: -1px; width: ${HOME_PILL.arrow}px; display: flex; align-items: center; justify-content: center;
+            border-left: 1px solid rgba(4,17,12,.25); pointer-events: none`),
+        rule('.gh-play-arrow svg', `width: ${HOME_PILL.arrowGlyph}px; height: ${HOME_PILL.arrowGlyph}px; margin: 0; fill: currentColor`),
+        rule('.gh-actions > .gh-btn-stream', `position: relative; z-index: 1; flex: 0 0 ${HOME_PILL.arrow}px; width: ${HOME_PILL.arrow}px; margin-left: -${HOME_PILL.arrow + 12}px; background: transparent;
+            border-color: transparent; border-radius: 0 999px 999px 0; box-shadow: none; transform: none`),
+        rule('.gh-actions > .gh-btn-stream.gh-focus', 'background: rgba(255,255,255,.28); box-shadow: none; transform: none'),
 
         // Recents row (handoff: left 44, 140 tall; times the card scale, its bottom stays at 688 and it grows upwards
         // from geo.top). Overflow stays visible: earlier capsules scroll off to the left edge.
@@ -509,7 +519,7 @@ export function openingRules(): string[] {
 
         // Leave: the game cards row and the tabs drop and fade; the info button fades.
         rule([`${MT} .gh-recents`, `${MT} .gh-tabs`].join(', '), `transform: translateY(${T.leaveDrop}px); opacity: 0; transition: transform ${T.leave}ms cubic-bezier(.4,0,1,1), opacity ${T.leave}ms cubic-bezier(.4,0,1,1)`),
-        rule(`${MT} .gh-actions > .gh-btn[data-action="info"]`, `opacity: 0; transition: opacity ${T.infoFade}ms ease`),
+        rule([`${MT} .gh-actions > .gh-btn[data-action="info"]`, `${MT} .gh-actions > .gh-btn-stream`].join(', '), `opacity: 0; transition: opacity ${T.infoFade}ms ease`),
 
         // Morph: the movers, from their own place (origin top-left, as openMotion computes).
         rule([`${M} .gh-title-slot`, `${M} .gh-eyebrow`, `${M} .gh-source`, `${M} .gh-actions > .gh-btn`, `${M} .gh-chip-label`, `${M} .gh-chip-value`].join(', '), 'transform-origin: 0 0'),
@@ -523,7 +533,9 @@ export function openingRules(): string[] {
         // The page focuses Play (its white ring and accent glow, as Home's focus): the page's focused pill at its exact size
         // (round ends; the stretched layer's are oval) fades in as the pill comes to rest, under the glyph and label.
         rule(`${M} ${play}::after`, "content: ''; position: absolute; left: 0; top: var(--gho-play-dy); width: calc(100% * var(--gho-play-sx)); height: calc(100% * var(--gho-play-sy)); border-radius: 999px; background: var(--glance-accent); box-shadow: 0 0 0 2px rgba(255,255,255,.9), 0 14px 40px -8px var(--glance-accent); pointer-events: none; opacity: 0"),
-        rule([`${M} ${play} > .gh-btn-icon`, `${M} ${play} > .gh-btn-label`].join(', '), 'z-index: 1'),
+        rule([`${M} ${play} > .gh-btn-icon`, `${M} ${play} > .gh-btn-label`, `${M} ${play} > .gh-play-arrow`].join(', '), 'z-index: 1'),
+        rule(`${M} ${play} > .gh-play-arrow`, 'transform-origin: 100% 50%'),
+        rule(`${MT} ${play} > .gh-play-arrow`, `transform: var(--gho-play-arrow); transition: ${move}`),
         rule(`${MT} ${play}`, `transform: var(--gho-play-fg); transition: ${move}`),
         // Its glyph and label grow to the page's, from the pill's left edge and centre line (white on both).
         rule([`${M} ${play} > .gh-btn-icon`, `${M} ${play} > .gh-btn-label`].join(', '), 'transform-origin: 0 50%'),
@@ -531,10 +543,11 @@ export function openingRules(): string[] {
         rule(`${MT} ${play} > .gh-btn-label`, `transform: var(--gho-play-label); transition: ${move}`),
         rule(`${MT} ${play}::before`, `transform: var(--gho-play-bg); transition: ${move}`),
         rule(`${MT} ${play}::after`, `opacity: 1; transition: ${settle}`),
-        ...[0, 1, 2, 3].map((i) => rule(`${MT} .gh-actions > .gh-btn:nth-child(${i + 2})`, `transform: var(--gho-circle-${i}, none); transition: ${move}`)),
+        // The circles by their order among circles (openHome measures .gh-btn-circle), whatever comes before them (the stream arrow).
+        ...[0, 1, 2, 3].map((i) => rule(`${MT} .gh-actions > .gh-btn-circle:nth-child(${i + 1} of .gh-btn-circle)`, `transform: var(--gho-circle-${i}, none); transition: ${move}`)),
         // Each circle's icon shrinks as the circle grows (openMotion), so it is the page's size throughout.
         rule(`${M} .gh-actions > .gh-btn-circle > .gh-btn-icon`, 'transform-origin: 50% 50%'),
-        ...[0, 1, 2, 3].map((i) => rule(`${MT} .gh-actions > .gh-btn:nth-child(${i + 2}) > .gh-btn-icon`, `transform: var(--gho-circle-icon-${i}, none); transition: ${move}`)),
+        ...[0, 1, 2, 3].map((i) => rule(`${MT} .gh-actions > .gh-btn-circle:nth-child(${i + 1} of .gh-btn-circle) > .gh-btn-icon`, `transform: var(--gho-circle-icon-${i}, none); transition: ${move}`)),
         // Chips: their glass gives way to the panels at once; texts move and grow; the bars and unmatched chips fade.
         rule(`${M} .gh-chip`, 'background: transparent; border-color: transparent; backdrop-filter: none; box-shadow: none'),
         // An accent copy of a value's words (data-text) over it, for a value the page draws in the accent (openMotion).

@@ -1,6 +1,6 @@
-import { Focusable } from '@decky/ui';
+import { Focusable, Menu, MenuItem, showContextMenu } from '@decky/ui';
 import type { GamepadEvent, NavEntryPositionPreferences } from '@decky/ui';
-import { ComponentType, ReactNode, useRef } from 'react';
+import { ComponentType, ReactNode, useRef, useState } from 'react';
 import { IoCloudDoneOutline, IoCloudOfflineOutline, IoCloudOutline, IoCloudUploadOutline, IoDownload, IoGrid, IoGameControllerOutline, IoInformationCircleOutline, IoPause, IoPlay, IoSettingsOutline } from 'react-icons/io5';
 import { LOG_PREFIX } from '../constants';
 import { markLaunch } from '../data/launchIntent';
@@ -10,6 +10,7 @@ import { openGameMenu } from './gameMenu';
 import { pressCloud, steamCloudIcon } from './steamCloud';
 import { steamControllerIcon, steamGearIcon } from './steamIcons';
 import { readSteamPill } from './steamPill';
+import { StreamChoice, streamChoices, StreamOverview } from './streaming';
 import { openGame, openLibrary, openPage } from './homeNav';
 import type { DownloadState } from './downloadProgress';
 import { playAction, runGameId } from './homeView';
@@ -27,6 +28,50 @@ const apps = (): AppsApi | undefined => (globalThis as { SteamClient?: { Apps?: 
 const LAUNCH_SOURCE = 100;
 /** A and a touch can both arrive for one press; one action per press. */
 const REPEAT_GUARD_MS = 1000;
+
+/** The game's "Play from" choices (home/streaming), or null: one device only, or Steam's store unreadable. */
+function readStreamChoices(appId: number): StreamChoice[] | null {
+    try {
+        const store = (globalThis as { appStore?: { GetAppOverviewByAppID?(id: number): StreamOverview | null | undefined } }).appStore;
+        return streamChoices(store?.GetAppOverviewByAppID?.(appId));
+    } catch {
+        return null;
+    }
+}
+
+/** Steam's arrow glyph for the "Play from" segment (the game page's, 36 x 36). */
+function PlayFromGlyph() {
+    return (
+        <svg viewBox="0 0 36 36" aria-hidden="true">
+            <path d="M17.98 26.54L3.20996 11.77H32.75L17.98 26.54Z" />
+        </svg>
+    );
+}
+
+/**
+ * Steam's "Play from" menu, as the game page's Play arrow opens it: this device, then each other one to stream from,
+ * the selected one ticked; picking one sets the game's streaming client (Steam's Play then becomes Stream). `changed`:
+ * once Steam has taken the choice (it updates the game asynchronously), so the pill reads Steam's new action.
+ */
+function openPlayFrom(appId: number, choices: StreamChoice[], anchor: HTMLElement | null, changed: () => void) {
+    const set = (clientid: string) => {
+        try {
+            (globalThis as { SteamClient?: { Apps?: { SetStreamingClientForApp?(appId: number, clientid: string): void } } }).SteamClient?.Apps?.SetStreamingClientForApp?.(appId, clientid);
+        } catch (error) {
+            console.warn(`${LOG_PREFIX} Home: choosing where to play failed`, error);
+        }
+        for (const ms of [250, 1000]) setTimeout(changed, ms);
+    };
+    showContextMenu(
+        <Menu label={tr('playFrom')} cancelText={tr('cancel')}>
+            {choices.map((c) => (
+                <MenuItem key={c.clientid} selected={c.selected} onSelected={() => set(c.clientid)}>{c.label}</MenuItem>
+            ))}
+        </Menu>,
+        anchor ?? undefined,
+        { bOverlapHorizontal: true },
+    );
+}
 
 /** Runs a Steam call; if it is missing or throws, opens the game's page instead (Steam's own controls live there). */
 function steamOr(what: string, appId: number, call: (api: AppsApi) => boolean) {
@@ -194,6 +239,8 @@ export function ActionRow({ game, running = false, download = null, preferred, b
     onBack?(): void;
 }) {
     const gear = useRef<HTMLElement | null>(null);
+    // Bumped once Steam has taken a "Play from" choice, so the pill reads Steam's new action (Stream / Play).
+    const [, setStreamVersion] = useState(0);
     const row = { className: 'gh-actions', 'flow-children': 'row', navEntryPreferPosition: PREFERRED_CHILD as NavEntryPositionPreferences, onButtonDown: buttons?.onButtonDown, onButtonUp: buttons?.onButtonUp, onCancel: backHandler(onBack) };
     if (!game) {
         return (
@@ -228,6 +275,8 @@ export function ActionRow({ game, running = false, download = null, preferred, b
     const playWord = pillWord(steamPill?.label ?? play.label);
     const fill = steamPill ? (download ? play.fill : null) : play.fill;
     const appId = game.appId;
+    // A game on more than one device: the pill ends in Steam's "Play from" segment, and its arrow opens Steam's menu.
+    const playFrom = readStreamChoices(appId);
     // Steam's game context menu, as the game page's gear opens it (gameMenu); Properties if it is unavailable.
     const openMenu = (anchor: HTMLElement | null) => openGameActions(appId, anchor);
     return (
@@ -262,7 +311,19 @@ export function ActionRow({ game, running = false, download = null, preferred, b
             >
                 <span className="gh-btn-icon">{steamPill ? steamPill.icon : play.label === 'Pause' ? <IoPause /> : play.label === 'Download' || play.label === 'Update' ? <IoDownload /> : <IoPlay />}</span>
                 <span className="gh-btn-label">{playWord}</span>
+                {playFrom && <span className="gh-play-arrow"><PlayFromGlyph /></span>}
             </ActionButton>
+            {playFrom && (
+                <ActionButton
+                    key="stream"
+                    className="gh-btn-stream"
+                    label={tr('playFrom')}
+                    action="stream"
+                    onPress={(el) => openPlayFrom(appId, playFrom, el, () => setStreamVersion((v) => v + 1))}
+                >
+                    <span />
+                </ActionButton>
+            )}
             <ActionButton
                 className="gh-btn-circle"
                 label={tr('controllerSettings')}

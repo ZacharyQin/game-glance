@@ -868,3 +868,9 @@ describe('the cloud button on the restyled page', () => {
         expect(css).toContain(`.${play.CloudStatusRow} svg { width: calc(${PAGE_LAYOUT.cloudIcon} * var(--gg-d)) !important; height: calc(${PAGE_LAYOUT.cloudIcon} * var(--gg-d)) !important; }`);
     });
 });
+
+describe('the Play pill\'s "Play from" arrow', () => {
+    it('is a 56 wide segment with a 14 px glyph at the pill\'s right end, in the page\'s d unit (Home draws the same, home/homeCss)', () => {
+        expect(PAGE_LAYOUT.playArrow).toEqual({ w: 56, glyph: 14 });
+    });
+});

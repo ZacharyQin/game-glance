@@ -82,6 +82,9 @@ export function openMotion(home: HomeRects, page: PageTargets, look: PageLook, c
     const homeInset = HOME_PILL.border + HOME_PILL.padX;
     out['--gho-play-icon'] = `${translate(pill.padX * f - homeInset, 0)} scale(${k((pill.icon * f) / HOME_PILL.icon)})`;
     out['--gho-play-label'] = `${translate((pill.padX + pill.icon + pill.iconGap) * f - (homeInset + HOME_PILL.icon + HOME_PILL.gap), 0)} scale(${k((pill.font * f) / HOME_PILL.font)})`;
+    // A game on more than one device: Home's "Play from" segment, at the pill's right end (origin: its right edge and
+    // centre line), moves with the pill's growth and grows onto the page's segment (its width, the page pill's height).
+    out['--gho-play-arrow'] = `${translate((to.w - home.play.w) / s, 0)} scale(${k((PAGE_LAYOUT.playArrow.w * f) / HOME_PILL.arrow)}, ${k(to.h / home.play.h)})`;
     let slot = 0;
     home.circles.forEach((circle, i) => {
         if (i === home.infoCircle) return;

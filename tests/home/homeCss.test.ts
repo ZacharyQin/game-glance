@@ -1,7 +1,7 @@
 import { SETTLE_WIDEN_MS } from '../../src/home/fastCycle';
 import { describe, expect, it } from 'vitest';
 import {
-    statusCss,
+    statusCss, HOME_PILL,
     FEED_SHEET, hexAlpha, homeCss, MAX_STACK_SHIFT, sourcePillTop, stackShift, TITLE_BLOCK, titleBlockBottom, titleBlockLayout,
 } from '../../src/home/homeCss';
 import { sourcePillLook } from '../../src/styles/sourcePill';
@@ -437,9 +437,27 @@ describe('homeCss open transition', () => {
         const lit = all.find(([sel]) => sel.includes('data-gh-phase="to"') && sel.endsWith('.gh-chip:nth-child(3) .gh-chip-value::after'));
         expect(lit?.[1]).toContain('opacity: var(--gho-chip-2-accent, 0)');
     });
+    it("a game that can be streamed: the Play pill ends in the page's arrow segment (Home's size), and a focusable arrow over it", () => {
+        const all = rules(css);
+        const seg = all.find(([sel]) => sel === '.gh-btn-play > .gh-play-arrow');
+        expect(seg?.[1]).toMatch(new RegExp(`position: absolute[^;]*;[^]*right: -1px[^]*width: ${HOME_PILL.arrow}px[^]*border-left: 1px solid rgba\\(4,17,12,\\.25\\)`));
+        expect(css).toMatch(new RegExp(`\\.gh-play-arrow svg\\s*\\{[^}]*width: ${HOME_PILL.arrowGlyph}px`));
+        // The arrow button lies over the segment (the row's gap pulled back), with no ring or growth of its own: focused,
+        // the segment lights as the page's does.
+        const btn = all.find(([sel]) => sel === '.gh-actions > .gh-btn-stream');
+        expect(btn?.[1]).toMatch(new RegExp(`width: ${HOME_PILL.arrow}px[^]*margin-left: -${HOME_PILL.arrow + 12}px[^]*background: transparent`));
+        const focus = all.find(([sel]) => sel === '.gh-actions > .gh-btn-stream.gh-focus');
+        expect(focus?.[1]).toMatch(/background: rgba\(255,255,255,\.28\)[^]*box-shadow: none[^]*transform: none/);
+        // Opening: the segment moves with the pill and grows onto the page's (openMotion --gho-play-arrow), about its right end.
+        expect(all.some(([sel, body]) => sel.includes('data-gh-phase="to"') && sel.endsWith('.gh-play-arrow') && body.includes('transform: var(--gho-play-arrow)'))).toBe(true);
+        expect(all.some(([sel, body]) => sel.includes('data-gh-opening') && !sel.includes('data-gh-phase') && sel.endsWith('.gh-play-arrow') && /transform-origin:\s*100% 50%/.test(body))).toBe(true);
+        // The arrow button itself fades with the info button.
+        expect(all.some(([sel, body]) => sel.includes('data-gh-phase="to"') && sel.endsWith('.gh-btn-stream') && /opacity:\s*0/.test(body))).toBe(true);
+    });
     it("a circle's icon takes the counter-scale about its centre while the circle grows", () => {
         const all = rules(css);
-        const icon = all.find(([sel]) => sel.includes('data-gh-phase="to"') && sel.endsWith('.gh-btn:nth-child(3) > .gh-btn-icon'));
+        // Picked among the circles (openHome measures .gh-btn-circle in order), so the stream arrow before them shifts nothing.
+        const icon = all.find(([sel]) => sel.includes('data-gh-phase="to"') && sel.endsWith('.gh-btn-circle:nth-child(2 of .gh-btn-circle) > .gh-btn-icon'));
         expect(icon?.[1]).toContain('transform: var(--gho-circle-icon-1, none)');
         expect(all.some(([sel, body]) => sel.includes('data-gh-opening') && !sel.includes('data-gh-phase') && sel.includes('.gh-btn-circle > .gh-btn-icon') && /transform-origin:\s*50% 50%/.test(body))).toBe(true);
         // The cloud's icon is the page's size too (PAGE_LAYOUT.cloudIcon, on both).
@@ -573,5 +591,12 @@ describe('homeCss Play pill while opening', () => {
         const to = /\[data-gh-phase="to"\] \.gh-actions > \.gh-btn\[data-action="play"\]::after \{([^}]*)\}/.exec(css)?.[1] ?? '';
         expect(to).not.toContain('transform');
         expect(to).toContain('opacity: 1');
+    });
+});
+
+describe('HOME_PILL arrow', () => {
+    it("is the page's arrow at Home's pill height (54 against the page's 60), so its morph grows it evenly", () => {
+        expect(HOME_PILL.arrow).toBe(Math.round((PAGE_LAYOUT.playArrow.w * 54) / PAGE_LAYOUT.icon));
+        expect(HOME_PILL.arrowGlyph).toBe(Math.round((PAGE_LAYOUT.playArrow.glyph * 54) / PAGE_LAYOUT.icon));
     });
 });

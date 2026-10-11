@@ -89,6 +89,8 @@ export const PAGE_LAYOUT = {
     titleBlock: { gap: 14, eyebrow: 12, title: 64 },
     /** Inside the Play pill: its glyph's inset, the glyph, the gap to the label, the label's type size. */
     pill: { padX: 24, icon: 20, iconGap: 14, font: 22 },
+    /** The Play pill's "Play from" arrow (a game on more than one device): its segment's width and glyph, at the pill's right end. */
+    playArrow: { w: 56, glyph: 14 },
     /** The glyph in the controller and gear circles. */
     circleIcon: 24,
     /** A focused button grows by this about its centre (Home's buttons and the page's Play, alike). */
@@ -460,8 +462,8 @@ function restyleRules({ header, details, root, play, shared }: ThemeClasses, lay
         // The label bold like Home's (Steam's own class sets 500), so nothing changes at the open transition's hand-over.
         rule(playButton && `${playButton} [role="button"] > div`, ` font-size: ${d(PAGE_LAYOUT.pill.font)} !important; font-weight: 700 !important; color: #ffffff !important; `),
         rule(playButton && `${playButton} [role="button"] svg`, ` width: ${d(PAGE_LAYOUT.pill.icon)} !important; height: ${d(PAGE_LAYOUT.pill.icon)} !important; margin-right: ${d(PAGE_LAYOUT.pill.iconGap)} !important; `),
-        rule(playButton && `${playButton} [role="button"] + [role="button"]`, ` flex: 0 0 ${d(56)} !important; width: ${d(56)} !important; padding: 0 !important; `),
-        rule(playButton && `${playButton} [role="button"] + [role="button"] svg`, ` width: ${d(14)} !important; height: ${d(14)} !important; `),
+        rule(playButton && `${playButton} [role="button"] + [role="button"]`, ` flex: 0 0 ${d(PAGE_LAYOUT.playArrow.w)} !important; width: ${d(PAGE_LAYOUT.playArrow.w)} !important; padding: 0 !important; `),
+        rule(playButton && `${playButton} [role="button"] + [role="button"] svg`, ` width: ${d(PAGE_LAYOUT.playArrow.glyph)} !important; height: ${d(PAGE_LAYOUT.playArrow.glyph)} !important; `),
         rule(menuButton, ` background: rgba(12, 16, 22, 0.4) !important; backdrop-filter: blur(${d(12)}) !important; `),
         rule(menuButton && `${menuButton}.gpfocus`, ` background: #ffffff !important; `),
         rule(menuButton && `${menuButton} svg`, ` width: ${d(PAGE_LAYOUT.circleIcon)} !important; height: ${d(PAGE_LAYOUT.circleIcon)} !important; `),

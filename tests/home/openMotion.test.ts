@@ -5,6 +5,7 @@ import { HomeRects, MotionVar, openMotion } from '../../src/home/openMotion';
 import type { Box, PageTargets } from '../../src/home/openTargets';
 import { MORPH_EASE, OPEN_TIMINGS } from '../../src/home/motion';
 import { PAGE_LAYOUT } from '../../src/styles/themeCss';
+import { HOME_PILL } from '../../src/home/homeCss';
 
 const raw = JSON.parse(readFileSync(resolve(__dirname, 'fixtures/openLayout/home-1500x844.json'), 'utf8')) as { canvasScale: number; rects: Record<string, Box> };
 const r = raw.rects;
@@ -225,6 +226,16 @@ describe('openMotion', () => {
         const label = parse(v['--gho-play-label']);
         expect(label.tx).toBeCloseTo((24 + 20 + 14) * f - (1 + 22 + 18 + 13), 4);
         expect(label.sx).toBeCloseTo((22 * f) / 19, 3);
+    });
+
+    it("a game that can be streamed: Home's arrow segment, at the pill's right end, lands on the page's (its right end, the page's focused size)", () => {
+        const v = vars(openMotion(homeRects(), spotlight(), 'spotlight', s));
+        const a = parse(v['--gho-play-arrow']);
+        // Origin: the segment's right edge and centre line, inside the pill (which moves by its left edge).
+        expect(a.tx).toBeCloseTo((pageW - r.pill.w) / s, 1);
+        expect(a.ty).toBe(0);
+        expect(a.sx).toBeCloseTo((PAGE_LAYOUT.playArrow.w * f) / HOME_PILL.arrow, 3);
+        expect(a.sy).toBeCloseTo(pageH / r.pill.h, 3);
     });
 
     it("the page's focused pill's exact box (round ends, unlike the stretched layer), relative to Home's pill", () => {
