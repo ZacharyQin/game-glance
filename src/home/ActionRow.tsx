@@ -1,6 +1,7 @@
 import { Focusable, Menu, MenuItem, showContextMenu } from '@decky/ui';
 import type { GamepadEvent, NavEntryPositionPreferences } from '@decky/ui';
-import { ComponentType, ReactNode, useRef, useState } from 'react';
+import { ComponentType, CSSProperties, ReactNode, useRef, useState } from 'react';
+import { UnifideckCloudGlyph } from '../components/UnifideckCloudGlyph';
 import { IoCloudDoneOutline, IoCloudOfflineOutline, IoCloudOutline, IoCloudUploadOutline, IoDownload, IoGrid, IoGameControllerOutline, IoInformationCircleOutline, IoPause, IoPlay, IoSettingsOutline } from 'react-icons/io5';
 import { FaDownload, FaPlay } from 'react-icons/fa';
 import { LOG_PREFIX } from '../constants';
@@ -126,13 +127,15 @@ function toggleDownload(action: 'pause' | 'resume', appId: number) {
     openPage(appId);
 }
 
-function ActionButton({ className, label, onPress, preferredFocus, fill, setRef, action, children }: {
+function ActionButton({ className, label, onPress, preferredFocus, fill, setRef, action, style, children }: {
     className: string;
     /** What the button is (play, controller, menu, info, cloud, library): the open transition finds the buttons by it. */
     action?: string;
     /** Receives the button element (the gear: the game menu's anchor for View/Select). */
     setRef?(el: HTMLElement | null): void;
     label: string;
+    /** Inline custom properties (a Unifideck cloud button's ring colour: --gh-uni-ring). */
+    style?: CSSProperties;
     /** 0..100: a fill layer inside the pill that far from the left (the Play pill while Steam downloads the game). */
     fill?: number | null;
     /** `el`: the button itself (null before it mounted). */
@@ -168,6 +171,7 @@ function ActionButton({ className, label, onPress, preferredFocus, fill, setRef,
             role="button"
             aria-label={label}
             data-action={action}
+            style={style}
         >
             {typeof fill === 'number' && <span className="gh-btn-fill" style={{ width: `${Math.min(100, Math.max(0, fill))}%` }} />}
             {children}
@@ -364,12 +368,13 @@ export function ActionRow({ game, running = false, download = null, preferred, b
             {cloud && (
                 <ActionButton
                     key="cloud"
-                    className={`gh-btn-circle gh-btn-cloud gh-cloud-${cloud.tone}`}
+                    className={`gh-btn-circle gh-btn-cloud gh-cloud-${cloud.tone}${cloud.unifideck ? ` gh-cloud-uni${cloud.unifideck.dim ? ' gh-cloud-uni-dim' : ''}${cloud.unifideck.breathe ? ' unifideck-breathe' : ''}` : ''}`}
+                    style={cloud.unifideck?.ring ? ({ '--gh-uni-ring': cloud.unifideck.ring } as CSSProperties) : undefined}
                     label={cloud.label}
                     action="cloud"
                     onPress={(el) => pressCloud(cloud, appId, el?.ownerDocument?.defaultView ?? window)}
                 >
-                    <span className="gh-btn-icon"><CloudIcon cloud={cloud} /></span>
+                    <span className="gh-btn-icon">{cloud.unifideck ? <UnifideckCloudGlyph look={cloud.unifideck} /> : <CloudIcon cloud={cloud} />}</span>
                 </ActionButton>
             )}
         </Focusable>

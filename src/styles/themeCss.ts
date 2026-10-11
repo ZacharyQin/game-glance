@@ -340,7 +340,9 @@ export function buildUnifideckCss({ header, details, root }: ThemeClasses, optio
         options.restyle ? rule(primary, ` font-size: ${d(22)} !important; font-weight: 700 !important; color: #ffffff !important; transition: transform 250ms, box-shadow 250ms !important; `) : '',
         // Read and laid out as Home's pill and Steam's (consistent on Home and every page): the word as written, not in
         // Unifideck's capitals, and glyph and word from the left at the page pill's inset, glyph size and gap.
-        options.restyle ? rule(primary, ` text-transform: none !important; justify-content: flex-start !important; padding: 0 ${d(PAGE_LAYOUT.pill.padX)} !important; `) : '',
+        options.restyle ? rule(primary, ` text-transform: none !important; justify-content: flex-start !important; gap: 0 !important; padding: 0 ${d(PAGE_LAYOUT.pill.padX)} !important; `) : '',
+        // Its cloud button's in-sync check badge at Unifideck's proportion to the 24 glyph (the circles' rule sizes every svg 24).
+        options.restyle ? rule('.unifideck-icon-btn svg.unifideck-cloud-badge', ` width: ${d(13)} !important; height: ${d(13)} !important; `) : '',
         options.restyle ? rule(primary.map((p) => `${p} svg`), ` width: ${d(PAGE_LAYOUT.pill.icon)} !important; height: ${d(PAGE_LAYOUT.pill.icon)} !important; margin: 0 ${d(PAGE_LAYOUT.pill.iconGap)} 0 0 !important; flex: 0 0 auto !important; `) : '',
         options.restyle ? rule(focused, ` box-shadow: 0 0 0 ${d(2)} rgba(255, 255, 255, 0.9), 0 ${d(14)} ${d(40)} calc(-1 * ${d(8)}) var(--gg-accent) !important; transform: scale(${PILL_FOCUS.x}, ${PILL_FOCUS.y}) !important; `) : '',
     ].filter((r) => r.length > 0).join('\n');

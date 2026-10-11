@@ -308,6 +308,14 @@ export function homeCss(cardScale: number = CARD_SCALE_HANDHELD): string {
         // light tints for the dark translucent fill) with a dark halo so it reads over bright art too.
         rule('.gh-btn-cloud svg', `width: ${PAGE_LAYOUT.cloudIcon}px; height: ${PAGE_LAYOUT.cloudIcon}px; margin: 0; fill: currentColor; filter: drop-shadow(0 0 1.5px rgba(0,0,0,.7))`),
         ...(Object.keys(CLOUD_COLOURS) as CloudTone[]).map((tone) => rule(`.gh-btn-cloud.gh-cloud-${tone}`, `color: ${CLOUD_COLOURS[tone]}`)),
+        // A Unifideck game's cloud button wears Unifideck's own look (data/unifideckCloud, as its page's button): a white
+        // Font Awesome glyph at the circles' size, its state's ring inside the circle (focus shows ours instead), dimmed
+        // without cloud support; its breathing is Unifideck's own class.
+        rule('.gh-btn-cloud.gh-cloud-uni', 'color: #fff'),
+        rule('.gh-btn-cloud.gh-cloud-uni svg', `width: ${PAGE_LAYOUT.circleIcon}px; height: ${PAGE_LAYOUT.circleIcon}px; filter: none`),
+        rule('.gh-btn-cloud.gh-cloud-uni:not(.gh-focus)', 'box-shadow: 0 0 0 2px var(--gh-uni-ring, transparent) inset'),
+        rule('.gh-btn-cloud.gh-cloud-uni-dim', 'opacity: .5'),
+        rule('.gh-btn-cloud.gh-cloud-uni svg.gh-uni-badge', 'width: 13px; height: 13px'),
         // White words and glyph on the accent, as on the game page's Play.
         rule('.gh-btn-play', `width: ${HOME_PILL.width}px; flex: 0 0 ${HOME_PILL.width}px; background: var(--glance-accent); border-color: var(--glance-accent); color: #fff`),
         // The pill fills with the download progress: the shared darker layer (styles/downloadFill) from the left, clipped to

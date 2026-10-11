@@ -2,9 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { pageCloudNeeded } from '../data/unifideckCloud';
 import { CloudIcon } from '../home/ActionRow';
+import { UnifideckCloudGlyph } from './UnifideckCloudGlyph';
 import { CLOUD_COLOURS } from '../home/cloud';
 import { useUnifideckCloud } from '../home/useCloud';
-import { PAGE_LAYOUT } from '../styles/themeCss';
 
 /** How long the page is watched for Unifideck's row (it mounts after ours). */
 const FIND_FOR_MS = 10_000;
@@ -19,8 +19,8 @@ function findRow(doc: Document): { row: Element; className: string } | null {
 
 /**
  * A Unifideck game's cloud-save circle on its page where Unifideck draws none (data/unifideckCloud.pageCloudNeeded: a game
- * that is not installed), as Home shows it: the same state, Steam's cloud glyph in the state's colour, after the settings
- * button, wearing Unifideck's own round-button classes so it looks like its neighbours. Display only, as Home's (A does
+ * that is not installed), as Home shows it and Unifideck's own button looks: the same state, glyph, ring and dimming, after
+ * the settings button, wearing Unifideck's own round-button classes so it looks like its neighbours. Display only, as Home's (A does
  * nothing there either). Lives in the page's window (found from a marker element, as UnifideckRowNav).
  */
 export function UnifideckCloud({ appId, installed }: { appId: number; installed: boolean | null | undefined }) {
@@ -51,12 +51,20 @@ export function UnifideckCloud({ appId, installed }: { appId: number; installed:
             <span ref={marker} style={{ display: 'none' }} />
             {show &&
                 createPortal(
-                    <div className={`${row.className} gg-uni-cloud`} aria-label={cloud.label} role="img" style={{ color: CLOUD_COLOURS[cloud.tone], display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <span className="gg-uni-cloud-icon" style={{ display: 'flex', fontSize: `calc(${PAGE_LAYOUT.cloudIcon} * var(--gg-d))`, filter: 'drop-shadow(0 0 1.5px rgba(0,0,0,.7))' }}>
-                            <CloudIcon cloud={cloud} />
-                        </span>
-                        {/* Steam's glyph at the page's cloud size, as Home's (PAGE_LAYOUT.cloudIcon). */}
-                        <style>{`.gg-uni-cloud-icon svg { width: 1em !important; height: 1em !important; margin: 0 !important; fill: currentColor; }`}</style>
+                    <div
+                        className={`${row.className} gg-uni-cloud${cloud.unifideck?.breathe ? ' unifideck-breathe' : ''}`}
+                        aria-label={cloud.label}
+                        role="img"
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: cloud.unifideck ? '#fff' : CLOUD_COLOURS[cloud.tone],
+                            ...(cloud.unifideck?.ring ? { boxShadow: `0 0 0 2px ${cloud.unifideck.ring} inset` } : {}),
+                            ...(cloud.unifideck?.dim ? { opacity: 0.5 } : {}),
+                        }}
+                    >
+                        {cloud.unifideck ? <UnifideckCloudGlyph look={cloud.unifideck} /> : <CloudIcon cloud={cloud} />}
                     </div>,
                     row.row,
                 )}

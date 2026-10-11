@@ -681,3 +681,15 @@ describe('delayed fades in the open transition', () => {
         expect(css).toContain(`@keyframes gh-open-pill-out { 0%, ${at(OPEN_TIMINGS.extras)}% { opacity: 1; animation-timing-function: ease-in; } 100% { opacity: 0; } }`);
     });
 });
+
+describe("a Unifideck game's cloud button (Unifideck's own look, as on its page)", () => {
+    const css = homeCss(CARD_SCALE_HANDHELD);
+    it('a white glyph at the circles\' glyph size, its state ring inside it (unless focused), dimmed without cloud support', () => {
+        expect(css).toMatch(/\.gh-btn-cloud\.gh-cloud-uni\s*\{[^}]*color: #fff/);
+        expect(css).toMatch(new RegExp(`\\.gh-btn-cloud\\.gh-cloud-uni svg\\s*\\{[^}]*width: ${PAGE_LAYOUT.circleIcon}px[^}]*filter: none`));
+        expect(css).toMatch(/\.gh-btn-cloud\.gh-cloud-uni:not\(\.gh-focus\)\s*\{[^}]*box-shadow: 0 0 0 2px var\(--gh-uni-ring, transparent\) inset/);
+        expect(css).toMatch(/\.gh-btn-cloud\.gh-cloud-uni-dim\s*\{[^}]*opacity: \.5/);
+        // Its in-sync check badge at Unifideck's proportion to the cloud (13 of the 24).
+        expect(css).toMatch(/\.gh-btn-cloud\.gh-cloud-uni svg\.gh-uni-badge\s*\{[^}]*width: 13px/);
+    });
+});
