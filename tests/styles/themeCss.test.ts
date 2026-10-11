@@ -232,6 +232,15 @@ describe('buildUnifideckCss (a Unifideck game\u2019s page)', () => {
         expect(css).not.toContain('.unifideck-cancel-btn');
         expect(css).not.toContain('.unifideck-stop-btn');
     });
+    it("Unifideck's main button reads as Home's pill and Steam's: its word as written, not in capitals (Unifideck's own style upper-cases it)", () => {
+        const css = buildUnifideckCss(full, { restyle: true });
+        expect(css).toMatch(/\.unifideck-install-btn[^{]*\{[^}]*text-transform: none !important/);
+        expect(css).toMatch(/\.unifideck-play-btn[^{]*\{[^}]*text-transform: none !important/);
+        // Laid out as Home's pill and Steam's: glyph and word from the left, at the page pill's inset, glyph size and gap.
+        expect(css).toMatch(/\.unifideck-install-btn[^{]*\{[^}]*justify-content: flex-start !important/);
+        expect(css).toContain(`padding: 0 calc(${PAGE_LAYOUT.pill.padX} * var(--gg-d)) !important`);
+        expect(css).toMatch(new RegExp(`\\.unifideck-install-btn svg[^{]*\\{[^}]*width: calc\\(${PAGE_LAYOUT.pill.icon} \\* var\\(--gg-d\\)\\)`));
+    });
     it('Spotlight Home\u2019s look adds the handoff type, white as everywhere, and focuses it as Home\u2019s Play (ring, glow, scale)', () => {
         const css = buildUnifideckCss(full, { restyle: true });
         expect(buildUnifideckCss(full)).not.toContain('#0b0d10');

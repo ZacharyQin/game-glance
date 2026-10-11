@@ -325,6 +325,10 @@ export function buildUnifideckCss({ header, details, root }: ThemeClasses, optio
         options.restyle ? rule(`${inner}${UNIFIDECK_PAGE} > div:has(${UNIFIDECK_PRIMARY.join(', ')})`, ` padding-top: 0 !important; padding-bottom: ${d(36)} !important; `) : '',
         // And the handoff's pill type, white on the accent and focused as our own Play pill (ring, glow, focus scale).
         options.restyle ? rule(primary, ` font-size: ${d(22)} !important; font-weight: 700 !important; color: #ffffff !important; transition: transform 250ms, box-shadow 250ms !important; `) : '',
+        // Read and laid out as Home's pill and Steam's (consistent on Home and every page): the word as written, not in
+        // Unifideck's capitals, and glyph and word from the left at the page pill's inset, glyph size and gap.
+        options.restyle ? rule(primary, ` text-transform: none !important; justify-content: flex-start !important; padding: 0 ${d(PAGE_LAYOUT.pill.padX)} !important; `) : '',
+        options.restyle ? rule(primary.map((p) => `${p} svg`), ` width: ${d(PAGE_LAYOUT.pill.icon)} !important; height: ${d(PAGE_LAYOUT.pill.icon)} !important; margin: 0 ${d(PAGE_LAYOUT.pill.iconGap)} 0 0 !important; flex: 0 0 auto !important; `) : '',
         options.restyle ? rule(focused, ` box-shadow: 0 0 0 ${d(2)} rgba(255, 255, 255, 0.9), 0 ${d(14)} ${d(40)} calc(-1 * ${d(8)}) var(--gg-accent) !important; transform: scale(${PAGE_LAYOUT.focusScale}) !important; `) : '',
     ].filter((r) => r.length > 0).join('\n');
 }

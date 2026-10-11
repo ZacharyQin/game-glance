@@ -421,6 +421,7 @@ export function SpotlightHome() {
                                         buttons={actionRowButtons}
                                         cloud={onLibrary ? null : cloud}
                                         onBack={focusGames}
+                                        unifideck={!onLibrary && typeof uniInstalled === 'boolean' ? { installed: uniInstalled } : null}
                                     />
                                 </section>
                                 {/* The selected game's store, as the game page's pill; not on the Library card. */}

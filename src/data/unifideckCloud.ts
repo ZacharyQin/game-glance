@@ -104,3 +104,12 @@ export async function unifideckCloudForApp(
         return null;
     }
 }
+
+/**
+ * Whether a Unifideck game's page gets our cloud circle: Unifideck draws its own cloud-save button only for an installed
+ * game (read 2026-10-11: its not-installed row has the controller and settings buttons only), while Home shows the cloud
+ * state either way. `installed`: Unifideck's own record (undefined/null until it answers). Pure.
+ */
+export function pageCloudNeeded(installed: boolean | null | undefined, cloud: CloudState | null): boolean {
+    return installed === false && cloud !== null;
+}

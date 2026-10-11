@@ -2,6 +2,7 @@ import { Focusable, Menu, MenuItem, showContextMenu } from '@decky/ui';
 import type { GamepadEvent, NavEntryPositionPreferences } from '@decky/ui';
 import { ComponentType, ReactNode, useRef, useState } from 'react';
 import { IoCloudDoneOutline, IoCloudOfflineOutline, IoCloudOutline, IoCloudUploadOutline, IoDownload, IoGrid, IoGameControllerOutline, IoInformationCircleOutline, IoPause, IoPlay, IoSettingsOutline } from 'react-icons/io5';
+import { FaDownload, FaPlay } from 'react-icons/fa';
 import { LOG_PREFIX } from '../constants';
 import { markLaunch } from '../data/launchIntent';
 import type { CloudState } from './cloud';
@@ -175,7 +176,7 @@ function ActionButton({ className, label, onPress, preferredFocus, fill, setRef,
 }
 
 /** Steam's own cloud icon in the state's variant (as the game page draws it); ours if Steam's is not found. */
-function CloudIcon({ cloud }: { cloud: CloudState }) {
+export function CloudIcon({ cloud }: { cloud: CloudState }) {
     const Steam = steamCloudIcon();
     if (Steam) return <Steam {...cloud.icon} />;
     if (cloud.tone === 'off') return <IoCloudOfflineOutline />;
@@ -237,8 +238,10 @@ export function LibraryActionRow({ preferred }: { preferred?: boolean }) {
  * `preferred`: the pill takes focus when focus enters the row (Home's first focus is the game cards). B goes back to
  * the game cards (`onBack`, focusZones.onBack('actions')).
  */
-export function ActionRow({ game, running = false, download = null, preferred, buttons, cloud = null, onBack }: {
+export function ActionRow({ game, running = false, download = null, preferred, buttons, cloud = null, onBack, unifideck = null }: {
     game: HomeGame | null;
+    /** A Unifideck game (its own install state): the pill wears Unifideck's glyphs, as its button on the game page. */
+    unifideck?: { installed: boolean } | null;
     /** The selected game's Steam Cloud state (useCloud); null hides the cloud button, as the game page hides its status. */
     cloud?: CloudState | null;
     running?: boolean;
@@ -320,7 +323,7 @@ export function ActionRow({ game, running = false, download = null, preferred, b
                     });
                 }}
             >
-                <span className="gh-btn-icon">{steamPill ? steamPill.icon : play.label === 'Pause' ? <IoPause /> : play.label === 'Download' || play.label === 'Update' ? <IoDownload /> : <IoPlay />}</span>
+                <span className="gh-btn-icon">{unifideck && !download ? (unifideck.installed ? <FaPlay /> : <FaDownload />) : steamPill ? steamPill.icon : play.label === 'Pause' ? <IoPause /> : play.label === 'Download' || play.label === 'Update' ? <IoDownload /> : <IoPlay />}</span>
                 <span className="gh-btn-label">{playWord}</span>
                 {playFrom && <span className="gh-play-arrow"><PlayFromGlyph /></span>}
             </ActionButton>

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { resetUnifideckPlaytime } from '../../src/data/unifideckPlaytime';
-import { parseCloudStatus, resetUnifideckCloud, unifideckCloudForApp, unifideckCloudState } from '../../src/data/unifideckCloud';
+import { pageCloudNeeded, parseCloudStatus, resetUnifideckCloud, unifideckCloudForApp, unifideckCloudState } from '../../src/data/unifideckCloud';
 
 const base = { supported: true, in_progress: false, cloud_supported: null, save_path_resolved: true, has_local_saves: true, has_cloud_saves: true, local_snapshot: { timestamp: 1000 }, remote_snapshot: { timestamp: 1001 } };
 
@@ -44,5 +44,18 @@ describe('parseCloudStatus / unifideckCloudForApp', () => {
     it('is null for a non-Unifideck shortcut and on errors', async () => {
         expect(await unifideckCloudForApp(6, { backend: { call: vi.fn() }, key: async () => null })).toBeNull();
         expect(await unifideckCloudForApp(7, { backend: { call: vi.fn(async () => { throw new Error('x'); }) }, key })).toBeNull();
+    });
+});
+
+describe('pageCloudNeeded (our cloud circle on a Unifideck game page)', () => {
+    const ok = { tone: 'ok' as const, status: 0, action: 'none' as const, icon: { uploaded: true }, label: 'Cloud saves: Up to date' };
+    it("when Unifideck shows none of its own (it draws its button only for an installed game) and Home shows one", () => {
+        expect(pageCloudNeeded(false, ok)).toBe(true);
+    });
+    it("not when Unifideck draws its own (installed), nor without a state, nor before the install state is known", () => {
+        expect(pageCloudNeeded(true, ok)).toBe(false);
+        expect(pageCloudNeeded(false, null)).toBe(false);
+        expect(pageCloudNeeded(undefined, ok)).toBe(false);
+        expect(pageCloudNeeded(null, ok)).toBe(false);
     });
 });
