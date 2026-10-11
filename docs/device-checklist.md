@@ -99,10 +99,10 @@ Result per item: PASS, FAIL (with a note), or "not checked yet". Handheld unless
 
 | # | Check | Expected | Result |
 |---|---|---|---|
-| 24 | Game Glance page on, Spotlight Home off | Exactly the 1.1.1 game page and Steam's stock Home | not checked yet |
+| 24 | Game Glance page on, Spotlight Home off | Exactly the 1.1.1 game page and Steam's stock Home | PASS (Michael, 2026-10-11, "all states of Spotlight home - move on") |
 | 25 | Both on | Spotlight Home, and the game page restyled to match the design handoff: accent eyebrow, 64 px title, Play pill 340x60 and 60 px circles with the row's top at screen height minus 386, cards at height minus 290, the HLTB MAIN value always in the accent, no chevron at the bottom, and the store pill (icon and name) kept at the right of the Play row | not checked yet |
-| 26 | Game Glance page off, Spotlight Home off | Steam's stock game page and stock Home | PASS (Michael, 2026-10-11, "Game Glance off is good"; the Spotlight Home state was not stated) |
-| 27 | Game Glance page off, Spotlight Home on | Spotlight Home, with Steam's stock game page | not checked yet |
+| 26 | Game Glance page off, Spotlight Home off | Steam's stock game page and stock Home | PASS (Michael, 2026-10-11, "Game Glance off is good"; "all states of Spotlight home - move on") |
+| 27 | Game Glance page off, Spotlight Home on | Spotlight Home, with Steam's stock game page | PASS (Michael, 2026-10-11, "all states of Spotlight home - move on") |
 
 ### Home: focus and navigation
 
@@ -210,7 +210,7 @@ Result per item: PASS, FAIL (with a note), or "not checked yet". Handheld unless
 | 112 | Unifideck consistency | A Unifideck game (not installed and installed): the page and Home match: Play time stays first with "Space required" to its right; the cloud icon is there on Home and on the page; the bin (Uninstall) fades in with the other buttons; the Play pill's word and glyph sit as on other games | PASS (Michael, 2026-10-11, build 2d00d1d) |
 | 113 | Focused Play pill gap | On every game page, the gap between the focused Play pill and the round buttons is even (not too narrow) | PASS (Michael, 2026-10-11, build 2d00d1d) |
 | 114 | Blank logo fallback | A game whose logo file is fully transparent (Deus Ex: Human Revolution) shows its name, on Home and on the page, not a blank title | PASS (Michael, 2026-10-11, build 2d00d1d) |
-| 115 | One card height | Sonic X Shadow Generations (two-line description) and The Witcher 3 (standard) have cards of the same height, before, during and after the open (179 canvas px on the Ally in the live probe) | not checked yet (build 2d00d1d; Michael's report did not mention it) |
+| 115 | One card height | Sonic X Shadow Generations (two-line description) and The Witcher 3 (standard) have cards of the same height, before, during and after the open (179 canvas px on the Ally in the live probe) | PASS (Michael, 2026-10-11, build 2d00d1d: "card height is good") |
 
 ## When HowLongToBeat breaks
 
