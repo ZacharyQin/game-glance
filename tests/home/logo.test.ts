@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { logoUrls, SteamStores } from '../../src/home/artwork';
-import { alphaBounds, knownLogo, lastLogo, LOGO_AREA, logoFit, MEASURE_MAX, measureSize, rememberLogo, resetLogoMemo, scaleTrim } from '../../src/home/logo';
+import { alphaBounds, isBlankLogo, knownLogo, lastLogo, LOGO_AREA, logoFit, MEASURE_MAX, measureSize, rememberLogo, resetLogoMemo, scaleTrim } from '../../src/home/logo';
 import { LOGO_BOX } from '../../src/styles/logoBox';
 
 const host = 'https://steamloopback.host';
@@ -150,5 +150,15 @@ describe('measuring on a smaller copy', () => {
         expect(scaleTrim({ x: 41, y: 19, width: 78, height: 51 }, 0.25, { width: 640, height: 360 })).toEqual({ x: 164, y: 76, width: 312, height: 204 });
         expect(scaleTrim({ x: 150, y: 80, width: 10, height: 10 }, 0.25, { width: 640, height: 360 })).toEqual({ x: 600, y: 320, width: 40, height: 40 });
         expect(scaleTrim(null, 0.25, { width: 640, height: 360 })).toBeNull();
+    });
+});
+
+describe('isBlankLogo', () => {
+    it("a file whose pixels were read and show nothing is no logo (Steam's local Deus Ex: HR logo.png is fully transparent)", () => {
+        expect(isBlankLogo(true, null)).toBe(true);
+    });
+    it('a file with a visible part, or whose pixels could not be read, is drawn', () => {
+        expect(isBlankLogo(true, { x: 0, y: 0, width: 10, height: 10 })).toBe(false);
+        expect(isBlankLogo(false, null)).toBe(false);
     });
 });

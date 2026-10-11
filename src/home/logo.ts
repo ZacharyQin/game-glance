@@ -44,6 +44,15 @@ export function scaleTrim(trim: LogoTrim | null, scale: number, natural: { width
     return right > x && bottom > y ? { x, y, width: right - x, height: bottom - y } : null;
 }
 
+/**
+ * Whether a logo file is blank: its pixels were read (`readable`) and none shows (no trim). Steam's own local logo can be
+ * a fully transparent file (Deus Ex: Human Revolution's, 640 x 360, every pixel clear): drawn, it showed nothing where the
+ * name belongs. A file whose pixels could not be read is drawn whole. Pure.
+ */
+export function isBlankLogo(readable: boolean, trim: LogoTrim | null): boolean {
+    return readable && trim === null;
+}
+
 /** Every logo gets about this area, in canvas px, before the LOGO_BOX caps: a wide logo spreads, a tall one rises. */
 export const LOGO_AREA = 56_000;
 

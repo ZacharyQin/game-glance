@@ -1,6 +1,6 @@
 import { displayInfo, loadDecoded, logoCopy, makeCopy } from './artShrink';
 import { browserStores, logoUrls } from './artwork';
-import { alphaBounds, knownLogo, LogoChoice, LogoTrim, measureSize, rememberLogo, scaleTrim } from './logo';
+import { alphaBounds, isBlankLogo, knownLogo, LogoChoice, LogoTrim, measureSize, rememberLogo, scaleTrim } from './logo';
 
 /**
  * Game logos, resolved the way HeroBackground resolves hero art: once per game (the urls tried in order, the first that
@@ -22,21 +22,25 @@ function loadImage(url: string): Promise<HTMLImageElement | null> {
     return loadDecoded(url, true);
 }
 
-/** The visible part of a loaded logo, read from a smaller copy of its pixels; null when they cannot be read. */
-function measure(img: HTMLImageElement): LogoTrim | null {
+/**
+ * The visible part of a loaded logo, read from a smaller copy of its pixels (`trim`; null when nothing shows), and whether
+ * the pixels could be read at all (`readable`; when not, the trim is null and the file is drawn whole).
+ */
+function measure(img: HTMLImageElement): { readable: boolean; trim: LogoTrim | null } {
     try {
         const natural = { width: img.naturalWidth, height: img.naturalHeight };
         const size = measureSize(natural);
-        if (!size) return null;
+        if (!size) return { readable: false, trim: null };
         const canvas = document.createElement('canvas');
         canvas.width = size.width;
         canvas.height = size.height;
         const ctx = canvas.getContext('2d', { willReadFrequently: true });
-        if (!ctx) return null;
+        if (!ctx) return { readable: false, trim: null };
         ctx.drawImage(img, 0, 0, size.width, size.height);
-        return scaleTrim(alphaBounds(ctx.getImageData(0, 0, size.width, size.height).data, size.width, size.height), size.scale, natural);
+        const pixels = ctx.getImageData(0, 0, size.width, size.height).data;
+        return { readable: true, trim: scaleTrim(alphaBounds(pixels, size.width, size.height), size.scale, natural) };
     } catch {
-        return null;
+        return { readable: false, trim: null };
     }
 }
 
@@ -44,7 +48,10 @@ async function lookup(appId: number, urls: string[], key: string): Promise<LogoC
     for (const url of urls) {
         const img = await loadImage(url);
         if (!img || !(img.naturalWidth > 0)) continue;
-        const file: LogoChoice = { url, trim: measure(img), natural: { width: img.naturalWidth, height: img.naturalHeight } };
+        const seen = measure(img);
+        // A blank file (Steam's local logo can be fully transparent) is no logo: the next source, else the name.
+        if (isBlankLogo(seen.readable, seen.trim)) continue;
+        const file: LogoChoice = { url, trim: seen.trim, natural: { width: img.naturalWidth, height: img.naturalHeight } };
         // A logo far bigger than it is drawn (custom art: 3841x5405) is drawn from a smaller copy (home/artShrink).
         const copy = logoCopy(file, displayInfo().perCanvas);
         const src = copy ? await makeCopy(url, copy.natural, 'image/png') : null;
