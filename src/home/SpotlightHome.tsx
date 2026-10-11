@@ -135,7 +135,10 @@ export function SpotlightHome() {
     const onLibrary = isLibraryFocus(data.games.length, focusIndex);
     // A fast run of L1/R1 or Left/Right (home/fastCycle): the hero, the accent and the wide card hold what they showed
     // while only the selection moves along the narrow cards; the run ends on the selection, shown at once.
-    const cycle = useFastCycle(focusIndex);
+    // A held L1/R1, d-pad or stick that is repeating (useBumperSelect): the run lasts until it is let go.
+    const [bumperRepeating, setBumperRepeating] = useState(false);
+    const [directionRepeating, setDirectionRepeating] = useState(false);
+    const cycle = useFastCycle(focusIndex, bumperRepeating || directionRepeating);
     const shownAt = heroIndex(data.games.length, cycle.shown);
     const shownGame = shownAt === null ? null : data.games[shownAt] ?? null;
     const heldAccent = useRef(data.accent);
@@ -197,12 +200,12 @@ export function SpotlightHome() {
         }
         setRecentIndex(next);
     };
-    const bumpers = useBumperSelect(actionsRef, focusIndex, data.games.length, select);
+    const bumpers = useBumperSelect(actionsRef, focusIndex, data.games.length, select, setBumperRepeating);
     // The game cards (focusZones.recentsButton): Left/Right select the previous / next game and focus stays on the
     // cards; L1/R1 move focus to the Play pill first, then select as on the action row (its held-bumper repeat goes on
     // there); View/Menu open the selected game's menu at its card.
     // Left/Right on the cards, held: Home's own timer at a held bumper's pace (useBumperSelect.useDirectionSelect).
-    const directions = useDirectionSelect(recentsRef, focusIndex, data.games.length, setRecentIndex);
+    const directions = useDirectionSelect(recentsRef, focusIndex, data.games.length, setRecentIndex, setDirectionRepeating);
     const onRecentsButtonDown = (evt: GamepadEvent) => {
         try {
             const isRepeat = Boolean(evt?.detail?.is_repeat);

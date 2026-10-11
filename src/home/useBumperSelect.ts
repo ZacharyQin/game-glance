@@ -18,6 +18,8 @@ interface HeldOptions {
     sound: 'bumper' | 'dpad';
     /** Steam repeats the button while it is held (the d-pad and stick): its repeats keep the hold alive, silence ends it (focusZones.stillHeld). */
     steamRepeats: boolean;
+    /** The hold is repeating (true from its first timed step) or over (false): home/fastCycle keeps the cards narrow meanwhile. */
+    onRepeating?(on: boolean): void;
 }
 
 /**
@@ -34,8 +36,19 @@ export function useHeldSelect(row: RefObject<HTMLElement | null>, selected: numb
     const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const held = useRef<number | null>(null);
     const lastEvent = useRef(0);
+    const repeating = useRef(false);
+    const setRepeating = (on: boolean) => {
+        if (repeating.current === on) return;
+        repeating.current = on;
+        try {
+            state.current.options.onRepeating?.(on);
+        } catch {
+            // only a hint for the screen
+        }
+    };
 
     const stop = () => {
+        setRepeating(false);
         held.current = null;
         if (timer.current !== null) clearTimeout(timer.current);
         timer.current = null;
@@ -65,6 +78,8 @@ export function useHeldSelect(row: RefObject<HTMLElement | null>, selected: numb
             const next = o.stepFor(at, button, n, true);
             if (next === null || next === at) return stop();
             try {
+                // Before the step, so its render already knows it is a held repeat (React batches both).
+                setRepeating(true);
                 apply(next);
             } catch (error) {
                 console.warn(`${LOG_PREFIX} Home: held step failed`, error);
@@ -109,12 +124,12 @@ export function useHeldSelect(row: RefObject<HTMLElement | null>, selected: numb
 }
 
 /** L1/R1 on the action row (bumper navigation, focusZones.selectionForButton): Steam does not repeat bumpers. */
-export function useBumperSelect(row: RefObject<HTMLElement | null>, selected: number, count: number, select: (index: number) => void): BumperHandlers {
-    return useHeldSelect(row, selected, count, select, { stepFor: (at, button, n, isRepeat) => selectionForButton(at, button, n, isRepeat), sound: 'bumper', steamRepeats: false });
+export function useBumperSelect(row: RefObject<HTMLElement | null>, selected: number, count: number, select: (index: number) => void, onRepeating?: (on: boolean) => void): BumperHandlers {
+    return useHeldSelect(row, selected, count, select, { stepFor: (at, button, n, isRepeat) => selectionForButton(at, button, n, isRepeat), sound: 'bumper', steamRepeats: false, onRepeating });
 }
 
 /** Left/Right (the d-pad and the left stick) on the game cards (focusZones.recentsButton), at a held bumper's pace. */
-export function useDirectionSelect(row: RefObject<HTMLElement | null>, selected: number, count: number, select: (index: number) => void): BumperHandlers {
+export function useDirectionSelect(row: RefObject<HTMLElement | null>, selected: number, count: number, select: (index: number) => void, onRepeating?: (on: boolean) => void): BumperHandlers {
     return useHeldSelect(row, selected, count, select, {
         stepFor: (at, button, n, isRepeat) => {
             const what = recentsButton(button, at, n, isRepeat);
@@ -122,5 +137,6 @@ export function useDirectionSelect(row: RefObject<HTMLElement | null>, selected:
         },
         sound: 'dpad',
         steamRepeats: true,
+        onRepeating,
     });
 }
