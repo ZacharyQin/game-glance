@@ -653,6 +653,12 @@ describe('delayed fades in the open transition', () => {
             for (const [sel, o] of found) expect(o, sel).not.toContain('!important');
         }
     });
+    it("the bridge's freeze outranks every animation rule: the late fades and Home's way-back fade (opened soon after B)", () => {
+        expect(css).toMatch(/\.gh-root\.gh-bridge\.gh-back \.gh-safe\s*\{[^}]*animation: none/);
+        for (const target of ['\\.gh-open-extras', '\\.gh-source', '\\[data-action="play"\\]::after']) {
+            expect(css).toMatch(new RegExp(`\\.gh-root\\.gh-bridge\\[data-gh-opening\\]\\[data-gh-phase\\][^{]*${target}\\s*\\{[^}]*animation: none`));
+        }
+    });
     it('the bridge (a frozen copy, nothing animates in it, pseudo-elements too) holds the end values', () => {
         expect(css).toContain('.gh-root.gh-bridge *::before, .gh-root.gh-bridge *::after { animation: none !important; transition: none !important; }');
         expect(css).toMatch(/\.gh-root\.gh-bridge\[data-gh-opening\]\[data-gh-phase\]\[data-gh-extras\] \.gh-open-extras\s*\{[^}]*opacity: 1/);

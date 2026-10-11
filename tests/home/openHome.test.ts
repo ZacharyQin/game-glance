@@ -239,7 +239,7 @@ describe('mountOpenBridge', () => {
             };
             return node;
         };
-        const clone = { ...make(), classList: { add: vi.fn() } };
+        const clone = { ...make(), classList: { add: vi.fn(), remove: vi.fn() } };
         const doc = { body: { appendChild: (c: never) => appended.push(c) }, createElement: () => make() };
         const root = {
             ownerDocument: doc,
@@ -256,6 +256,9 @@ describe('mountOpenBridge', () => {
         expect(box.style).toMatchObject({ position: 'fixed', left: '0px', top: '0px', width: '1500px', height: '844px', pointerEvents: 'none' });
         expect(box.children).toEqual([f.clone]);
         expect(f.clone.classList.add).toHaveBeenCalledWith('gh-bridge');
+        // Not Home's "just back" state (its UI fading in): in the copy that fade replayed from 0, blanking the title, Play
+        // row and stats at the hand-over (opened within 1.5 s of B; recorded on the Ally).
+        expect(f.clone.classList.remove).toHaveBeenCalledWith('gh-back');
         bridge.fadeOut(120);
         expect(box.style.opacity).toBe('0');
         expect(box.style.transition).toBe(`opacity 120ms ${BRIDGE_FADE_EASE}`);

@@ -537,9 +537,12 @@ export function openingRules(): string[] {
         rule('.gh-root.gh-bridge, .gh-root.gh-bridge *', 'animation: none; transition: none'),
         rule('.gh-root.gh-bridge *::before, .gh-root.gh-bridge *::after', 'animation: none; transition: none'),
         // With nothing animating, the copy holds the late fades' end values (their own values are the start ones).
-        rule('.gh-root.gh-bridge[data-gh-opening][data-gh-phase][data-gh-extras] .gh-open-extras', 'opacity: 1'),
-        rule('.gh-root.gh-bridge[data-gh-opening][data-gh-phase][data-gh-extras~="pills"] .gh-source', 'opacity: 0'),
-        rule(`.gh-root.gh-bridge[data-gh-opening][data-gh-phase] ${play}::after`, 'opacity: 1'),
+        // Stated as specifically as the rules that animate them, so the freeze wins: the late fades, and Home's way-back fade
+        // (an open soon after B; the copy also drops .gh-back, openBridge).
+        rule('.gh-root.gh-bridge[data-gh-opening][data-gh-phase][data-gh-extras] .gh-open-extras', 'opacity: 1; animation: none'),
+        rule('.gh-root.gh-bridge[data-gh-opening][data-gh-phase][data-gh-extras~="pills"] .gh-source', 'opacity: 0; animation: none'),
+        rule(`.gh-root.gh-bridge[data-gh-opening][data-gh-phase] ${play}::after`, 'opacity: 1; animation: none'),
+        rule('.gh-root.gh-bridge.gh-back .gh-safe', 'animation: none'),
 
         // Scrims: Home already shades its art as the page does; only the feed sheet's dim goes.
         rule(`${MT} .gh-scrim-dim`, `opacity: 0; transition: opacity ${T.morph}ms ease`),
