@@ -412,7 +412,7 @@ describe('homeCss open transition', () => {
     it("the morph ends on the page's own look: the glass is the page's tint without blur (the page grows its blur), the pill its exact round shape", () => {
         const all = rules(css);
         const body = (pred: (sel: string) => boolean) => all.filter(([sel]) => pred(sel)).map(([, b]) => b).join(' ');
-        const settle = 'opacity 180ms ease-in-out 270ms';
+        const settleAt = Math.round(((OPEN_TIMINGS.morph - OPEN_TIMINGS.settle) / OPEN_TIMINGS.morph) * 100000) / 1000;
         // The glass: the page panel's tint from the start, never blurred on Home (the arriving page grows the blur).
         const shell = body((sel) => sel === '.gh-open-shell');
         expect(shell).toMatch(/background:\s*rgba\(12,16,22,\.38\)/);
@@ -424,7 +424,8 @@ describe('homeCss open transition', () => {
         expect(pill).toContain('height: calc(100% * var(--gho-play-sy))');
         expect(pill).toContain('top: var(--gho-play-dy)');
         expect(pill).not.toContain('transform: var(--gho-play-bg)');
-        expect(body((sel) => sel.includes('data-gh-phase="to"') && sel.endsWith('[data-action="play"]::after'))).toContain(settle);
+        expect(body((sel) => sel.includes('data-gh-phase="to"') && sel.endsWith('[data-action="play"]::after'))).toContain(`animation: gh-open-settle ${OPEN_TIMINGS.morph}ms linear both`);
+        expect(css).toContain(`@keyframes gh-open-settle { 0%, ${settleAt}% { opacity: 0; animation-timing-function: ease-in-out; } 100% { opacity: 1; } }`);
     });
     it("a chip's label can fade on its own, and an accent copy of its value (data-text) can fade in over it", () => {
         const all = rules(css);
@@ -505,8 +506,8 @@ describe('homeCss open transition', () => {
         expect(all.some(([sel, b]) => sel === '.gh-root[data-gh-extras~="pills"] .gh-x-pill' && b.includes('display: inline-flex'))).toBe(true);
         // Home's own pill (moving into place) fades out as the page's fades in, still moving.
         const home = body('.gh-root[data-gh-opening="morph"][data-gh-phase="to"][data-gh-extras~="pills"] .gh-source');
-        expect(home).toContain('opacity: 0');
-        expect(home).toMatch(/transition: transform \d+ms cubic-bezier\([^)]*\), opacity \d+ms/);
+        expect(home).toContain(`animation: gh-open-pill-out ${OPEN_TIMINGS.morph}ms linear both`);
+        expect(home).toMatch(/transition: transform \d+ms cubic-bezier\([^)]*\)/);
     });
     it("the extras layer's Play time column: the page's label and value, at its place, in the page's value size", () => {
         const all = rules(css);
@@ -518,8 +519,8 @@ describe('homeCss open transition', () => {
     });
     it('the extras fade in (opacity only) during the morph and are complete at the hand-over', () => {
         const to = rules(css).find(([sel]) => sel === '.gh-root[data-gh-opening="morph"][data-gh-phase="to"][data-gh-extras] .gh-open-extras')?.[1];
-        expect(to).toMatch(/opacity: 1/);
-        expect(to).toContain(`transition: opacity ${OPEN_TIMINGS.extras}ms ease-out ${OPEN_TIMINGS.morph - OPEN_TIMINGS.extras}ms`);
+        // Over the whole morph, held at 0 until its last OPEN_TIMINGS.extras ms (see "delayed fades" below).
+        expect(to).toContain(`animation: gh-open-extras-in ${OPEN_TIMINGS.morph}ms linear both`);
     });
     it("the extras are laid out as the page's cards, in the page's d unit (openMotion's --gho-x-d)", () => {
         const all = rules(css);
@@ -598,7 +599,8 @@ describe('homeCss Play pill while opening', () => {
         expect(after).not.toContain('rgba(255,255,255,.28)');
         const to = /\[data-gh-phase="to"\] \.gh-actions > \.gh-btn\[data-action="play"\]::after \{([^}]*)\}/.exec(css)?.[1] ?? '';
         expect(to).not.toContain('transform');
-        expect(to).toContain('opacity: 1');
+        // Faded in by the late-fade animation, which holds it at 1 (its own value stays 0: see "delayed fades").
+        expect(to).toContain('animation: gh-open-settle');
     });
 });
 
@@ -614,5 +616,37 @@ describe('the way back (B from a page)', () => {
         const css = homeCss(CARD_SCALE_HANDHELD);
         expect(css).toMatch(new RegExp(`\\.gh-root\\.gh-back \\.gh-safe\\s*\\{[^}]*animation: gh-fade-in ${RETURN_TIMINGS.fade}ms ease both`));
         expect(css).not.toMatch(/\.gh-back \.gh-hero/);
+    });
+});
+
+describe('delayed fades in the open transition', () => {
+    // On Steam's browser the GPU draws a delayed opacity transition at its end value during the delay (docked, Michael saw
+    // the description and HowLongToBeat numbers over the game cards; the page's computed opacity read 0 meanwhile).
+    const css = homeCss(CARD_SCALE_HANDHELD);
+    const at = (delay: number) => Math.round(((OPEN_TIMINGS.morph - delay) / OPEN_TIMINGS.morph) * 100000) / 1000;
+    it('no opacity transition waits (a delay after its duration)', () => {
+        expect(css).not.toMatch(/opacity \d+ms [a-z-]+(?:\([^)]*\))? \d+ms/);
+    });
+    it('the extras fade in as a keyframe animation that holds them at 0 for the wait, complete at the hand-over', () => {
+        expect(css).toContain(`@keyframes gh-open-extras-in { 0%, ${at(OPEN_TIMINGS.extras)}% { opacity: 0; animation-timing-function: ease-out; } 100% { opacity: 1; } }`);
+        const rule = css.match(/\.gh-root\[data-gh-opening="morph"\]\[data-gh-phase="to"\]\[data-gh-extras\] \.gh-open-extras\s*\{[^}]*\}/)?.[0] ?? '';
+        expect(rule).toContain(`animation: gh-open-extras-in ${OPEN_TIMINGS.morph}ms linear both`);
+    });
+    // The GPU draws an element's own value until its animation runs: with the end value as its own, the extras showed in
+    // full over the cards for the first frames (docked).
+    it("the start value is each element's own: extras 0, Home's pill 1, the settle layer 0", () => {
+        const body = (re: RegExp) => css.match(re)?.[0] ?? '';
+        expect(body(/\.gh-root\[data-gh-opening="morph"\]\[data-gh-phase="to"\]\[data-gh-extras\] \.gh-open-extras\s*\{[^}]*\}/)).toContain('opacity: 0');
+        expect(body(/\.gh-root\[data-gh-opening="morph"\]\[data-gh-phase="to"\]\[data-gh-extras~="pills"\] \.gh-source\s*\{[^}]*\}/)).not.toContain('opacity');
+        expect(body(/\.gh-root\[data-gh-opening="morph"\]\[data-gh-phase="to"\] \.gh-actions > \.gh-btn\[data-action="play"\]::after\s*\{[^}]*\}/)).not.toMatch(/opacity: 1/);
+    });
+    it('the bridge (a frozen copy, nothing animates in it, pseudo-elements too) holds the end values', () => {
+        expect(css).toContain('.gh-root.gh-bridge *::before, .gh-root.gh-bridge *::after { animation: none !important; transition: none !important; }');
+        expect(css).toMatch(/\.gh-root\.gh-bridge\[data-gh-opening\]\[data-gh-phase\]\[data-gh-extras\] \.gh-open-extras\s*\{[^}]*opacity: 1/);
+        expect(css).toMatch(/\.gh-root\.gh-bridge\[data-gh-opening\]\[data-gh-phase\]\[data-gh-extras~="pills"\] \.gh-source\s*\{[^}]*opacity: 0/);
+        expect(css).toMatch(/\.gh-root\.gh-bridge\[data-gh-opening\]\[data-gh-phase\] \.gh-actions > \.gh-btn\[data-action="play"\]::after\s*\{[^}]*opacity: 1/);
+    });
+    it("Home's store pill fades out the same way, held at 1 for the wait", () => {
+        expect(css).toContain(`@keyframes gh-open-pill-out { 0%, ${at(OPEN_TIMINGS.extras)}% { opacity: 1; animation-timing-function: ease-in; } 100% { opacity: 0; } }`);
     });
 });

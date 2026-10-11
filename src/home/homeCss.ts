@@ -501,14 +501,24 @@ export function openingRules(): string[] {
             width: calc(var(--gho-shell-${i}-w) * 1px); height: calc(var(--gho-shell-${i}-h) * 1px); transform: var(--gho-shell-${i}-from); opacity: var(--gho-shell-${i}-o0)`),
         rule(`${MT}${i === 1 ? '[data-gh-shells="2"]' : ''} .gh-open-shell[data-i="${i}"]`, `transform: none; opacity: 1; transition: ${move}, opacity ${T.morph}ms ease`),
     ];
+    // Fades that start late in the morph are keyframe animations over the whole morph that hold their start value until
+    // then, never delayed transitions: on Steam's browser the GPU draws a delayed opacity transition at its end value
+    // during the delay (docked, the description and HowLongToBeat numbers showed over the game cards from the first frame).
+    const hold = (fade: number) => Math.round(((T.morph - fade) / T.morph) * 100000) / 1000;
+    const lateFade = (name: string, from: number, to: number, fade: number, ease: string) =>
+        `@keyframes ${name} { 0%, ${hold(fade)}% { opacity: ${from}; animation-timing-function: ${ease}; } 100% { opacity: ${to}; } }`;
+    const late = (name: string) => `animation: ${name} ${T.morph}ms linear both`;
     // The morph's last part: the page pill's exact look fades in as it comes to rest (opacity only).
-    const settle = `opacity ${T.settle}ms ease-in-out ${T.morph - T.settle}ms`;
+    const settle = late('gh-open-settle');
     // The extras layer: the page's own sizes, in its d unit (openMotion's --gho-x-d), outside the scaled canvas.
     const L = PAGE_LAYOUT;
     const dd = (n: number) => `calc(${n}px * var(--gho-x-d))`;
     const X = '.gh-open-extras';
     const at = (name: string) => `left: var(--gho-x-${name}-x); top: var(--gho-x-${name}-y); width: var(--gho-x-${name}-w)`;
     return [
+        lateFade('gh-open-extras-in', 0, 1, T.extras, 'ease-out'),
+        lateFade('gh-open-pill-out', 1, 0, T.extras, 'ease-in'),
+        lateFade('gh-open-settle', 0, 1, T.settle, 'ease-in-out'),
         // Always there, hidden: the page's scrims over Home's, the opened game's hero (heroFade), the glass panels.
         rule('.gh-hero-open', 'position: absolute; inset: 0; pointer-events: none; background-image: var(--gho-hero, none); background-size: cover; background-position: center 30%; background-repeat: no-repeat; opacity: 0'),
         // The glass: the page's cards and Clean panel (.38, its border), never blurred here (a blur under a moving scale is
@@ -517,6 +527,11 @@ export function openingRules(): string[] {
         rule(O, 'pointer-events: none'),
         // The bridge (openBridge): a frozen copy of Home in its final state; nothing inside it may animate again.
         rule('.gh-root.gh-bridge, .gh-root.gh-bridge *', 'animation: none; transition: none'),
+        rule('.gh-root.gh-bridge *::before, .gh-root.gh-bridge *::after', 'animation: none; transition: none'),
+        // With nothing animating, the copy holds the late fades' end values (their own values are the start ones).
+        rule('.gh-root.gh-bridge[data-gh-opening][data-gh-phase][data-gh-extras] .gh-open-extras', 'opacity: 1'),
+        rule('.gh-root.gh-bridge[data-gh-opening][data-gh-phase][data-gh-extras~="pills"] .gh-source', 'opacity: 0'),
+        rule(`.gh-root.gh-bridge[data-gh-opening][data-gh-phase] ${play}::after`, 'opacity: 1'),
 
         // Scrims: Home already shades its art as the page does; only the feed sheet's dim goes.
         rule(`${MT} .gh-scrim-dim`, `opacity: 0; transition: opacity ${T.morph}ms ease`),
@@ -547,7 +562,7 @@ export function openingRules(): string[] {
         rule(`${MT} ${play} > .gh-btn-icon`, `transform: var(--gho-play-icon); transition: ${move}`),
         rule(`${MT} ${play} > .gh-btn-label`, `transform: var(--gho-play-label); transition: ${move}`),
         rule(`${MT} ${play}::before`, `transform: var(--gho-play-bg); transition: ${move}`),
-        rule(`${MT} ${play}::after`, `opacity: 1; transition: ${settle}`),
+        rule(`${MT} ${play}::after`, settle),
         // The circles by their order among circles (openHome measures .gh-btn-circle), whatever comes before them (the stream arrow).
         ...[0, 1, 2, 3].map((i) => rule(`${MT} .gh-actions > .gh-btn-circle:nth-child(${i + 1} of .gh-btn-circle)`, `transform: var(--gho-circle-${i}, none); transition: ${move}`)),
         // Each circle's icon shrinks as the circle grows (openMotion), so it is the page's size throughout.
@@ -574,7 +589,8 @@ export function openingRules(): string[] {
         // page's card, each part only when Home has it (data-gh-extras), fading in to be complete at the hand-over.
         rule(X, 'display: none; position: absolute; left: 0; top: 0; width: 100%; height: 100%; pointer-events: none; color: #fff; opacity: 0'),
         rule(`${M}[data-gh-extras] ${X}`, 'display: block; opacity: 0'),
-        rule(`${MT}[data-gh-extras] ${X}`, `opacity: 1; transition: opacity ${T.extras}ms ease-out ${T.morph - T.extras}ms`),
+        // Its own opacity stays the start value (0): the GPU draws that until the animation runs, and the animation holds the end.
+        rule(`${MT}[data-gh-extras] ${X}`, `opacity: 0; ${late('gh-open-extras-in')}`),
         rule(`${X} .gh-x-desc`, `display: none; position: absolute; ${at('desc')}; margin: 0; font-size: ${dd(L.cardText.desc)}; font-weight: 400; line-height: ${L.cardText.descLine};
             color: rgba(255,255,255,.84); -webkit-line-clamp: ${L.cardText.descLines}; -webkit-box-orient: vertical; overflow: hidden`),
         rule('.gh-root[data-gh-extras~="desc"] .gh-x-desc', 'display: -webkit-box'),
@@ -593,7 +609,7 @@ export function openingRules(): string[] {
         rule(`${X} .gh-x-played`, `display: none; position: absolute; left: var(--gho-x-played-x); top: var(--gho-x-played-y); flex-direction: column; gap: ${dd(L.stats.rowGap)}`),
         rule('.gh-root[data-gh-extras~="played"] .gh-x-played', 'display: flex'),
         rule(`${X} .gh-x-played .gh-x-value`, 'font-size: var(--gho-x-played-font)'),
-        rule(`${MT}[data-gh-extras~="pills"] .gh-source`, `opacity: 0; transition: ${move}, opacity ${T.extras}ms ease-in ${T.morph - T.extras}ms`),
+        rule(`${MT}[data-gh-extras~="pills"] .gh-source`, `transition: ${move}; ${late('gh-open-pill-out')}`),
         rule(`${X} .gh-x-label`, `font-size: ${dd(L.stats.label)}; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; line-height: ${PAGE_LINES.label}; white-space: nowrap; color: rgba(255,255,255,.62)`),
         rule(`${X} .gh-x-stats`, `display: flex; gap: ${dd(L.stats.colGapHltb)}`),
         rule(`${X} .gh-x-stats > div`, `display: flex; flex-direction: column; gap: ${dd(L.stats.rowGap)}`),
