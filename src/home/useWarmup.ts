@@ -12,7 +12,10 @@ import { cardArtKnown, warmCardArt } from './wideCardArt';
 import { memoAchievements, noteDetails, seedAchievements, setAchievementSink } from './detailsMemo';
 import { ArtWarmDeps, DescriptionWarmDeps, DetailsWarmDeps, HltbWarmDeps, warmAchievements, warmArt, warmDescriptions, warmHltb, warmOrder } from './warmup';
 
-/** Waits this long after Home is up before warming, so the first paint and the selected game's own requests go first. */
+/**
+ * The network and Steam-details warming waits this long after Home is up, so the first paint and the selected game's own
+ * requests go first. The art does not wait: its files are on the device, and it starts with the game shown first.
+ */
 const WARMUP_DELAY_MS = 1200;
 
 const achievementKey = (appId: number) => `ach:${appId}`;
@@ -34,11 +37,12 @@ export interface WarmInfo {
 }
 
 /**
- * Warms what the selected game's chips and the open transition need, for every game in the recents row, nearest the
- * selection first: HowLongToBeat (the disk cache at once, online for the games with nothing cached when the pre-load
+ * Warms what the selected game's chips, its wide card and the open transition need, for every game in Home's games row
+ * (whatever the Games row setting shows), nearest the selection first: HowLongToBeat (the disk cache at once, online for the games with nothing cached when the pre-load
  * setting allows), the Achievements counts (Steam's details, one game at a time; also kept in the plugin cache for a week,
- * so after a restart they are there at once), the description (likewise; the Spotlight look only) and the hero art (loaded
- * and decoded, one game at a time). Starts WARMUP_DELAY_MS after Home is up and again when the list of games changes;
+ * so after a restart they are there at once), the description (likewise; the Spotlight look only), the hero art and the
+ * wide card's art (loaded and decoded, one game at a time). The art starts at once, from the game shown; the rest
+ * WARMUP_DELAY_MS after Home is up. Starts again when the list of games changes;
  * stops on unmount. `onChange` is called as results come in, so the selected game refreshes. Never throws.
  */
 export function useWarmup(games: WarmGame[], centre: number, ready: boolean, info: (appId: number) => WarmInfo, onChange: () => void) {
@@ -56,9 +60,18 @@ export function useWarmup(games: WarmGame[], centre: number, ready: boolean, inf
         let cancelled = false;
         const isCancelled = () => cancelled;
         const run = async () => {
+            // One tick first: Home's restored selection (back on B) is applied by then, so the order starts from what is shown.
+            await sleep(0);
+            if (cancelled) return;
             const { games: list, centre: at, info: infoOf, onChange: changed } = latest.current;
             const shortcut = (appId: number) => infoOf(appId).isShortcut;
             const ordered = warmOrder(list, at);
+            // The art at once, from the game shown outward (Home's own load of the shown game's art is shared, not repeated):
+            // its hero, and the wide card's own art.
+            const ids = ordered.map((g) => g.appId);
+            const artDeps: ArtWarmDeps = { has: artKnown, resolve: resolveArt, sleep };
+            const cardDeps: ArtWarmDeps = { has: cardArtKnown, resolve: warmCardArt, sleep };
+            const art = Promise.all([warmArt(ids, artDeps, isCancelled), warmArt(ids, cardDeps, isCancelled)]);
             // The persisted counts first: no delay, so the chip is there on the very first selection after a restart.
             let seeded = false;
             for (const game of ordered) {
@@ -94,9 +107,6 @@ export function useWarmup(games: WarmGame[], centre: number, ready: boolean, inf
                 allowNetwork: () => settings.get().autoPreload,
                 sleep,
             };
-            const artDeps: ArtWarmDeps = { has: artKnown, resolve: resolveArt, sleep };
-            // The wide card's own art too (its landscape file, at the card's size), so a card's first widening has it at once.
-            const cardDeps: ArtWarmDeps = { has: cardArtKnown, resolve: warmCardArt, sleep };
             // The Clean look shows no description: none to warm.
             const descriptions = async () => {
                 if (settings.get().cleanPage) return;
@@ -105,8 +115,7 @@ export function useWarmup(games: WarmGame[], centre: number, ready: boolean, inf
             };
             await Promise.all([
                 descriptions(),
-                warmArt(ordered.map((g) => g.appId), artDeps, isCancelled),
-                warmArt(ordered.map((g) => g.appId), cardDeps, isCancelled),
+                art,
                 warmHltb(ordered.map((g) => ({ appId: g.appId, name: g.name, isShortcut: shortcut(g.appId) })), hltbDeps, isCancelled, changed),
                 warmAchievements(ordered.filter((g) => !shortcut(g.appId)).map((g) => g.appId), detailsDeps, isCancelled, (appId, details) => {
                     noteDetails(appId, details);
