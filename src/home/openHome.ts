@@ -181,13 +181,14 @@ export function readChipTexts(root: Element): ChipText[] {
 
 /**
  * The page's parts Home can draw as it turns into the page's Spotlight look (SpotlightHome's .gh-open-extras), as
- * data-gh-extras words: `hltb` when HowLongToBeat found the game with a Main
+ * data-gh-extras words: `desc` when it has the description's text, `hltb` when HowLongToBeat found the game with a Main
  * time (without one the page writes "—" there, which Home's chip would not cover), `pills` when it knows the store (the
  * page's own store pill, and family pill, drawn at the page's size: Home's scaled one is a little narrower), `played` when
  * Home shows no Play time chip (a new game's Added chip): the page's Play time column, so it is there at the hand-over. Pure.
  */
-export function extrasParts(hltb: HltbResult | undefined, source?: string | null, playedMissing = false, size = false): string {
+export function extrasParts(description: string | null | undefined, hltb: HltbResult | undefined, source?: string | null, playedMissing = false, size = false): string {
     const parts: string[] = [];
+    if (description && description.trim()) parts.push('desc');
     if (hltb?.status === 'found' && hltb.times.main !== null) parts.push('hltb');
     if (source) parts.push('pills');
     if (playedMissing) parts.push('played');
@@ -196,9 +197,10 @@ export function extrasParts(hltb: HltbResult | undefined, source?: string | null
 }
 
 /** The open intent's flags for the parts Home drew (extrasParts words): the page shows those at once. */
-export function extrasFlags(parts: string): { homeHltb?: true; homeSize?: true } {
+export function extrasFlags(parts: string): { homeDesc?: true; homeHltb?: true; homeSize?: true } {
     const words = parts.split(/\s+/);
     return {
+        ...(words.includes('desc') ? { homeDesc: true as const } : {}),
         ...(words.includes('hltb') ? { homeHltb: true as const } : {}),
         ...(words.includes('size') ? { homeSize: true as const } : {}),
     };

@@ -453,7 +453,7 @@ export function SpotlightHome() {
                 </div>
             </div>
             {/* Open transition: the page's parts Home draws as it turns into the page (hidden until opening; not built during a fast run). */}
-            {game && !cycle.holding && <OpenExtras hltb={data.hltb} playedMinutes={data.playedMinutes} locale={data.locale} source={data.source} family={family} playedMissing={!data.chips.some((c) => c.key === 'played')} size={sizeColumn} />}
+            {game && !cycle.holding && <OpenExtras description={data.description} hltb={data.hltb} playedMinutes={data.playedMinutes} locale={data.locale} source={data.source} family={family} playedMissing={!data.chips.some((c) => c.key === 'played')} size={sizeColumn} />}
         </div>
     );
 }

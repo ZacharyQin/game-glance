@@ -188,7 +188,7 @@ function startHome(c: OpenContext): (() => void) | null {
             console.warn(`${LOG_PREFIX} Home: could not set up the morph`, error);
         }
         // Home could not be measured: the page still gets a calm fade, and arrives whole.
-        c.intent = { ...c.intent, mode: 'all', homeHltb: undefined };
+        c.intent = { ...c.intent, mode: 'all', homeDesc: undefined, homeHltb: undefined };
         return applyOpening(root, 'fade', [], null);
     }
     return applyOpening(root, c.variant, [], c.variant === 'heroFade' ? c.heroUrl : null);

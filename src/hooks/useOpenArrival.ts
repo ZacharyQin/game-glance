@@ -22,7 +22,8 @@ export function useOpenArrival(ref: RefObject<HTMLElement | null>, appId: number
     useEffect(() => {
         if (phase !== 'hidden' || !opened.intent) return undefined;
         const win = ref.current?.ownerDocument?.defaultView ?? window;
-        const sel = pageArrivalSelectors();
+        // Home drew the description as it opened: the page's must be there before Home's copy fades onto it.
+        const sel = { ...pageArrivalSelectors(), desc: opened.intent.homeDesc ? '.gg-desc' : null };
         return runArrival({
             ready: () => pageReady(ref.current?.ownerDocument as unknown as Parameters<typeof pageReady>[0], sel),
             now: () => Date.now(),
