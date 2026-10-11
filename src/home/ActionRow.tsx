@@ -8,7 +8,7 @@ import type { CloudState } from './cloud';
 import { opensGameMenu, PREFERRED_CHILD } from './focusZones';
 import { openGameMenu } from './gameMenu';
 import { pressCloud, steamCloudIcon } from './steamCloud';
-import { steamControllerIcon, steamGearIcon } from './steamIcons';
+import { steamCheckIcon, steamControllerIcon, steamGearIcon, steamStreamMenuClasses } from './steamIcons';
 import { readSteamPill } from './steamPill';
 import { StreamChoice, streamChoices, StreamOverview } from './streaming';
 import { openGame, openLibrary, openPage } from './homeNav';
@@ -62,10 +62,21 @@ function openPlayFrom(appId: number, choices: StreamChoice[], anchor: HTMLElemen
         }
         for (const ms of [250, 1000]) setTimeout(changed, ms);
     };
+    // Steam's own item layout (a tick column, then the words) and tick, found by name; plain words if missing.
+    const classes = steamStreamMenuClasses();
+    const Check = steamCheckIcon();
+    const Item = MenuItem as unknown as ComponentType<Record<string, unknown>>;
     showContextMenu(
         <Menu label={tr('playFrom')} cancelText={tr('cancel')}>
             {choices.map((c) => (
-                <MenuItem key={c.clientid} selected={c.selected} onSelected={() => set(c.clientid)}>{c.label}</MenuItem>
+                <Item key={c.clientid} className={classes?.StreamingContextMenuItem} selected={c.selected} onSelected={() => set(c.clientid)}>
+                    {classes ? (
+                        <>
+                            <span className={classes.CheckContainer}>{c.selected && (Check ? <Check /> : '✓')}</span>
+                            <span className={classes.StreamingTargetLabel}>{c.label}</span>
+                        </>
+                    ) : `${c.selected ? '✓ ' : ''}${c.label}`}
+                </Item>
             ))}
         </Menu>,
         anchor ?? undefined,

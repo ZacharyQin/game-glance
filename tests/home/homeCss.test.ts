@@ -446,8 +446,16 @@ describe('homeCss open transition', () => {
         // the segment lights as the page's does.
         const btn = all.find(([sel]) => sel === '.gh-actions > .gh-btn-stream');
         expect(btn?.[1]).toMatch(new RegExp(`width: ${HOME_PILL.arrow}px[^]*margin-left: -${HOME_PILL.arrow + 12}px[^]*background: transparent`));
+        // Nothing of its own over the pill: a button's glass blur here blurred the segment away (device, 8e90058).
+        expect(btn?.[1]).toMatch(/backdrop-filter: none/);
+        expect(btn?.[1]).toMatch(/border: none/);
         const focus = all.find(([sel]) => sel === '.gh-actions > .gh-btn-stream.gh-focus');
-        expect(focus?.[1]).toMatch(/background: rgba\(255,255,255,\.28\)[^]*box-shadow: none[^]*transform: none/);
+        expect(focus?.[1]).toMatch(/background: transparent[^]*box-shadow: none[^]*transform: none/);
+        // Focused, the whole pill shows Home's focus (as the page's pill does for its arrow), and the segment is tinted.
+        const pill = all.find(([sel]) => sel === '.gh-actions > .gh-btn-play:has(+ .gh-btn-stream.gh-focus)');
+        expect(pill?.[1]).toMatch(new RegExp(`box-shadow: 0 0 0 2px rgba\\(255,255,255,\\.9\\)[^]*transform: scale\\(${PAGE_LAYOUT.focusScale}\\)`));
+        const tint = all.find(([sel]) => sel === '.gh-actions > .gh-btn-play:has(+ .gh-btn-stream.gh-focus) > .gh-play-arrow');
+        expect(tint?.[1]).toMatch(/background: rgba\(255,255,255,\.28\)/);
         // Opening: the segment moves with the pill and grows onto the page's (openMotion --gho-play-arrow), about its right end.
         expect(all.some(([sel, body]) => sel.includes('data-gh-phase="to"') && sel.endsWith('.gh-play-arrow') && body.includes('transform: var(--gho-play-arrow)'))).toBe(true);
         expect(all.some(([sel, body]) => sel.includes('data-gh-opening') && !sel.includes('data-gh-phase') && sel.endsWith('.gh-play-arrow') && /transform-origin:\s*100% 50%/.test(body))).toBe(true);

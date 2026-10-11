@@ -319,8 +319,11 @@ export function homeCss(cardScale: number = CARD_SCALE_HANDHELD): string {
             border-left: 1px solid rgba(4,17,12,.25); pointer-events: none`),
         rule('.gh-play-arrow svg', `width: ${HOME_PILL.arrowGlyph}px; height: ${HOME_PILL.arrowGlyph}px; margin: 0; fill: currentColor`),
         rule('.gh-actions > .gh-btn-stream', `position: relative; z-index: 1; flex: 0 0 ${HOME_PILL.arrow}px; width: ${HOME_PILL.arrow}px; margin-left: -${HOME_PILL.arrow + 12}px; background: transparent;
-            border-color: transparent; border-radius: 0 999px 999px 0; box-shadow: none; transform: none`),
-        rule('.gh-actions > .gh-btn-stream.gh-focus', 'background: rgba(255,255,255,.28); box-shadow: none; transform: none'),
+            border: none; border-radius: 0 999px 999px 0; backdrop-filter: none; box-shadow: none; transform: none`),
+        rule('.gh-actions > .gh-btn-stream.gh-focus', 'background: transparent; box-shadow: none; transform: none'),
+        // The arrow focused: the whole pill shows Home's focus, as the page's pill does for its arrow; the segment is tinted.
+        rule('.gh-actions > .gh-btn-play:has(+ .gh-btn-stream.gh-focus)', `box-shadow: 0 0 0 2px rgba(255,255,255,.9), 0 14px 40px -8px var(--glance-accent); transform: scale(${PAGE_LAYOUT.focusScale})`),
+        rule('.gh-actions > .gh-btn-play:has(+ .gh-btn-stream.gh-focus) > .gh-play-arrow', 'background: rgba(255,255,255,.28)'),
 
         // Recents row (handoff: left 44, 140 tall; times the card scale, its bottom stays at 688 and it grows upwards
         // from geo.top). Overflow stays visible: earlier capsules scroll off to the left edge.
