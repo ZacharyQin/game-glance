@@ -490,7 +490,8 @@ describe('homeCss open transition', () => {
         expect(all.find(([sel]) => sel === '.gh-open-extras')?.[1]).toContain('display: none');
         const shown = all.find(([sel]) => sel === '.gh-root[data-gh-opening="morph"][data-gh-extras] .gh-open-extras')?.[1];
         expect(shown).toContain('display: block');
-        expect(shown).toMatch(/opacity: 0/);
+        // Hidden by its own (soft) opacity until the morph's late fade shows it.
+        expect(css).toContain('.gh-open-extras { opacity: 0; }');
         for (const part of ['desc', 'hltb']) {
             expect(all.find(([sel]) => sel === `.gh-open-extras .gh-x-${part}`)?.[1], part).toContain('display: none');
             expect(all.some(([sel, body]) => sel === `.gh-root[data-gh-extras~="${part}"] .gh-x-${part}` && body.includes('display'))).toBe(true);
@@ -593,7 +594,7 @@ describe('homeCss Play pill while opening', () => {
         const css = homeCss();
         const after = /\.gh-root\[data-gh-opening="morph"\] \.gh-actions > \.gh-btn\[data-action="play"\]::after \{([^}]*)\}/.exec(css)?.[1] ?? '';
         expect(after).toContain('box-shadow: 0 0 0 2px rgba(255,255,255,.9)');
-        expect(after).toContain('opacity: 0');
+        expect(css).toContain('.gh-root[data-gh-opening="morph"] .gh-actions > .gh-btn[data-action="play"]::after { opacity: 0; }');
         // The page's focused Play keeps its accent fill, as Home's (no lighter overlay any more).
         expect(after).toContain('background: var(--glance-accent)');
         expect(after).not.toContain('rgba(255,255,255,.28)');
@@ -636,9 +637,21 @@ describe('delayed fades in the open transition', () => {
     // full over the cards for the first frames (docked).
     it("the start value is each element's own: extras 0, Home's pill 1, the settle layer 0", () => {
         const body = (re: RegExp) => css.match(re)?.[0] ?? '';
-        expect(body(/\.gh-root\[data-gh-opening="morph"\]\[data-gh-phase="to"\]\[data-gh-extras\] \.gh-open-extras\s*\{[^}]*\}/)).toContain('opacity: 0');
+        expect(css).toContain('.gh-open-extras { opacity: 0; }');
+        expect(body(/\.gh-root\[data-gh-opening="morph"\]\[data-gh-phase="to"\]\[data-gh-extras\] \.gh-open-extras\s*\{[^}]*\}/)).not.toContain('opacity');
         expect(body(/\.gh-root\[data-gh-opening="morph"\]\[data-gh-phase="to"\]\[data-gh-extras~="pills"\] \.gh-source\s*\{[^}]*\}/)).not.toContain('opacity');
         expect(body(/\.gh-root\[data-gh-opening="morph"\]\[data-gh-phase="to"\] \.gh-actions > \.gh-btn\[data-action="play"\]::after\s*\{[^}]*\}/)).not.toMatch(/opacity: 1/);
+    });
+    it("their own opacity is never !important: an animation cannot override an !important value (the extras and Play's ring stayed hidden through the morph, then popped in with the bridge)", () => {
+        const opacities = (target: string) => [...css.matchAll(/([^{}]+)\{([^}]*)\}/g)]
+            .filter(([, sel]) => !sel.includes('gh-bridge') && sel.trim().endsWith(target))
+            .map(([, sel, body]) => [sel.trim(), body.match(/opacity:[^;]*/)?.[0] ?? ''] as const)
+            .filter(([, o]) => o !== '');
+        for (const target of ['.gh-open-extras', '[data-action="play"]::after']) {
+            const found = opacities(target);
+            expect(found.length, target).toBeGreaterThan(0);
+            for (const [sel, o] of found) expect(o, sel).not.toContain('!important');
+        }
     });
     it('the bridge (a frozen copy, nothing animates in it, pseudo-elements too) holds the end values', () => {
         expect(css).toContain('.gh-root.gh-bridge *::before, .gh-root.gh-bridge *::after { animation: none !important; transition: none !important; }');

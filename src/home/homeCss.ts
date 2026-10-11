@@ -16,6 +16,14 @@ import { PILL_INSET, ROW_OFFSET, SIDE_INSET } from './insets';
  * except custom properties: the root's `--glance-accent` default must lose to the inline per-game value.
  * Properties the components set inline (canvas size/transform, bar widths, art urls) are never set here.
  */
+/**
+ * Declarations without `!important`: only an opacity that an animation must drive (an animation cannot override an
+ * !important value): the open transition's late fades (openingRules).
+ */
+function soft(selector: string, body: string): string {
+    return `${selector} { ${body}; }`;
+}
+
 function rule(selector: string, body: string): string {
     const decls = body
         .split(';')
@@ -552,7 +560,8 @@ export function openingRules(): string[] {
         rule(`${M} ${play}::before`, "content: ''; position: absolute; left: 0; top: 0; width: 100%; height: 100%; border-radius: 999px; background: var(--glance-accent); transform-origin: 0 0; pointer-events: none"),
         // The page focuses Play (its white ring and accent glow, as Home's focus): the page's focused pill at its exact size
         // (round ends; the stretched layer's are oval) fades in as the pill comes to rest, under the glyph and label.
-        rule(`${M} ${play}::after`, "content: ''; position: absolute; left: 0; top: var(--gho-play-dy); width: calc(100% * var(--gho-play-sx)); height: calc(100% * var(--gho-play-sy)); border-radius: 999px; background: var(--glance-accent); box-shadow: 0 0 0 2px rgba(255,255,255,.9), 0 14px 40px -8px var(--glance-accent); pointer-events: none; opacity: 0"),
+        rule(`${M} ${play}::after`, "content: ''; position: absolute; left: 0; top: var(--gho-play-dy); width: calc(100% * var(--gho-play-sx)); height: calc(100% * var(--gho-play-sy)); border-radius: 999px; background: var(--glance-accent); box-shadow: 0 0 0 2px rgba(255,255,255,.9), 0 14px 40px -8px var(--glance-accent); pointer-events: none"),
+        soft(`${M} ${play}::after`, 'opacity: 0'),
         rule([`${M} ${play} > .gh-btn-icon`, `${M} ${play} > .gh-btn-label`, `${M} ${play} > .gh-play-arrow`].join(', '), 'z-index: 1'),
         rule(`${M} ${play} > .gh-play-arrow`, 'transform-origin: 100% 50%'),
         rule(`${MT} ${play} > .gh-play-arrow`, `transform: var(--gho-play-arrow); transition: ${move}`),
@@ -587,10 +596,12 @@ export function openingRules(): string[] {
         // The page's parts Home draws as it turns into it (Spotlight look; SpotlightHome's .gh-open-extras, openMotion's
         // --gho-x-*): the description and the HowLongToBeat card's title, other columns, bar and caption, laid out as the
         // page's card, each part only when Home has it (data-gh-extras), fading in to be complete at the hand-over.
-        rule(X, 'display: none; position: absolute; left: 0; top: 0; width: 100%; height: 100%; pointer-events: none; color: #fff; opacity: 0'),
-        rule(`${M}[data-gh-extras] ${X}`, 'display: block; opacity: 0'),
-        // Its own opacity stays the start value (0): the GPU draws that until the animation runs, and the animation holds the end.
-        rule(`${MT}[data-gh-extras] ${X}`, `opacity: 0; ${late('gh-open-extras-in')}`),
+        rule(X, 'display: none; position: absolute; left: 0; top: 0; width: 100%; height: 100%; pointer-events: none; color: #fff'),
+        soft(X, 'opacity: 0'),
+        rule(`${M}[data-gh-extras] ${X}`, 'display: block'),
+        // Its own opacity stays the start value (0, soft: an animation cannot override !important): the GPU draws that until
+        // the animation runs, and the animation holds the end.
+        rule(`${MT}[data-gh-extras] ${X}`, late('gh-open-extras-in')),
         rule(`${X} .gh-x-desc`, `display: none; position: absolute; ${at('desc')}; margin: 0; font-size: ${dd(L.cardText.desc)}; font-weight: 400; line-height: ${L.cardText.descLine};
             color: rgba(255,255,255,.84); -webkit-line-clamp: ${L.cardText.descLines}; -webkit-box-orient: vertical; overflow: hidden`),
         rule('.gh-root[data-gh-extras~="desc"] .gh-x-desc', 'display: -webkit-box'),
