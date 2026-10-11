@@ -9,10 +9,27 @@ export interface SizeStat {
 
 /**
  * The size item: labelled with Unifideck's own word for it when known (`nativeLabel`, read from its row: translated by Unifideck),
- * else our English: "Installed size" for an installed game, "Install size" for one that is not. Null when the size is unknown
- * (never "0 B"). Pure.
+ * else Unifideck's English: "Installed size" for an installed game, "Space required" for one that is not. Null when the size
+ * is unknown (never "0 B"). Pure.
  */
 export function sizeStat(bytes: number | null | undefined, installed: boolean, locale: string, nativeLabel: string | null = null): SizeStat | null {
     const value = formatBytes(bytes, locale);
-    return value === null ? null : { key: 'size', label: nativeLabel || (installed ? 'Installed size' : 'Install size'), value };
+    return value === null ? null : { key: 'size', label: nativeLabel || (installed ? 'Installed size' : 'Space required'), value };
+}
+
+/** Unifideck's own words for the size, as read from its row on a game page (they are translated by Unifideck), by install state. */
+const sizeLabels = new Map<boolean, string>();
+
+/** Keeps Unifideck's word (read on a game page) so Home's open draws the page's label. */
+export function rememberSizeLabel(installed: boolean, label: string | null | undefined) {
+    if (typeof label === 'string' && label.trim()) sizeLabels.set(installed, label.trim());
+}
+
+/** Unifideck's word for the size in this install state, when a page has shown it this session; else null. */
+export function knownSizeLabel(installed: boolean): string | null {
+    return sizeLabels.get(installed) ?? null;
+}
+
+export function resetSizeLabels() {
+    sizeLabels.clear();
 }

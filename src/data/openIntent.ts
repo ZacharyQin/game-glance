@@ -33,6 +33,8 @@ export interface OpenIntent {
     homeHltb?: boolean;
     homeFamily?: boolean;
     homeMissing?: string[];
+    /** Home drew a Unifideck game's size column (OpenExtras): the page shows its own at once. */
+    homeSize?: boolean;
 }
 
 let pending: { appId: number; at: number; intent: OpenIntent } | null = null;

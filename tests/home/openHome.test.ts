@@ -309,3 +309,24 @@ describe('mountOpenBridge', () => {
         expect(() => mountOpenBridge(f.root)).toThrow();
     });
 });
+
+describe('the Unifideck size in the open (Home draws it)', () => {
+    const chips = [{ key: 'played', label: 'Play Time', value: '0 h', bar: false }, { key: 'hltb', label: 'HLTB Main', value: '12 h', bar: true }];
+    it('the page stats put it right after Played, as the page does', () => {
+        const size = { label: 'Space required', value: '1.6 GB' };
+        expect(pageStatsFromChips(chips, 'spotlight', size).map((s) => s.key)).toEqual(['played', 'size', 'hltb']);
+        expect(pageStatsFromChips(chips, 'clean', size)[1]).toEqual({ key: 'size', label: 'Space required', value: '1.6 GB', bar: false });
+        expect(pageStatsFromChips(chips, 'clean').map((s) => s.key)).toEqual(['played', 'hltb']);
+    });
+    it("is one of the extras' parts when Home knows it", () => {
+        expect(extrasParts(null, undefined, 'GOG', false, true)).toBe('pills size');
+        expect(extrasParts(null, undefined, 'GOG', false, false)).toBe('pills');
+    });
+});
+
+describe('extrasFlags for the size', () => {
+    it('the page shows the size column at once when Home drew it', () => {
+        expect(extrasFlags('pills size')).toEqual({ homeSize: true });
+        expect(extrasFlags('desc hltb')).toEqual({ homeDesc: true, homeHltb: true });
+    });
+});

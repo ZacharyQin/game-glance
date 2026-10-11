@@ -145,18 +145,28 @@ export interface ChipText { key: string; label: string; value: string; bar: bool
  * game's Added chip stands for the page's Play time of 0 h. Only these three; a Unifideck size column is not known
  * here (its column then makes the page's others sit a little further right, which the hand-over's fade covers). Pure.
  */
-export function pageStatsFromChips(chips: ChipText[], look: PageLook): PageStat[] {
+/** `size`: a Unifideck game's size column as Home draws it (OpenExtras), right after Played as on the page. */
+export function pageStatsFromChips(chips: ChipText[], look: PageLook, size?: { label: string; value: string } | null): PageStat[] {
     const byKey = new Map(chips.map((c) => [c.key, c]));
     const out: PageStat[] = [];
     const played = byKey.get('played');
     if (played) out.push({ key: 'played', label: played.label, value: played.value, bar: look === 'clean' && played.bar });
     else if (byKey.has('added')) out.push({ key: 'played', label: tr('played'), value: '0 h', bar: false });
+    if (size) out.push({ key: 'size', label: size.label, value: size.value, bar: false });
     const add = (key: StatKey, label: string, value: string, bar: boolean) => out.push({ key, label, value, bar: look === 'clean' && bar });
     const ach = byKey.get('achievements');
     if (ach) add('achievements', ach.label, ach.value, ach.bar);
     const hltb = byKey.get('hltb');
     if (hltb) add('hltb', look === 'spotlight' ? 'Main' : hltb.label, hltb.value, hltb.bar);
     return out;
+}
+
+/** The Unifideck size column Home drew in its extras layer (OpenExtras), or null. */
+export function readExtrasSize(root: Element): { label: string; value: string } | null {
+    const column = root.querySelector('.gh-open-extras .gh-x-size');
+    const label = column?.querySelector('.gh-x-label')?.textContent?.trim() ?? '';
+    const value = column?.querySelector('.gh-x-value')?.textContent?.trim() ?? '';
+    return label && value ? { label, value } : null;
 }
 
 /** Home's chips as shown (data-chip, label, value, bar), for pageStatsFromChips. */
@@ -176,19 +186,24 @@ export function readChipTexts(root: Element): ChipText[] {
  * page's own store pill, and family pill, drawn at the page's size: Home's scaled one is a little narrower), `played` when
  * Home shows no Play time chip (a new game's Added chip): the page's Play time column, so it is there at the hand-over. Pure.
  */
-export function extrasParts(description: string | null | undefined, hltb: HltbResult | undefined, source?: string | null, playedMissing = false): string {
+export function extrasParts(description: string | null | undefined, hltb: HltbResult | undefined, source?: string | null, playedMissing = false, size = false): string {
     const parts: string[] = [];
     if (description && description.trim()) parts.push('desc');
     if (hltb?.status === 'found' && hltb.times.main !== null) parts.push('hltb');
     if (source) parts.push('pills');
     if (playedMissing) parts.push('played');
+    if (size) parts.push('size');
     return parts.join(' ');
 }
 
 /** The open intent's flags for the parts Home drew (extrasParts words): the page shows those at once. */
-export function extrasFlags(parts: string): { homeDesc?: true; homeHltb?: true } {
+export function extrasFlags(parts: string): { homeDesc?: true; homeHltb?: true; homeSize?: true } {
     const words = parts.split(/\s+/);
-    return { ...(words.includes('desc') ? { homeDesc: true as const } : {}), ...(words.includes('hltb') ? { homeHltb: true as const } : {}) };
+    return {
+        ...(words.includes('desc') ? { homeDesc: true as const } : {}),
+        ...(words.includes('hltb') ? { homeHltb: true as const } : {}),
+        ...(words.includes('size') ? { homeSize: true as const } : {}),
+    };
 }
 
 /** What the extras layer holds, for openTargets: its HowLongToBeat columns after Main, and whether it has a bar. */

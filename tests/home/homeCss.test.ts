@@ -510,6 +510,14 @@ describe('homeCss open transition', () => {
         expect(home).toContain(`animation: gh-open-pill-out ${OPEN_TIMINGS.morph}ms linear both`);
         expect(home).toMatch(/transition: transform \d+ms cubic-bezier\([^)]*\)/);
     });
+    it("the extras layer's Unifideck size column: hidden unless Home drew it, at its place, in the page's value size", () => {
+        const all = rules(css);
+        const body = (sel: string) => all.find(([s]) => s === sel)?.[1] ?? '';
+        expect(body('.gh-open-extras .gh-x-size')).toContain('display: none');
+        for (const decl of ['left: var(--gho-x-size-x)', 'top: var(--gho-x-size-y)']) expect(body('.gh-open-extras .gh-x-size')).toContain(decl);
+        expect(all.some(([sel, b]) => sel === '.gh-root[data-gh-extras~="size"] .gh-x-size' && b.includes('display: flex'))).toBe(true);
+        expect(body('.gh-open-extras .gh-x-size .gh-x-value')).toContain('font-size: var(--gho-x-size-font)');
+    });
     it("the extras layer's Play time column: the page's label and value, at its place, in the page's value size", () => {
         const all = rules(css);
         const body = (sel: string) => all.find(([s]) => s === sel)?.[1] ?? '';

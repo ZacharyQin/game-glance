@@ -275,6 +275,17 @@ describe('openMotion', () => {
     });
 });
 
+describe('the Unifideck size column', () => {
+    it("Home's drawn column goes where the page puts it, at the look's value size", () => {
+        const page = { ...spotlight(), stats: { ...spotlight().stats, size: { label: box(200, 614.7, 120, 17.2), value: box(200, 636.1, 120, 37.5) } } };
+        const v = vars(openMotion(homeRects(), page, 'spotlight', s));
+        expect(v['--gho-x-size-x']).toBeDefined();
+        expect(parseFloat(v['--gho-x-size-y']) - parseFloat(v['--gho-x-played-y'])).toBeCloseTo(0, 1);
+        expect(v['--gho-x-size-font']).toBe(v['--gho-x-played-font']);
+        expect(vars(openMotion(homeRects(), spotlight(), 'spotlight', s))['--gho-x-size-x']).toBeUndefined();
+    });
+});
+
 describe('open timings', () => {
     it('match the spec', () => {
         expect(OPEN_TIMINGS).toEqual({ leave: 220, infoFade: 180, morph: 450, settle: 180, extras: 250, feedHero: 300, feedUi: 220, bridgeFade: 300, bridgeIn: 150, readyCap: 500, revealDelay: 0, reveal: 200, leaveDrop: 70, feedRise: 14 });

@@ -145,6 +145,13 @@ export function openMotion(home: HomeRects, page: PageTargets, look: PageLook, c
     out['--gho-x-pill-x'] = px(page.store.x + page.store.w - ox);
     out['--gho-x-pill-y'] = px(page.store.y - oy);
     // The Play time column (a new game's: Home shows its Added chip instead), by its top-left corner, in the look's value size.
+    // A Unifideck game's size column (right after Played), likewise.
+    const size = page.stats.size;
+    if (size) {
+        out['--gho-x-size-x'] = px(size.label.x - ox);
+        out['--gho-x-size-y'] = px(size.label.y - oy);
+        out['--gho-x-size-font'] = px((look === 'clean' ? PAGE_LAYOUT.cleanInfo.value : PAGE_LAYOUT.stats.value) * d);
+    }
     const played = page.stats.played;
     if (played) {
         out['--gho-x-played-x'] = px(played.label.x - ox);

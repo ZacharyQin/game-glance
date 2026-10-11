@@ -17,16 +17,17 @@ export function InfoCard({ game, locale, description, size = null }: Props) {
     return (
         <div className="gg-card">
             <div className="gg-stats">
+                <div data-stat="played">
+                    <div className="gg-label">{tr('played')}</div>
+                    <div className="gg-value">{formatHours(minutesToHours(game.playedMinutes), locale)}</div>
+                </div>
+                {/* Right after Played: Played stays first in every game (Home's open lands on it). */}
                 {size && (
                     <div data-stat="size">
                         <div className="gg-label">{size.label}</div>
                         <div className="gg-value">{size.value}</div>
                     </div>
                 )}
-                <div data-stat="played">
-                    <div className="gg-label">{tr('played')}</div>
-                    <div className="gg-value">{formatHours(minutesToHours(game.playedMinutes), locale)}</div>
-                </div>
                 {game.achievements && (
                     <div data-stat="achievements">
                         <div className="gg-label">{tr('achievements')}</div>

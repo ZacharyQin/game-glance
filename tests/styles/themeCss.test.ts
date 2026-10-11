@@ -776,6 +776,12 @@ describe('the page arriving after the open transition', () => {
         }
         expect(buildArrivingCss(full, 'clean', 'parts', false, { missing: ['bad key"]'] })).not.toContain('bad key');
     });
+    it('a Unifideck size column Home drew (extras) is there at once; otherwise it arrives with the new parts', () => {
+        for (const look of ['spotlight', 'clean'] as const) {
+            expect(buildArrivingCss(full, look, 'parts', false), look).toContain('[data-stat="size"]');
+            expect(buildArrivingCss(full, look, 'parts', false, { size: true }), look).not.toContain('[data-stat="size"]');
+        }
+    });
     it("Unifideck's store version dropdown (Steam's DialogDropDown) arrives with the new parts instead of popping in", () => {
         for (const look of ['spotlight', 'clean'] as const) {
             expect(buildArrivingCss(full, look, 'parts'), look).toContain(':has(> .DialogDropDown_CurrentDisplay)');

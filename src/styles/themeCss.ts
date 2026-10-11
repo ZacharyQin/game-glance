@@ -577,7 +577,7 @@ const ARRIVE_RISE_PX = 14;
  */
 export function buildArrivingCss(
     classes: ThemeClasses, look: 'spotlight' | 'clean', mode: 'parts' | 'all', revealed = false,
-    extra: { cloud?: boolean; bars?: string[]; desc?: boolean; hltb?: boolean; family?: boolean; missing?: string[] } = {},
+    extra: { cloud?: boolean; bars?: string[]; desc?: boolean; hltb?: boolean; family?: boolean; missing?: string[]; size?: boolean } = {},
 ): string {
     const { header, details, root, play } = classes;
     if (!(cls(header, 'TopCapsule') && cls(details, 'InnerContainer') && cls(details, 'AppDetailsOverviewPanel') && cls(root, 'AppDetailsContainer'))) return '';
@@ -588,7 +588,7 @@ export function buildArrivingCss(
     // A stat column Home showed no chip for (`extra.missing`: a new game's Play time), and Unifideck's store version
     // dropdown (Steam's DialogDropDown), arrive too instead of popping in.
     const missing = (extra.missing ?? []).filter((key) => /^[a-z]+$/i.test(key)).map((key) => `[data-stat="${key}"]`);
-    const shared = ['[data-stat="size"]', ...missing, ...(extra.family ? [] : ['.gg-family']), ...(cloud ? [cloud] : []), ':has(> .DialogDropDown_CurrentDisplay)'];
+    const shared = [...(extra.size ? [] : ['[data-stat="size"]']), ...missing, ...(extra.family ? [] : ['.gg-family']), ...(cloud ? [cloud] : []), ':has(> .DialogDropDown_CurrentDisplay)'];
     // Spotlight: the description and the HowLongToBeat card's rest, unless Home drew them as it opened (`extra.desc`,
     // `extra.hltb`: home/OpenExtras), when the page's are there at once under Home's copy.
     const desc = extra.desc ? [] : ['.gg-desc'];

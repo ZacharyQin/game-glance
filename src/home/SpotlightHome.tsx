@@ -28,6 +28,9 @@ import { useFastCycle } from './fastCycle';
 import { noteDisplay } from './artShrink';
 import { canvasStyle, homeCanvas } from './scale';
 import { OpenExtras } from './OpenExtras';
+import { useUnifideckInstalled } from '../hooks/useUnifideckInstalled';
+import { useUnifideckSize } from '../hooks/useUnifideckSize';
+import { knownSizeLabel, sizeStat } from '../logic/sizeStat';
 import { TitleBlock } from './TitleBlock';
 import { useBumperSelect, useDirectionSelect } from './useBumperSelect';
 import { useCloud } from './useCloud';
@@ -349,6 +352,12 @@ export function SpotlightHome() {
     // A game from the family library: "Family Sharing · Lender" beside the store pill (data/family).
     const family = game ? familyPillLabel(game.appId) : null;
     const contentUp = measuredScale !== null && resolved;
+    // A Unifideck game's size, as its page shows it right after Played (not during a fast run): the open draws that column
+    // (OpenExtras), in Unifideck's own word once a page has shown it, so nothing shifts or pops in at the hand-over.
+    const uniShortcut = !!game && !onLibrary && game.gameId !== undefined && !cycle.holding;
+    const uniInstalled = useUnifideckInstalled(game?.appId ?? null, uniShortcut);
+    const uniBytes = useUnifideckSize(game?.appId ?? null, uniShortcut && typeof uniInstalled === 'boolean', uniInstalled === true, uniShortcut);
+    const sizeColumn = uniShortcut && typeof uniInstalled === 'boolean' ? sizeStat(uniBytes, uniInstalled, data.locale, knownSizeLabel(uniInstalled)) : null;
     // Once the content is up: focus what was focused. The game cards or the actions here; the tabs and the feed are
     // the feed sheet's (their cards may still be loading), which says when it is done. Without a restore (a cold start
     // or a fresh visit) Home opens on the first game card, as Steam's own Home does.
@@ -443,7 +452,7 @@ export function SpotlightHome() {
                 </div>
             </div>
             {/* Open transition: the page's parts Home draws as it turns into the page (hidden until opening; not built during a fast run). */}
-            {game && !cycle.holding && <OpenExtras description={data.description} hltb={data.hltb} playedMinutes={data.playedMinutes} locale={data.locale} source={data.source} family={family} playedMissing={!data.chips.some((c) => c.key === 'played')} />}
+            {game && !cycle.holding && <OpenExtras description={data.description} hltb={data.hltb} playedMinutes={data.playedMinutes} locale={data.locale} source={data.source} family={family} playedMissing={!data.chips.some((c) => c.key === 'played')} size={sizeColumn} />}
         </div>
     );
 }

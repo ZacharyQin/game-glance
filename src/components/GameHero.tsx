@@ -22,7 +22,7 @@ import { useUnifideckSize } from '../hooks/useUnifideckSize';
 import { useOverrideVersion } from '../hooks/useOverrideVersion';
 import { steamLanguageToLocale } from '../logic/format';
 import { heroicStoreLabel } from '../logic/heroic';
-import { sizeStat } from '../logic/sizeStat';
+import { rememberSizeLabel, sizeStat } from '../logic/sizeStat';
 import { useDownload } from '../home/useDownload';
 import { useLaunchOverlay } from '../styles/launchOverlay';
 import { useOpenArrival } from '../hooks/useOpenArrival';
@@ -127,6 +127,10 @@ function Hero({ overview, details, restyle, clean }: Props & { restyle: boolean;
     useUnifideckGamepadFocus(pageDoc, game.isShortcut);
     const nativeSizeLabel = useUnifideckSizeLabel(pageDoc, game.appId, uniInstalled, restyle && game.isShortcut);
     const size = restyle && typeof uniInstalled === 'boolean' ? sizeStat(unifideckSize, uniInstalled, locale, nativeSizeLabel) : null;
+    // Kept for Home's open, which draws this column before the page (OpenExtras) in Unifideck's own word.
+    useEffect(() => {
+        if (typeof uniInstalled === 'boolean') rememberSizeLabel(uniInstalled, nativeSizeLabel);
+    }, [uniInstalled, nativeSizeLabel]);
     const fillCss = restyle ? downloadCss(download?.percent ?? null) : '';
     // While Steam's launch overlay is up, the page's text fades away so the overlay sits on the game's art alone; after
     // Play on Home (data/launchIntent) the page starts that way, so it never shows before the launch screen.
@@ -166,7 +170,7 @@ function Hero({ overview, details, restyle, clean }: Props & { restyle: boolean;
                 {launching && <style>{launchCss()}</style>}
                 {accent && <style>{accentCss(accent)}</style>}
                 {fillCss && <style>{fillCss}</style>}
-                {arrival && restyle && <style>{arrivingCss(clean ? 'clean' : 'spotlight', arrival.intent.mode, arrival.revealed, { cloud: arrival.intent.homeCloud === false, bars: arrival.intent.homeBars, desc: arrival.intent.homeDesc, hltb: arrival.intent.homeHltb, family: arrival.intent.homeFamily, missing: arrival.intent.homeMissing })}</style>}
+                {arrival && restyle && <style>{arrivingCss(clean ? 'clean' : 'spotlight', arrival.intent.mode, arrival.revealed, { cloud: arrival.intent.homeCloud === false, bars: arrival.intent.homeBars, desc: arrival.intent.homeDesc, hltb: arrival.intent.homeHltb, family: arrival.intent.homeFamily, missing: arrival.intent.homeMissing, size: arrival.intent.homeSize })}</style>}
                 {source && (
                     <SourcePill label={source}>
                         {/* A game from the family library (Steam's line under Play is hidden): with the restyled look only. */}

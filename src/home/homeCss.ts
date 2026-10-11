@@ -623,6 +623,10 @@ export function openingRules(): string[] {
         rule(`${X} .gh-x-played`, `display: none; position: absolute; left: var(--gho-x-played-x); top: var(--gho-x-played-y); flex-direction: column; gap: ${dd(L.stats.rowGap)}`),
         rule('.gh-root[data-gh-extras~="played"] .gh-x-played', 'display: flex'),
         rule(`${X} .gh-x-played .gh-x-value`, 'font-size: var(--gho-x-played-font)'),
+        // A Unifideck game's size column (right after Played), as the page draws it, at its place.
+        rule(`${X} .gh-x-size`, `display: none; position: absolute; left: var(--gho-x-size-x); top: var(--gho-x-size-y); flex-direction: column; gap: ${dd(L.stats.rowGap)}`),
+        rule('.gh-root[data-gh-extras~="size"] .gh-x-size', 'display: flex'),
+        rule(`${X} .gh-x-size .gh-x-value`, 'font-size: var(--gho-x-size-font)'),
         rule(`${MT}[data-gh-extras~="pills"] .gh-source`, `transition: ${move}; ${late('gh-open-pill-out')}`),
         rule(`${X} .gh-x-label`, `font-size: ${dd(L.stats.label)}; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; line-height: ${PAGE_LINES.label}; white-space: nowrap; color: rgba(255,255,255,.62)`),
         rule(`${X} .gh-x-stats`, `display: flex; gap: ${dd(L.stats.colGapHltb)}`),

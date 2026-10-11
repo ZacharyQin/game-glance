@@ -4,7 +4,7 @@ import { browserStores, heroUrls } from './artwork';
 import { markLeaving } from './homeMemory';
 import { takeSteamFocus } from './steamFocus';
 import { createOpenTransition, OpenTransition } from './openTransition';
-import { applyOpening, canvasMeasure, extrasFlags, missingStats, OpenVariant, openVariant, pageStatsFromChips, readChipTexts, readExtrasAsked, measureHome, viewportSize } from './openHome';
+import { applyOpening, canvasMeasure, extrasFlags, missingStats, OpenVariant, openVariant, pageStatsFromChips, readChipTexts, readExtrasAsked, readExtrasSize, measureHome, viewportSize } from './openHome';
 import { openMotion } from './openMotion';
 import { pageTargets, PageLook } from './openTargets';
 import { mountOpenBridge } from './openBridge';
@@ -177,7 +177,9 @@ function startHome(c: OpenContext): (() => void) | null {
             const scale = home && canvasEl && canvasEl.offsetWidth > 0 ? home.canvas.w / canvasEl.offsetWidth : 0;
             const screen = win ? viewportSize(win) : { width: 0, height: 0 };
             if (home && scale > 0 && screen.width > 0 && screen.height > 0) {
-                const stats = pageStatsFromChips(readChipTexts(root), c.look);
+                // A Unifideck game's size column Home drew: the page has it right after Played, so the columns land where the page puts them.
+                const size = c.extras.split(' ').includes('size') ? readExtrasSize(root) : null;
+                const stats = pageStatsFromChips(readChipTexts(root), c.look, size);
                 const store = home.store ?? { x: 0, y: 0, w: 0, h: 0 };
                 const page = pageTargets(c.look, screen, stats, canvasMeasure(root), { w: store.w, h: store.h }, c.extras ? readExtrasAsked(root) : undefined);
                 return applyOpening(root, 'morph', openMotion(home, page, c.look, scale), null, c.extras);
@@ -267,7 +269,7 @@ export function openGame(appId: number, source?: HTMLElement | null) {
         // Spotlight: the description and the HowLongToBeat card's rest Home draws as it turns into the page (OpenExtras).
         // (The Clean look shows neither, only the store pill.)
         const drawn = variant === 'morph' && root ? root.querySelector('.gh-open-extras')?.getAttribute('data-parts') ?? '' : '';
-        const extras = look === 'spotlight' ? drawn : drawn.split(' ').filter((p) => p === 'pills' || p === 'played').join(' ');
+        const extras = look === 'spotlight' ? drawn : drawn.split(' ').filter((p) => p === 'pills' || p === 'played' || p === 'size').join(' ');
         // The family library pill moves in with Home's store pill: the page's must not arrive again (it blinked).
         const homeFamily = variant === 'morph' && root ? root.querySelector('.gh-family') !== null : undefined;
         // The page's stat columns Home showed no chip for (a new game's Play time) arrive instead of popping in.
