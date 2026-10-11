@@ -2,9 +2,10 @@ import { Focusable } from '@decky/ui';
 import type { GamepadEvent } from '@decky/ui';
 import { memo, Ref, useEffect, useMemo, useState } from 'react';
 import { browserStores, capsuleUrls, heroUrls, landscapeUrls } from './artwork';
-import { displayInfo, loadArt } from './artShrink';
-import { ArtBox, createArtResolver } from './cardArt';
+import { displayInfo } from './artShrink';
+import { ArtBox, cardBox } from './cardArt';
 import { wideArt } from './homeView';
+import { knownCardArt, resolveCardArt } from './wideCardArt';
 import { clampFocus, isLibraryFocus, MAX_GHOSTS, RecentsGeometry, recentsLayout } from './recentsLayout';
 import type { HomeGame } from './useHomeData';
 import { tr } from '../i18n/steamText';
@@ -23,22 +24,19 @@ function backgrounds(list: string[]): { backgroundImage?: string } {
     return { backgroundImage: list.map((u) => `url("${u.replace(/"/g, '%22')}")`).join(', ') };
 }
 
-/** The wide card's art, per game: the first of its files that loads, decoded (a smaller copy when far too big). */
-const cardArt = createArtResolver((url, box) => loadArt(url, box ?? displayInfo()), 48);
-
 /**
  * The art to draw on a wide card (null: none yet, or none loads). Known art draws at once; otherwise it is looked up and
  * drawn once loaded and decoded, so the card never waits on a decode (it used to stack all its files as backgrounds,
  * the game's 3840 px hero under the landscape art, each decoded on every step).
  */
 function useCardArt(appId: number, list: string[] | null, box: ArtBox): string | null {
-    const known = list ? cardArt.known(appId, list) : null;
+    const known = list ? knownCardArt(appId, list) : null;
     const key = list ? `${appId}|${list.join('|')}` : '';
     const [loaded, setLoaded] = useState<{ key: string; url: string | null } | null>(null);
     useEffect(() => {
         if (!list || known !== undefined) return undefined;
         let live = true;
-        cardArt.resolve(appId, list, box).then((url) => {
+        resolveCardArt(appId, list, box).then((url) => {
             if (live) setLoaded({ key, url });
         }, () => undefined);
         return () => {
@@ -126,7 +124,7 @@ export function RecentsRow({ games, selected, geometry, nav, expand = true, snap
     const layout = recentsLayout(count, at, geometry, expand);
     // The wide card in device px: its art is loaded for that size (home/artShrink).
     const perCanvas = displayInfo().perCanvas;
-    const box = useMemo(() => ({ width: Math.round(geometry.wideW * perCanvas), height: Math.round(geometry.capsuleH * perCanvas) }), [geometry, perCanvas]);
+    const box = useMemo(() => cardBox(geometry, perCanvas), [geometry, perCanvas]);
     const onLibrary = isLibraryFocus(count, at);
     const library = layout.items[count];
     // The loop preview's portraits, read once per list of games (not on every step).

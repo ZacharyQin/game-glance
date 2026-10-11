@@ -8,6 +8,7 @@ import { getShortcutDescription } from '../data/shortcutDescription';
 import { getDescription, getSteamLanguage } from '../data/steam';
 import type { HeroicRef } from '../logic/heroic';
 import { artKnown, resolveArt } from './HeroBackground';
+import { cardArtKnown, warmCardArt } from './wideCardArt';
 import { memoAchievements, noteDetails, seedAchievements, setAchievementSink } from './detailsMemo';
 import { ArtWarmDeps, DescriptionWarmDeps, DetailsWarmDeps, HltbWarmDeps, warmAchievements, warmArt, warmDescriptions, warmHltb, warmOrder } from './warmup';
 
@@ -94,6 +95,8 @@ export function useWarmup(games: WarmGame[], centre: number, ready: boolean, inf
                 sleep,
             };
             const artDeps: ArtWarmDeps = { has: artKnown, resolve: resolveArt, sleep };
+            // The wide card's own art too (its landscape file, at the card's size), so a card's first widening has it at once.
+            const cardDeps: ArtWarmDeps = { has: cardArtKnown, resolve: warmCardArt, sleep };
             // The Clean look shows no description: none to warm.
             const descriptions = async () => {
                 if (settings.get().cleanPage) return;
@@ -103,6 +106,7 @@ export function useWarmup(games: WarmGame[], centre: number, ready: boolean, inf
             await Promise.all([
                 descriptions(),
                 warmArt(ordered.map((g) => g.appId), artDeps, isCancelled),
+                warmArt(ordered.map((g) => g.appId), cardDeps, isCancelled),
                 warmHltb(ordered.map((g) => ({ appId: g.appId, name: g.name, isShortcut: shortcut(g.appId) })), hltbDeps, isCancelled, changed),
                 warmAchievements(ordered.filter((g) => !shortcut(g.appId)).map((g) => g.appId), detailsDeps, isCancelled, (appId, details) => {
                     noteDetails(appId, details);

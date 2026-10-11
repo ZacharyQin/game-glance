@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createArtResolver } from '../../src/home/cardArt';
+import { cardBox, createArtResolver } from '../../src/home/cardArt';
+import { CARD_SCALE_DOCKED, CARD_SCALE_HANDHELD, recentsGeometry } from '../../src/home/recentsLayout';
 
 const loader = (ok: string[]) => vi.fn(async (url: string) => (ok.includes(url) ? url : null));
 
@@ -56,5 +57,15 @@ describe('createArtResolver', () => {
     it('a loader that throws counts as not loading', async () => {
         const r = createArtResolver(async (url) => { if (url === 'a') throw new Error('x'); return url; }, 10);
         expect(await r.resolve(1, ['a', 'b'])).toBe('b');
+    });
+});
+
+describe('cardBox', () => {
+    it('the wide card in device px: its canvas size times device px per canvas px (the row and the warm-up load the same copy)', () => {
+        const g = recentsGeometry(CARD_SCALE_HANDHELD);
+        expect(cardBox(g, 4 / 3)).toEqual({ width: Math.round((g.wideW * 4) / 3), height: Math.round((g.capsuleH * 4) / 3) });
+    });
+    it('docked and handheld cards are the same size, so one warm-up serves both', () => {
+        expect(cardBox(recentsGeometry(CARD_SCALE_DOCKED), 1)).toEqual(cardBox(recentsGeometry(CARD_SCALE_HANDHELD), 1));
     });
 });

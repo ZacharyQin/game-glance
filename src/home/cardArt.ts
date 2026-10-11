@@ -62,3 +62,8 @@ export function createArtResolver(load: ArtLoader, max: number): ArtResolver {
         },
     };
 }
+
+/** The wide card in device px (its canvas size times device px per canvas px): the size its art is loaded at. Pure. */
+export function cardBox(geometry: { wideW: number; capsuleH: number }, perCanvas: number): ArtBox {
+    return { width: Math.round(geometry.wideW * perCanvas), height: Math.round(geometry.capsuleH * perCanvas) };
+}
