@@ -487,6 +487,9 @@ describe('buildThemeCss restyle (Spotlight Home on)', () => {
         expect(ring).toContain(`transform: scale(${PAGE_LAYOUT.focusScale}) !important`);
         expect(rulesFor(restyled, '.rt_PlayBtn > div:has(> [role="button"])')).toContain('transition: transform 250ms, box-shadow 250ms !important');
     });
+    it('the "Play from" arrow focused: the pill shows its focus and the arrow\'s segment is tinted, as on Home (Michael: Neva)', () => {
+        expect(rulesFor(restyled, '.rt_PlayBtn [role="button"] + [role="button"].gpfocus')).toContain('background: rgba(255, 255, 255, 0.28) !important');
+    });
     it('buildThemeCss with restyle adds the eyebrow, title and accent rules', () => {
         // accent: one per-game colour, animated over 500 ms, on Play, the HLTB goal value and bar
         expect(restyled).toContain("@property --glance-accent { syntax: '<color>'; inherits: true; initial-value: #5fd1ae; }");

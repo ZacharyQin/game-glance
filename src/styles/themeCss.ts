@@ -481,6 +481,8 @@ function restyleRules({ header, details, root, play, shared }: ThemeClasses, lay
         // lighter overlay), a white ring and accent glow, and it grows by the focus scale.
         rule(playButton && `${playButton} [role="button"]`, ` color: #ffffff !important; `),
         rule(playButton && `${playButton} [role="button"].gpfocus`, ` background: transparent !important; `),
+        // The "Play from" arrow focused: the pill shows its focus (below) and the arrow's segment is tinted, as on Home.
+        rule(playButton && `${playButton} [role="button"] + [role="button"].gpfocus`, ` background: rgba(255, 255, 255, 0.28) !important; `),
         // Steam's focus shine on Play (a green gradient on its ::after) would show over the accent pill.
         rule(playButton && `${playButton} [role="button"]::after`, ` display: none !important; `),
         rule(playButton && `${playButton} > div:has(> [role="button"])`, ` transition: transform 250ms, box-shadow 250ms !important; `),
