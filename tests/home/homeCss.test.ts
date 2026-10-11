@@ -6,7 +6,7 @@ import {
 } from '../../src/home/homeCss';
 import { sourcePillLook } from '../../src/styles/sourcePill';
 import { PAGE_LAYOUT, PAGE_SCRIMS, STEAM_TOP_GRADIENT } from '../../src/styles/themeCss';
-import { ACCENT_MS, CAP_ART_FADE_MS, CAP_STATE_MS, HERO_FADE_MS, OPEN_TIMINGS, SHEET_MS, SLIDE_MS } from '../../src/home/motion';
+import { ACCENT_MS, CAP_ART_FADE_MS, CAP_STATE_MS, HERO_FADE_MS, OPEN_TIMINGS, RETURN_TIMINGS, SHEET_MS, SLIDE_MS } from '../../src/home/motion';
 import { CARD_SCALE_DOCKED, CARD_SCALE_HANDHELD, recentsGeometry, recentsGlowTop } from '../../src/home/recentsLayout';
 
 /** Selector lists of every style rule, @-rule preludes (keyframes, @property) excluded. */
@@ -598,5 +598,13 @@ describe('HOME_PILL arrow', () => {
     it("is the page's arrow at Home's pill height (54 against the page's 60), so its morph grows it evenly", () => {
         expect(HOME_PILL.arrow).toBe(Math.round((PAGE_LAYOUT.playArrow.w * 54) / PAGE_LAYOUT.icon));
         expect(HOME_PILL.arrowGlyph).toBe(Math.round((PAGE_LAYOUT.playArrow.glyph * 54) / PAGE_LAYOUT.icon));
+    });
+});
+
+describe('the way back (B from a page)', () => {
+    it("Home's title, chips, buttons and row fade in over the art, which is there at once (opacity only)", () => {
+        const css = homeCss(CARD_SCALE_HANDHELD);
+        expect(css).toMatch(new RegExp(`\\.gh-root\\.gh-back \\.gh-safe\\s*\\{[^}]*animation: gh-fade-in ${RETURN_TIMINGS.fade}ms ease both`));
+        expect(css).not.toMatch(/\.gh-back \.gh-hero/);
     });
 });

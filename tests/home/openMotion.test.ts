@@ -3,7 +3,7 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { HomeRects, MotionVar, openMotion } from '../../src/home/openMotion';
 import type { Box, PageTargets } from '../../src/home/openTargets';
-import { MORPH_EASE, OPEN_TIMINGS } from '../../src/home/motion';
+import { MORPH_EASE, OPEN_TIMINGS, RETURN_TIMINGS } from '../../src/home/motion';
 import { PAGE_LAYOUT } from '../../src/styles/themeCss';
 import { HOME_PILL } from '../../src/home/homeCss';
 
@@ -279,5 +279,13 @@ describe('open timings', () => {
     it('match the spec', () => {
         expect(OPEN_TIMINGS).toEqual({ leave: 220, infoFade: 180, morph: 450, settle: 180, extras: 250, feedHero: 300, feedUi: 220, bridgeFade: 300, bridgeIn: 150, readyCap: 500, revealDelay: 0, reveal: 200, leaveDrop: 70, feedRise: 14 });
         expect(MORPH_EASE).toBe('cubic-bezier(.3,.55,.15,1)');
+    });
+});
+
+describe('return timings (B from a page: Home is just there)', () => {
+    it('a short fade of Home\'s UI; Steam\'s fades stay off until its page-leave animation (0.2 s delay + 0.6 s) has ended', () => {
+        expect(RETURN_TIMINGS.fade).toBe(200);
+        expect(RETURN_TIMINGS.hold).toBeGreaterThanOrEqual(1200);
+        expect(RETURN_TIMINGS.hold).toBeLessThanOrEqual(2000);
     });
 });

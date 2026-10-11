@@ -11,7 +11,8 @@ import { useSettings } from '../data/settings';
 import { recentsButton, selectionForButton, type Zone } from './focusZones';
 import { HeroBackground } from './HeroBackground';
 import { neighbourIds } from './heroLayers';
-import { HERO_PRELOAD_DELAY_MS, HERO_PRELOAD_RADIUS } from './motion';
+import { HERO_PRELOAD_DELAY_MS, HERO_PRELOAD_RADIUS, RETURN_TIMINGS } from './motion';
+import { steamEnterOffCss } from '../styles/theme';
 import { legibleAccent } from './accent';
 import { solveRaiseDelta } from './raised';
 import { findLegendHeight, legendReserve } from './legend';
@@ -130,6 +131,15 @@ export function SpotlightHome() {
     const { homeStatusBar, gameLogo } = useSettings();
     const [resolved, setResolved] = useState(restore === null);
     const [restoring, setRestoring] = useState(restore !== null);
+    // Back from a page (B): Home is just there (motion.RETURN_TIMINGS): Steam's page fades are off for a moment and its UI fades in.
+    const [back, setBack] = useState(restore !== null);
+    useEffect(() => {
+        if (!back) return undefined;
+        const timer = setTimeout(() => setBack(false), RETURN_TIMINGS.hold);
+        return () => clearTimeout(timer);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const enterOff = useMemo(() => (back ? steamEnterOffCss() : ''), [back]);
     const data = useHomeData(recentIndex);
     const focusIndex = clampFocus(data.games.length, recentIndex);
     const onLibrary = isLibraryFocus(data.games.length, focusIndex);
@@ -362,8 +372,9 @@ export function SpotlightHome() {
     }, [contentUp, restoring]);
 
     return (
-        <div ref={rootRef} className="gh-root" style={{ '--glance-accent': accent, '--glance-accent-text': legibleAccent(accent), '--gh-dim': sheetUp ? DIM_SHEET : DIM_REST, '--gh-side': `${side}px`, '--gh-row': `${rowInset(side, tv)}px`, '--gh-pill': `${pillInset(tv)}px`, '--gh-bottom': `${legend}px`, '--gh-shift': `${stackShift(logicalHeight, legend, false)}px`, '--gh-raise': `${FEED_SHEET.raise + raiseDelta}px` } as CSSProperties}>
+        <div ref={rootRef} className={`gh-root${back ? ' gh-back' : ''}`} style={{ '--glance-accent': accent, '--glance-accent-text': legibleAccent(accent), '--gh-dim': sheetUp ? DIM_SHEET : DIM_REST, '--gh-side': `${side}px`, '--gh-row': `${rowInset(side, tv)}px`, '--gh-pill': `${pillInset(tv)}px`, '--gh-bottom': `${legend}px`, '--gh-shift': `${stackShift(logicalHeight, legend, false)}px`, '--gh-raise': `${FEED_SHEET.raise + raiseDelta}px` } as CSSProperties}>
             <style>{css}</style>
+            {enterOff && <style>{enterOff}</style>}
             {/* No game until the restore is applied (Home back on B): the first game's art would flash before the selected one's. */}
             <HeroBackground appId={resolved ? shownGame?.appId ?? null : null} detailsVersion={data.detailsVersion} neighbours={heroNeighbours} />
             {/* The opened game's hero (a feed card's, homeCss.openingRules), the feed sheet's dim, and the page's shading. */}

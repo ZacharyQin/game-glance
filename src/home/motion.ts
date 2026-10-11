@@ -76,3 +76,12 @@ export const OPEN_TIMINGS = {
  * still crept at the end; Michael on the device: slower and smoother, so the hand-over cannot be seen).
  */
 export const MORPH_EASE = 'cubic-bezier(.3,.55,.15,1)';
+
+/**
+ * The way back (B from a game, news or store page): Home is just there, as when B comes during the open. Steam's own
+ * page fades are off while Home returns (the page leaving is hidden at once, Home is not faded in from black; Steam's
+ * leave animation, 0.2 s delay + 0.6 s, must be over before they come back: `hold`), the art is up on Home's first frame,
+ * and Home's title, chips, buttons and row fade in over it (`fade`). Probed on the Ally: Home mounts 50-70 ms after B,
+ * then Steam waited ~0.7 s, faded the page to black and Home in from black (~0.8 s).
+ */
+export const RETURN_TIMINGS = { fade: 200, hold: 1500 } as const;
