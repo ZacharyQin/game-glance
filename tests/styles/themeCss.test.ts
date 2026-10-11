@@ -791,6 +791,12 @@ describe('the page arriving after the open transition', () => {
         }
         expect(buildArrivingCss(full, 'clean', 'parts', false, { missing: ['bad key"]'] })).not.toContain('bad key');
     });
+    it("Unifideck's Uninstall circle (an installed game's fourth button; Home has none) arrives with the new parts (Michael: fade it in)", () => {
+        const buttons = `.${full.root!.AppButtons}`;
+        for (const look of ['spotlight', 'clean'] as const) {
+            expect(buildArrivingCss(full, look, 'parts', false), look).toContain(`.unifideck-hide-native-play ${buttons}:has(> :nth-child(4)) > :nth-child(n+4)`);
+        }
+    });
     it('a Unifideck size column Home drew (extras) is there at once; otherwise it arrives with the new parts', () => {
         for (const look of ['spotlight', 'clean'] as const) {
             expect(buildArrivingCss(full, look, 'parts', false), look).toContain('[data-stat="size"]');
