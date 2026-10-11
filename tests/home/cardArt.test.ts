@@ -29,6 +29,15 @@ describe('createArtResolver', () => {
         expect(r.known(1, ['x', 'a'])).toBeUndefined();
         expect(await r.resolve(1, ['x', 'a'])).toBe('x');
     });
+    it('what a game last ended on, whatever its list: drawn while a new list (Steam loaded the game\'s details) is looked up', async () => {
+        const r = createArtResolver(loader(['a', 'x']), 10);
+        expect(r.last(1)).toBeUndefined();
+        await r.resolve(1, ['a']);
+        expect(r.known(1, ['x', 'a'])).toBeUndefined();
+        expect(r.last(1)).toBe('a');
+        await r.resolve(1, ['x', 'a']);
+        expect(r.last(1)).toBe('x');
+    });
     it('two asking at once share one lookup', async () => {
         const load = loader(['a']);
         const r = createArtResolver(load, 10);

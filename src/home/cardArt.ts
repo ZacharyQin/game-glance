@@ -18,6 +18,8 @@ export interface ArtResolver {
     /** The art `id` ended on for this url list: a url, null for none, undefined when not looked up yet. */
     known(id: number, urls: string[]): string | null | undefined;
     resolve(id: number, urls: string[], box?: ArtBox): Promise<string | null>;
+    /** What `id` last ended on, whatever its url list (undefined: never looked up): drawn while a new list is looked up. */
+    last(id: number): string | null | undefined;
 }
 
 export function createArtResolver(load: ArtLoader, max: number): ArtResolver {
@@ -46,6 +48,7 @@ export function createArtResolver(load: ArtLoader, max: number): ArtResolver {
     };
     return {
         known,
+        last: (id) => memo.get(id)?.url,
         resolve(id, urls, box) {
             const hit = known(id, urls);
             if (hit !== undefined) return Promise.resolve(hit);

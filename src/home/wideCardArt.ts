@@ -36,6 +36,11 @@ export function knownCardArt(appId: number, list: string[]): string | null | und
     return resolver.known(appId, list);
 }
 
+/** What a game's card last showed, whatever its files then (Steam lists another file once it loads the game's details). */
+export function lastCardArt(appId: number): string | null | undefined {
+    return resolver.last(appId);
+}
+
 export function resolveCardArt(appId: number, list: string[], box: ArtBox): Promise<string | null> {
     return resolver.resolve(appId, list, box);
 }

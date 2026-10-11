@@ -5,7 +5,7 @@ import { browserStores, capsuleUrls, heroUrls, landscapeUrls } from './artwork';
 import { displayInfo } from './artShrink';
 import { ArtBox, cardBox } from './cardArt';
 import { wideArt } from './homeView';
-import { knownCardArt, resolveCardArt } from './wideCardArt';
+import { knownCardArt, lastCardArt, resolveCardArt } from './wideCardArt';
 import { clampFocus, isLibraryFocus, MAX_GHOSTS, RecentsGeometry, recentsLayout } from './recentsLayout';
 import type { HomeGame } from './useHomeData';
 import { tr } from '../i18n/steamText';
@@ -46,7 +46,9 @@ function useCardArt(appId: number, list: string[] | null, box: ArtBox): string |
     }, [key]);
     if (!list) return null;
     if (known !== undefined) return known;
-    return loaded && loaded.key === key ? loaded.url : null;
+    if (loaded && loaded.key === key) return loaded.url;
+    // Steam just listed another file for the game (its details loaded): the art it had stays up while that is looked up.
+    return lastCardArt(appId) ?? null;
 }
 
 /**
