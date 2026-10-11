@@ -5,7 +5,7 @@ import {
     FEED_SHEET, hexAlpha, homeCss, MAX_STACK_SHIFT, sourcePillTop, stackShift, TITLE_BLOCK, titleBlockBottom, titleBlockLayout,
 } from '../../src/home/homeCss';
 import { sourcePillLook } from '../../src/styles/sourcePill';
-import { PAGE_LAYOUT, PAGE_SCRIMS, STEAM_TOP_GRADIENT } from '../../src/styles/themeCss';
+import { PAGE_LAYOUT, PAGE_SCRIMS, pillFocusScale, STEAM_TOP_GRADIENT } from '../../src/styles/themeCss';
 import { ACCENT_MS, CAP_ART_FADE_MS, CAP_STATE_MS, HERO_FADE_MS, OPEN_TIMINGS, RETURN_TIMINGS, SHEET_MS, SLIDE_MS } from '../../src/home/motion';
 import { CARD_SCALE_DOCKED, CARD_SCALE_HANDHELD, recentsGeometry, recentsGlowTop } from '../../src/home/recentsLayout';
 
@@ -454,7 +454,8 @@ describe('homeCss open transition', () => {
         expect(focus?.[1]).toMatch(/background: transparent[^]*box-shadow: none[^]*transform: none/);
         // Focused, the whole pill shows Home's focus (as the page's pill does for its arrow), and the segment is tinted.
         const pill = all.find(([sel]) => sel === '.gh-actions > .gh-btn-play:has(+ .gh-btn-stream.gh-focus)');
-        expect(pill?.[1]).toMatch(new RegExp(`box-shadow: 0 0 0 2px rgba\\(255,255,255,\\.9\\)[^]*transform: scale\\(${PAGE_LAYOUT.focusScale}\\)`));
+        const hp = pillFocusScale(HOME_PILL.width, TITLE_BLOCK.button);
+        expect(pill?.[1]).toMatch(new RegExp(`box-shadow: 0 0 0 2px rgba\\(255,255,255,\\.9\\)[^]*transform: scale\\(${hp.x}, ${hp.y}\\)`));
         const tint = all.find(([sel]) => sel === '.gh-actions > .gh-btn-play:has(+ .gh-btn-stream.gh-focus) > .gh-play-arrow');
         expect(tint?.[1]).toMatch(/background: rgba\(255,255,255,\.28\)/);
         // Opening: the segment moves with the pill and grows onto the page's (openMotion --gho-play-arrow), about its right end.
@@ -594,6 +595,9 @@ describe('homeCss Play pill', () => {
         const body = /\.gh-btn\.gh-focus \{([^}]*)\}/.exec(homeCss())?.[1] ?? '';
         expect(body).toContain('0 0 0 2px rgba(255,255,255,.9)');
         expect(body).toContain(`scale(${PAGE_LAYOUT.focusScale})`);
+        // The Play pill grows by what a circle grows (its height's share), so its gap to the circles stays.
+        const hp = pillFocusScale(HOME_PILL.width, TITLE_BLOCK.button);
+        expect(/\.gh-actions > \.gh-btn-play\.gh-focus \{([^}]*)\}/.exec(homeCss())?.[1] ?? '').toContain(`scale(${hp.x}, ${hp.y})`);
     });
 });
 

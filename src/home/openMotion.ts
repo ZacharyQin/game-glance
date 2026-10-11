@@ -1,4 +1,4 @@
-import { PAGE_LAYOUT } from '../styles/themeCss';
+import { PAGE_LAYOUT, pillFocusScale } from '../styles/themeCss';
 import { HOME_PILL, TITLE_BLOCK } from './homeCss';
 import type { Box, PageLook, PageTargets, StatKey } from './openTargets';
 
@@ -65,8 +65,9 @@ export function openMotion(home: HomeRects, page: PageTargets, look: PageLook, c
     out['--gho-eyebrow'] = translate((page.eyebrowBottomLeft.x - home.eyebrow.x) / s, (page.eyebrowBottomLeft.y - (home.eyebrow.y + home.eyebrow.h)) / s);
 
     // The page focuses its Play on arrival, and a focused Play grows about its centre (as Home's): the morph lands on it.
-    const f = PAGE_LAYOUT.focusScale;
-    const to: Box = { x: page.play.x - (page.play.w * (f - 1)) / 2, y: page.play.y - (page.play.h * (f - 1)) / 2, w: page.play.w * f, h: page.play.h * f };
+    // (A focused pill grows by what a circle grows: 4% taller, as much wider in px; themeCss.pillFocusScale.)
+    const pf = pillFocusScale(PAGE_LAYOUT.playW, PAGE_LAYOUT.icon);
+    const to: Box = { x: page.play.x - (page.play.w * (pf.x - 1)) / 2, y: page.play.y - (page.play.h * (pf.y - 1)) / 2, w: page.play.w * pf.x, h: page.play.h * pf.y };
     // The pill itself only moves (by its left edge and centre line); its background layer, inside it, grows to the page
     // pill's size about that centre line, so the label never stretches.
     out['--gho-play-bg'] = `${translate(0, (home.play.h - to.h) / 2 / s)} scale(${k(to.w / home.play.w)}, ${k(to.h / home.play.h)})`;
@@ -80,11 +81,11 @@ export function openMotion(home: HomeRects, page: PageTargets, look: PageLook, c
     const pill = PAGE_LAYOUT.pill;
     // (Home's sit inside its 1 px border; the page's pill has none.)
     const homeInset = HOME_PILL.border + HOME_PILL.padX;
-    out['--gho-play-icon'] = `${translate(pill.padX * f - homeInset, 0)} scale(${k((pill.icon * f) / HOME_PILL.icon)})`;
-    out['--gho-play-label'] = `${translate((pill.padX + pill.icon + pill.iconGap) * f - (homeInset + HOME_PILL.icon + HOME_PILL.gap), 0)} scale(${k((pill.font * f) / HOME_PILL.font)})`;
+    out['--gho-play-icon'] = `${translate(pill.padX * pf.x - homeInset, 0)} scale(${k((pill.icon * pf.x) / HOME_PILL.icon)}, ${k((pill.icon * pf.y) / HOME_PILL.icon)})`;
+    out['--gho-play-label'] = `${translate((pill.padX + pill.icon + pill.iconGap) * pf.x - (homeInset + HOME_PILL.icon + HOME_PILL.gap), 0)} scale(${k((pill.font * pf.x) / HOME_PILL.font)}, ${k((pill.font * pf.y) / HOME_PILL.font)})`;
     // A game on more than one device: Home's "Play from" segment, at the pill's right end (origin: its right edge and
     // centre line), moves with the pill's growth and grows onto the page's segment (its width, the page pill's height).
-    out['--gho-play-arrow'] = `${translate((to.w - home.play.w) / s, 0)} scale(${k((PAGE_LAYOUT.playArrow.w * f) / HOME_PILL.arrow)}, ${k(to.h / home.play.h)})`;
+    out['--gho-play-arrow'] = `${translate((to.w - home.play.w) / s, 0)} scale(${k((PAGE_LAYOUT.playArrow.w * pf.x) / HOME_PILL.arrow)}, ${k(to.h / home.play.h)})`;
     let slot = 0;
     home.circles.forEach((circle, i) => {
         if (i === home.infoCircle) return;

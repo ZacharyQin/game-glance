@@ -1,7 +1,7 @@
 import { sourcePillIcon, sourcePillLook } from '../../src/styles/sourcePill';
 import { describe, expect, it } from 'vitest';
 import { buildAccentCss, buildArrivingCss, buildCleanCss, buildSteamEnterOffCss, steamFooterSelector, buildDownloadCss, buildLaunchCss, buildThemeCss, buildUnifideckCss, launchTargets, ThemeClasses } from '../../src/styles/themeCss';
-import { PAGE_LAYOUT, PAGE_SCRIM_LAYERS, PAGE_SCRIMS, pageDUnit, STEAM_LEGEND_PX } from '../../src/styles/themeCss';
+import { PAGE_LAYOUT, PAGE_SCRIM_LAYERS, PAGE_SCRIMS, pageDUnit, pillFocusScale, STEAM_LEGEND_PX } from '../../src/styles/themeCss';
 
 const full: ThemeClasses = {
     header: { TopCapsule: 'hd_Top', BoxSizer: 'hd_Box' },
@@ -246,7 +246,8 @@ describe('buildUnifideckCss (a Unifideck game\u2019s page)', () => {
         expect(buildUnifideckCss(full)).not.toContain('#0b0d10');
         expect(css).not.toContain('#0b0d10');
         expect(css).toMatch(/\.unifideck-hide-native-play \.unifideck-play-btn[^{]*\{[^}]*color: #ffffff !important;/);
-        expect(css).toMatch(new RegExp(`\\.unifideck-play-btn\\.gpfocus[^{]*\\{[^}]*transform: scale\\(${PAGE_LAYOUT.focusScale}\\) !important;`));
+        const pf = pillFocusScale(PAGE_LAYOUT.playW, PAGE_LAYOUT.icon);
+        expect(css).toMatch(new RegExp(`\\.unifideck-play-btn\\.gpfocus[^{]*\\{[^}]*transform: scale\\(${pf.x}, ${pf.y}\\) !important;`));
     });
     it('with Spotlight Home\u2019s look its row has Steam\u2019s padding (none above, 36 below), so the pill is level with Steam\u2019s', () => {
         const rowRule = /:has\([^)]*\) \{[^}]*padding-top: 0 !important; padding-bottom: [^;]+ !important;/;
@@ -493,7 +494,8 @@ describe('buildThemeCss restyle (Spotlight Home on)', () => {
         expect(rulesFor(restyled, '.rt_PlayBtn [role="button"].gpfocus')).toContain('background: transparent !important');
         const ring = rulesFor(restyled, '.rt_PlayBtn > div:has(> [role="button"].gpfocus)');
         expect(ring).toContain('rgba(255, 255, 255, 0.9)');
-        expect(ring).toContain(`transform: scale(${PAGE_LAYOUT.focusScale}) !important`);
+        const pf = pillFocusScale(PAGE_LAYOUT.playW, PAGE_LAYOUT.icon);
+        expect(ring).toContain(`transform: scale(${pf.x}, ${pf.y}) !important`);
         expect(rulesFor(restyled, '.rt_PlayBtn > div:has(> [role="button"])')).toContain('transition: transform 250ms, box-shadow 250ms !important');
     });
     it('the "Play from" arrow focused: the pill shows its focus and the arrow\'s segment is tinted, as on Home (Michael: Neva)', () => {
@@ -890,5 +892,15 @@ describe('the cloud button on the restyled page', () => {
 describe('the Play pill\'s "Play from" arrow', () => {
     it('is a 56 wide segment with a 14 px glyph at the pill\'s right end, in the page\'s d unit (Home draws the same, home/homeCss)', () => {
         expect(PAGE_LAYOUT.playArrow).toEqual({ w: 56, glyph: 14 });
+    });
+});
+
+describe('pillFocusScale', () => {
+    it("a focused pill grows by what a focused circle grows (its height's share), not by 4% of its width: the gap to the circles stays (Michael)", () => {
+        const f = PAGE_LAYOUT.focusScale;
+        const pf = pillFocusScale(340, 60);
+        expect(pf.y).toBe(f);
+        expect((pf.x - 1) * 340).toBeCloseTo((f - 1) * 60, 2);
+        expect(pillFocusScale(250, 54).x).toBeCloseTo(1 + (0.04 * 54) / 250, 4);
     });
 });

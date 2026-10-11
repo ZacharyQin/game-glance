@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { HomeRects, MotionVar, openMotion } from '../../src/home/openMotion';
 import type { Box, PageTargets } from '../../src/home/openTargets';
 import { MORPH_EASE, OPEN_TIMINGS, RETURN_TIMINGS } from '../../src/home/motion';
-import { PAGE_LAYOUT } from '../../src/styles/themeCss';
+import { PAGE_LAYOUT, pillFocusScale } from '../../src/styles/themeCss';
 import { HOME_PILL } from '../../src/home/homeCss';
 
 const raw = JSON.parse(readFileSync(resolve(__dirname, 'fixtures/openLayout/home-1500x844.json'), 'utf8')) as { canvasScale: number; rects: Record<string, Box> };
@@ -197,8 +197,10 @@ describe('openMotion', () => {
 
     // The page focuses Play on arrival, and a focused Play is scaled about its centre (as Home's): the morph lands on it.
     const f = PAGE_LAYOUT.focusScale;
-    const pageW = 354.2 * f;
-    const pageH = 62.5 * f;
+    // The focused pill grows by what a circle grows (themeCss.pillFocusScale): 4% in height, the same px in width.
+    const pf = pillFocusScale(PAGE_LAYOUT.playW, PAGE_LAYOUT.icon);
+    const pageW = 354.2 * pf.x;
+    const pageH = 62.5 * pf.y;
     it('the Play pill moves by its left edge and centre; its background layer, inside it, grows onto the page pill as focused', () => {
         expect(f).toBe(1.04);
         const v = vars(openMotion(homeRects(), spotlight(), 'spotlight', s));
@@ -221,11 +223,13 @@ describe('openMotion', () => {
         const icon = parse(v['--gho-play-icon']);
         // The page's glyph starts 24 in (Home's 22) and is 20 (Home's 18); its label starts after a 14 gap (Home's 13).
         // (Home's glyph and label sit inside the pill's 1 px border; the page's pill has none.)
-        expect(icon.tx).toBeCloseTo(24 * f - (22 + 1), 4);
-        expect(icon.sx).toBeCloseTo((20 * f) / 18, 3);
+        expect(icon.tx).toBeCloseTo(24 * pf.x - (22 + 1), 2); // px values are written to 2 decimals
+        expect(icon.sx).toBeCloseTo((20 * pf.x) / 18, 3);
+        expect(icon.sy).toBeCloseTo((20 * pf.y) / 18, 3);
         const label = parse(v['--gho-play-label']);
-        expect(label.tx).toBeCloseTo((24 + 20 + 14) * f - (1 + 22 + 18 + 13), 4);
-        expect(label.sx).toBeCloseTo((22 * f) / 19, 3);
+        expect(label.tx).toBeCloseTo((24 + 20 + 14) * pf.x - (1 + 22 + 18 + 13), 2);
+        expect(label.sx).toBeCloseTo((22 * pf.x) / 19, 3);
+        expect(label.sy).toBeCloseTo((22 * pf.y) / 19, 3);
     });
 
     it("a game that can be streamed: Home's arrow segment, at the pill's right end, lands on the page's (its right end, the page's focused size)", () => {
@@ -234,7 +238,7 @@ describe('openMotion', () => {
         // Origin: the segment's right edge and centre line, inside the pill (which moves by its left edge).
         expect(a.tx).toBeCloseTo((pageW - r.pill.w) / s, 1);
         expect(a.ty).toBe(0);
-        expect(a.sx).toBeCloseTo((PAGE_LAYOUT.playArrow.w * f) / HOME_PILL.arrow, 3);
+        expect(a.sx).toBeCloseTo((PAGE_LAYOUT.playArrow.w * pf.x) / HOME_PILL.arrow, 3);
         expect(a.sy).toBeCloseTo(pageH / r.pill.h, 3);
     });
 

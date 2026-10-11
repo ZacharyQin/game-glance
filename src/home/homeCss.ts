@@ -6,7 +6,7 @@ import { FRIEND_COLOURS } from './friends';
 import { FEED_ROW2_HEADER } from './feedLayout';
 import { PERSONA_DOT, PERSONA_DOT_COLOURS, PersonaDot, STATUS_BAR, STATUS_FADE_MS } from './statusItems';
 import { ACCENT_MS, CAP_ART_FADE_MS, CAP_STATE_MS, FEED_ART_FADE_MS, FEED_SCROLL, HERO_FADE_MS, MORPH_EASE, OPEN_TIMINGS, RETURN_TIMINGS, SETTLE_WIDEN_MS, SHEET, SHEET_MS, SLIDE, SLIDE_EASE } from './motion';
-import { PAGE_LAYOUT, PAGE_SCRIMS, STEAM_TOP_GRADIENT } from '../styles/themeCss';
+import { PAGE_LAYOUT, PAGE_SCRIMS, pillFocusScale, STEAM_TOP_GRADIENT } from '../styles/themeCss';
 import { PAGE_LINES } from './openTargets';
 import { CARD_SCALE_HANDHELD, GLOW as CAP_GLOW, RECENTS_BOTTOM, recentsGeometry } from './recentsLayout';
 import { PILL_INSET, ROW_OFFSET, SIDE_INSET } from './insets';
@@ -46,7 +46,7 @@ const GLOW = '0 0 0 1px var(--glance-accent), 0 16px 40px -12px var(--glance-acc
 /** Inside the Play pill: the glyph's inset, the glyph, the gap to the label, the label's type size (canvas px). */
 /** Home's Play pill in canvas px: its padding, glyph, gap and type, and the 1 px border all .gh-btn have (its content sits inside it). */
 /** `arrow`/`arrowGlyph`: the "Play from" segment (PAGE_LAYOUT.playArrow at Home's 54 px pill height against the page's 60). */
-export const HOME_PILL = { padX: 22, icon: 18, gap: 13, font: 19, border: 1, arrow: 50, arrowGlyph: 13 } as const;
+export const HOME_PILL = { width: 250, padX: 22, icon: 18, gap: 13, font: 19, border: 1, arrow: 50, arrowGlyph: 13 } as const;
 
 export const TITLE_BLOCK = {
     top: 118,
@@ -64,6 +64,9 @@ export const TITLE_BLOCK = {
     /** Room inside the title's clip for descenders and its text-shadow, cancelled by an equal negative margin. */
     titleBleed: 16,
 } as const;
+
+/** Home's Play pill focused: grows by what a circle grows (themeCss.pillFocusScale). */
+const pillFocus = pillFocusScale(HOME_PILL.width, TITLE_BLOCK.button);
 
 export interface TitleBlockLayout {
     /** Top of the title's two-line slot. */
@@ -306,7 +309,7 @@ export function homeCss(cardScale: number = CARD_SCALE_HANDHELD): string {
         rule('.gh-btn-cloud svg', `width: ${PAGE_LAYOUT.cloudIcon}px; height: ${PAGE_LAYOUT.cloudIcon}px; margin: 0; fill: currentColor; filter: drop-shadow(0 0 1.5px rgba(0,0,0,.7))`),
         ...(Object.keys(CLOUD_COLOURS) as CloudTone[]).map((tone) => rule(`.gh-btn-cloud.gh-cloud-${tone}`, `color: ${CLOUD_COLOURS[tone]}`)),
         // White words and glyph on the accent, as on the game page's Play.
-        rule('.gh-btn-play', 'width: 250px; flex: 0 0 250px; background: var(--glance-accent); border-color: var(--glance-accent); color: #fff'),
+        rule('.gh-btn-play', `width: ${HOME_PILL.width}px; flex: 0 0 ${HOME_PILL.width}px; background: var(--glance-accent); border-color: var(--glance-accent); color: #fff`),
         // The pill fills with the download progress: the shared darker layer (styles/downloadFill) from the left, clipped to
         // the pill's radius, under the icon and label, exactly as on the details page. No bar below.
         rule('.gh-btn-play', 'position: relative; overflow: hidden'),
@@ -320,6 +323,8 @@ export function homeCss(cardScale: number = CARD_SCALE_HANDHELD): string {
         rule('.gh-btn-icon', 'display: flex; align-items: center; justify-content: center; line-height: 1'),
         rule('.gh-btn-play .gh-btn-icon', `font-size: ${HOME_PILL.icon}px`),
         rule('.gh-btn.gh-focus', `box-shadow: 0 0 0 2px rgba(255,255,255,.9), 0 14px 40px -8px var(--glance-accent); transform: scale(${PAGE_LAYOUT.focusScale})`),
+        // The Play pill grows by what a circle grows (themeCss.pillFocusScale), so its gap to the circles stays.
+        rule('.gh-actions > .gh-btn-play.gh-focus', `transform: scale(${pillFocus.x}, ${pillFocus.y})`),
         // A game on more than one device (home/streaming): the pill ends in the page's "Play from" segment (a divider and
         // Steam's arrow glyph, part of the pill, so it grows with it), and a focusable arrow lies over it, right after Play
         // in the row (the row's gap pulled back). Focused, the segment lights as the page's does; no ring or growth of its own.
@@ -330,7 +335,7 @@ export function homeCss(cardScale: number = CARD_SCALE_HANDHELD): string {
             border: none; border-radius: 0 999px 999px 0; backdrop-filter: none; box-shadow: none; transform: none`),
         rule('.gh-actions > .gh-btn-stream.gh-focus', 'background: transparent; box-shadow: none; transform: none'),
         // The arrow focused: the whole pill shows Home's focus, as the page's pill does for its arrow; the segment is tinted.
-        rule('.gh-actions > .gh-btn-play:has(+ .gh-btn-stream.gh-focus)', `box-shadow: 0 0 0 2px rgba(255,255,255,.9), 0 14px 40px -8px var(--glance-accent); transform: scale(${PAGE_LAYOUT.focusScale})`),
+        rule('.gh-actions > .gh-btn-play:has(+ .gh-btn-stream.gh-focus)', `box-shadow: 0 0 0 2px rgba(255,255,255,.9), 0 14px 40px -8px var(--glance-accent); transform: scale(${pillFocus.x}, ${pillFocus.y})`),
         rule('.gh-actions > .gh-btn-play:has(+ .gh-btn-stream.gh-focus) > .gh-play-arrow', 'background: rgba(255,255,255,.28)'),
 
         // Recents row (handoff: left 44, 140 tall; times the card scale, its bottom stays at 688 and it grows upwards

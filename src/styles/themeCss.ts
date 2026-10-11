@@ -25,6 +25,16 @@ function cls(map: ClassMap, key: string): string | null {
     return typeof name === 'string' && name.length > 0 ? `.${name}` : null;
 }
 
+/**
+ * A focused pill's scale: 4% taller as a focused circle, but only as much wider as a circle grows (its height's share), not
+ * 4% of its width: a 340 wide pill grew 6.8 px each side and halved its gap to the circles (Michael: too narrow). Same on
+ * Home's pill, the page's and Unifideck's. Pure.
+ */
+export function pillFocusScale(width: number, height: number): { x: number; y: number } {
+    const f = PAGE_LAYOUT.focusScale;
+    return { x: Math.round((1 + (height * (f - 1)) / width) * 100000) / 100000, y: f };
+}
+
 /** One CSS rule, or nothing if any Steam class it needs is missing (so a Steam update skips it). */
 function rule(selectors: Array<string | null> | string | null, body: string): string {
     const list = Array.isArray(selectors) ? selectors : [selectors];
@@ -103,6 +113,9 @@ export const PAGE_LAYOUT = {
     /** The store pill's top above the cards block (.gg-hero), Spotlight look. */
     storePillTop: 82,
 } as const;
+
+/** The page's Play pill focused (pillFocusScale on the pill's size). */
+const PILL_FOCUS = pillFocusScale(PAGE_LAYOUT.playW, PAGE_LAYOUT.icon);
 
 /** The TV media query as CSS. */
 const TV_QUERY = `@media (min-width: ${PAGE_LAYOUT.tvQuery.minWidth}px) and (min-height: ${PAGE_LAYOUT.tvQuery.minHeight}px)`;
@@ -329,7 +342,7 @@ export function buildUnifideckCss({ header, details, root }: ThemeClasses, optio
         // Unifideck's capitals, and glyph and word from the left at the page pill's inset, glyph size and gap.
         options.restyle ? rule(primary, ` text-transform: none !important; justify-content: flex-start !important; padding: 0 ${d(PAGE_LAYOUT.pill.padX)} !important; `) : '',
         options.restyle ? rule(primary.map((p) => `${p} svg`), ` width: ${d(PAGE_LAYOUT.pill.icon)} !important; height: ${d(PAGE_LAYOUT.pill.icon)} !important; margin: 0 ${d(PAGE_LAYOUT.pill.iconGap)} 0 0 !important; flex: 0 0 auto !important; `) : '',
-        options.restyle ? rule(focused, ` box-shadow: 0 0 0 ${d(2)} rgba(255, 255, 255, 0.9), 0 ${d(14)} ${d(40)} calc(-1 * ${d(8)}) var(--gg-accent) !important; transform: scale(${PAGE_LAYOUT.focusScale}) !important; `) : '',
+        options.restyle ? rule(focused, ` box-shadow: 0 0 0 ${d(2)} rgba(255, 255, 255, 0.9), 0 ${d(14)} ${d(40)} calc(-1 * ${d(8)}) var(--gg-accent) !important; transform: scale(${PILL_FOCUS.x}, ${PILL_FOCUS.y}) !important; `) : '',
     ].filter((r) => r.length > 0).join('\n');
 }
 
@@ -491,7 +504,7 @@ function restyleRules({ header, details, root, play, shared }: ThemeClasses, lay
         rule(playButton && `${playButton} [role="button"]::after`, ` display: none !important; `),
         rule(playButton && `${playButton} > div:has(> [role="button"])`, ` transition: transform 250ms, box-shadow 250ms !important; `),
         rule(playButton && `${playButton} > div:has(> [role="button"].gpfocus)`,
-            ` box-shadow: 0 0 0 ${d(2)} rgba(255, 255, 255, 0.9), 0 ${d(14)} ${d(40)} calc(-1 * ${d(8)}) var(--glance-accent) !important; transform: scale(${PAGE_LAYOUT.focusScale}) !important; `),
+            ` box-shadow: 0 0 0 ${d(2)} rgba(255, 255, 255, 0.9), 0 ${d(14)} ${d(40)} calc(-1 * ${d(8)}) var(--glance-accent) !important; transform: scale(${PILL_FOCUS.x}, ${PILL_FOCUS.y}) !important; `),
 
         // Eyebrow ("Last played · Today", accent) and the 64px/800 title, at most two lines. Hidden unless the
         // full-screen layout applies (below): all-or-nothing, like the rest of the layout.
