@@ -914,3 +914,15 @@ describe('pillFocusScale', () => {
         expect(pillFocusScale(250, 54).x).toBeCloseTo(1 + (0.04 * 54) / 250, 4);
     });
 });
+
+describe('the Spotlight cards have one height', () => {
+    it("every game's cards are as tall as with three description lines (The Witcher's): a short description no longer shortens them after the open (Sonic)", () => {
+        const css = buildThemeCss(full, { restyle: true });
+        // The content's minimum (the card is content-box): the cards' height less padding and border, i.e. stats, gap and three lines.
+        const content = PAGE_LAYOUT.playTop.tvCards - 2 * PAGE_LAYOUT.cards.padY - 2;
+        const L = PAGE_LAYOUT;
+        expect(content).toBeCloseTo(L.stats.label * 1.5 + L.stats.rowGap + L.stats.value * 1.2 + L.cards.colGap + L.cardText.desc * L.cardText.descLine * L.cardText.descLines, 5);
+        expect(css).toContain(`min-height: calc(${content} * var(--gg-d))`);
+        expect(css).toMatch(/\.gg-card \{[^}]*min-height: calc\(/);
+    });
+});

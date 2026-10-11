@@ -524,7 +524,11 @@ function restyleRules({ header, details, root, play, shared }: ThemeClasses, lay
         // Cards: grid 1.1fr / 1fr, gap 18; padding 20x24, radius 16, the handoff's glass; its type sizes.
         `.gg-cards { display: grid; grid-template-columns: minmax(0, ${PAGE_LAYOUT.cards.split[0]}fr) minmax(0, ${PAGE_LAYOUT.cards.split[1]}fr); gap: ${d(PAGE_LAYOUT.cards.gridGap)}; }`,
         `.gg-card { display: flex; flex-direction: column; gap: ${d(PAGE_LAYOUT.cards.colGap)}; padding: ${d(PAGE_LAYOUT.cards.padY)} ${d(PAGE_LAYOUT.cards.padX)}; border-radius: ${d(16)};
-            background: rgba(12, 16, 22, 0.38); border-color: rgba(255, 255, 255, 0.12); backdrop-filter: blur(${d(16)}); }`,
+            background: rgba(12, 16, 22, 0.38); border-color: rgba(255, 255, 255, 0.12); backdrop-filter: blur(${d(16)});
+            min-height: ${d(PAGE_LAYOUT.playTop.tvCards - 2 * PAGE_LAYOUT.cards.padY - 2)}; }`,
+        // (One height for every game: three description lines' worth, as The Witcher's (its content: stats, gap and three
+        // lines, 136 of the 178 the cards take with their padding and border; measured 179 on the Ally with Steam's border); a short description, or none, left
+        // them shorter, which the open transition's panels (openTargets, the same height) then shrank to after the hand-over.)
         `.gg-card.gg-hltb { gap: ${d(PAGE_LAYOUT.cards.hltbGap)}; }`,
         `.gg-label { font-size: ${d(PAGE_LAYOUT.stats.label)}; letter-spacing: 0.18em; color: rgba(255, 255, 255, 0.62); }`,
         `.gg-value { font-size: ${d(PAGE_LAYOUT.stats.value)}; line-height: 1.2; }`,
