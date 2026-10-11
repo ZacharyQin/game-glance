@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { memoAchievements, noteDetails, resetDetailsMemo, seedAchievements, setAchievementSink } from '../../src/home/detailsMemo';
 import {
-    ART_WARM_GAP_MS, DESCRIPTION_MEMO_MAX, DESCRIPTION_WARM_DELAY_MS, forgetHltb, warmArt, warmDescriptions, knownDescription, HLTB_WARM_DELAY_MS, peekDescription, peekHltb, rememberDescription, rememberHltb, resetWarmup, warmAchievements,
+    ART_WARM_GAP_MS, forgetHltb, warmArt, HLTB_WARM_DELAY_MS, peekHltb, rememberHltb, resetWarmup, warmAchievements,
     warmHltb, warmOrder,
 } from '../../src/home/warmup';
 
@@ -34,95 +34,6 @@ describe('the HowLongToBeat memo', () => {
         rememberHltb(3, found(5));
         forgetHltb();
         expect(peekHltb(3)).toBeUndefined();
-    });
-});
-
-describe('the description memo', () => {
-    it('keeps a game’s description per language for the session', () => {
-        rememberDescription(1, 'english', 'A ship in the dark.');
-        expect(peekDescription(1, 'english')).toBe('A ship in the dark.');
-        expect(peekDescription(1, 'spanish')).toBeUndefined();
-        expect(peekDescription(2, 'english')).toBeUndefined();
-        rememberDescription(1, 'english', 'Updated.');
-        expect(peekDescription(1, 'english')).toBe('Updated.');
-    });
-
-    it('never keeps an empty description', () => {
-        rememberDescription(1, 'english', '');
-        rememberDescription(2, 'english', '   ');
-        expect(peekDescription(1, 'english')).toBeUndefined();
-        expect(peekDescription(2, 'english')).toBeUndefined();
-    });
-
-    it('is bounded: the oldest goes first', () => {
-        for (let i = 0; i <= DESCRIPTION_MEMO_MAX; i++) rememberDescription(i, 'english', `text ${i}`);
-        expect(peekDescription(0, 'english')).toBeUndefined();
-        expect(peekDescription(DESCRIPTION_MEMO_MAX, 'english')).toBe(`text ${DESCRIPTION_MEMO_MAX}`);
-    });
-
-    it('the page shows the fetched description once it answers, until then the one Home already fetched', () => {
-        rememberDescription(1, 'english', 'From Home.');
-        expect(knownDescription(undefined, 1, 'english')).toBe('From Home.');
-        expect(knownDescription('Fetched.', 1, 'english')).toBe('Fetched.');
-        expect(knownDescription(null, 1, 'english')).toBeNull();
-        expect(knownDescription(undefined, 1, undefined)).toBeUndefined();
-        expect(knownDescription(undefined, 2, 'english')).toBeUndefined();
-    });
-
-    it('resetWarmup clears it', () => {
-        rememberDescription(1, 'english', 'x');
-        resetWarmup();
-        expect(peekDescription(1, 'english')).toBeUndefined();
-    });
-});
-
-describe('warmDescriptions', () => {
-    const g = (appId: number, isShortcut = false) => ({ appId, name: `Game ${appId}`, isShortcut });
-    const deps = (cached: Record<number, string | null>, over: Partial<Parameters<typeof warmDescriptions>[2]> = {}) => ({
-        readCached: vi.fn(async (appId: number) => (appId in cached ? cached[appId] : undefined)),
-        fetch: vi.fn(async (game: { appId: number }) => `Fetched ${game.appId}.`),
-        allowNetwork: () => true,
-        sleep: vi.fn(async () => undefined),
-        ...over,
-    });
-    it('puts what the disk cache has into the memo at once, without going online or pausing', async () => {
-        const d = deps({ 1: 'One.', 2: null });
-        await warmDescriptions([g(1), g(2)], 'english', d, () => false);
-        expect(peekDescription(1, 'english')).toBe('One.');
-        // A cached "none" is not looked up again.
-        expect(peekDescription(2, 'english')).toBeUndefined();
-        expect(d.fetch).not.toHaveBeenCalled();
-        expect(d.sleep).not.toHaveBeenCalled();
-    });
-    it('fetches a game with nothing cached when allowed, then pauses; calls onResult for each it learned', async () => {
-        const d = deps({ 1: 'One.' });
-        const seen: number[] = [];
-        await warmDescriptions([g(1), g(3)], 'english', d, () => false, (id) => seen.push(id));
-        expect(d.fetch).toHaveBeenCalledTimes(1);
-        expect(peekDescription(3, 'english')).toBe('Fetched 3.');
-        expect(d.sleep).toHaveBeenCalledWith(DESCRIPTION_WARM_DELAY_MS);
-        expect(seen).toEqual([1, 3]);
-    });
-    it('never goes online when the pre-load setting is off', async () => {
-        const d = deps({}, { allowNetwork: () => false });
-        await warmDescriptions([g(1), g(2, true)], 'english', d, () => false);
-        expect(d.fetch).not.toHaveBeenCalled();
-    });
-    it("a non-Steam game has no disk entry of its own: it is looked up (Heroic's local copy, or the store) when allowed", async () => {
-        const d = deps({});
-        await warmDescriptions([g(9, true)], 'english', d, () => false);
-        expect(d.readCached).not.toHaveBeenCalled();
-        expect(peekDescription(9, 'english')).toBe('Fetched 9.');
-    });
-    it('skips games already known and stops when cancelled', async () => {
-        rememberDescription(1, 'english', 'Known.');
-        const d = deps({ 2: 'Two.' });
-        let stop = false;
-        await warmDescriptions([g(1), g(2), g(3)], 'english', d, () => stop, (id) => {
-            if (id === 2) stop = true;
-        });
-        expect(d.readCached).toHaveBeenCalledTimes(1);
-        expect(d.fetch).not.toHaveBeenCalled();
     });
 });
 

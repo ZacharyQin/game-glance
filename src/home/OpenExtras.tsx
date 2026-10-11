@@ -6,7 +6,6 @@ import { extrasParts } from './openHome';
 import { FamilyPill, SourcePill } from '../components/SourcePill';
 
 interface Props {
-    description: string | null;
     hltb: HltbResult | undefined;
     playedMinutes: number;
     locale: string;
@@ -20,17 +19,16 @@ interface Props {
 }
 
 /**
- * The page's parts Spotlight Home draws as it turns into the page's Spotlight look (the open transition): the description
- * and the HowLongToBeat card's title, columns, bar and caption, as the page's card shows them (logic/hltbCardView), and
+ * The page's parts Spotlight Home draws as it turns into the page's Spotlight look (the open transition): the HowLongToBeat
+ * card's title, columns, bar and caption, as the page's card shows them (logic/hltbCardView), and
  * the page's store pill (the family pill in it) at the page's own size.
  * Hidden until opening (homeCss.openingRules); openMotion places it; the page then shows the same at once (intent).
  */
-export function OpenExtras({ description, hltb, playedMinutes, locale, source, family, playedMissing = false, size = null }: Props) {
-    const parts = extrasParts(description, hltb, source, playedMissing, size !== null);
+export function OpenExtras({ hltb, playedMinutes, locale, source, family, playedMissing = false, size = null }: Props) {
+    const parts = extrasParts(hltb, source, playedMissing, size !== null);
     const view = parts.includes('hltb') && hltb?.status === 'found' ? hltbFoundView(hltb.times, playedMinutes, locale, true) : null;
     return (
         <div className="gh-open-extras" data-parts={parts}>
-            {parts.includes('desc') && <p className="gh-x-desc">{description}</p>}
             {view && (
                 <div className="gh-x-hltb">
                     <div className="gh-x-label">{HLTB_TITLE}</div>

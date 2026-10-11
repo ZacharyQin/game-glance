@@ -18,7 +18,7 @@ export type ArriveMode = 'parts' | 'all';
  * `eyebrow`: Home's eyebrow words at the open (the page shows the same, so nothing changes at the hand-over), and
  * `homeCloud`: whether Home showed its cloud button (false: its state was not known yet, so the page's arrives), and
  * `homeBars`: the stats whose progress bar Home's morph moved onto the page's (those bars do not arrive again), and
- * `homeDesc` / `homeHltb`: Home drew the description / the HowLongToBeat card's rest as it turned into the page
+ * `homeHltb`: Home drew the HowLongToBeat card's rest as it turned into the page
  * (home/OpenExtras), so the page shows those at once instead of letting them arrive, and `homeFamily`: Home showed
  * the family library pill (it moves in with the store pill, so the page's is there at once too), and `homeMissing`:
  * the page's stat columns Home showed no chip for (they arrive with the new parts).
@@ -29,7 +29,6 @@ export interface OpenIntent {
     eyebrow?: string;
     homeCloud?: boolean;
     homeBars?: string[];
-    homeDesc?: boolean;
     homeHltb?: boolean;
     homeFamily?: boolean;
     homeMissing?: string[];

@@ -27,7 +27,7 @@ import { useDownload } from '../home/useDownload';
 import { useLaunchOverlay } from '../styles/launchOverlay';
 import { useOpenArrival } from '../hooks/useOpenArrival';
 import { openPending } from '../data/openIntent';
-import { knownDescription, peekHltb, rememberDescription, rememberHltb } from '../home/warmup';
+import { peekHltb, rememberHltb } from '../home/warmup';
 import { accentMemo, knownAccent } from '../home/accentMemo';
 import { accentCss, arrivingCss, cleanCss, downloadCss, launchCss, launchSelectors, themeCss, unifideckCss } from '../styles/theme';
 import { CleanInfo } from './CleanInfo';
@@ -91,15 +91,9 @@ function Hero({ overview, details, restyle, clean }: Props & { restyle: boolean;
         getSourceLabel(game.appId, game.isShortcut, undefined, heroicStoreLabel(game.heroic)),
     );
     // Wait for the language so the description is fetched once, in the right language.
-    const fetchedDescription = useAsync(lang === undefined ? null : `desc:${game.appId}:${lang}`, () =>
+    const description = useAsync(lang === undefined ? null : `desc:${game.appId}:${lang}`, () =>
         game.isShortcut ? getShortcutDescription(game, lang ?? 'english') : getDescription(game.appId, lang ?? 'english'),
     );
-    // Until the fetch answers, the text Spotlight Home already fetched (home/warmup), so the first frame has it and the
-    // open transition's copy of it hands over unchanged.
-    const description = knownDescription(fetchedDescription, game.appId, lang);
-    useEffect(() => {
-        if (lang !== undefined && fetchedDescription) rememberDescription(game.appId, lang, fetchedDescription);
-    }, [game.appId, lang, fetchedDescription]);
     const looked = useAsync(`hltb:${game.appId}:${overrideVersion}`, () =>
         lookupHltb({ appId: game.appId, name: game.name, isShortcut: game.isShortcut }),
     );
@@ -172,7 +166,7 @@ function Hero({ overview, details, restyle, clean }: Props & { restyle: boolean;
                 {launching && <style>{launchCss()}</style>}
                 {accent && <style>{accentCss(accent)}</style>}
                 {fillCss && <style>{fillCss}</style>}
-                {arrival && restyle && <style>{arrivingCss(clean ? 'clean' : 'spotlight', arrival.intent.mode, arrival.revealed, { cloud: arrival.intent.homeCloud === false, bars: arrival.intent.homeBars, desc: arrival.intent.homeDesc, hltb: arrival.intent.homeHltb, family: arrival.intent.homeFamily, missing: arrival.intent.homeMissing, size: arrival.intent.homeSize })}</style>}
+                {arrival && restyle && <style>{arrivingCss(clean ? 'clean' : 'spotlight', arrival.intent.mode, arrival.revealed, { cloud: arrival.intent.homeCloud === false, bars: arrival.intent.homeBars, hltb: arrival.intent.homeHltb, family: arrival.intent.homeFamily, missing: arrival.intent.homeMissing, size: arrival.intent.homeSize })}</style>}
                 {source && (
                     <SourcePill label={source}>
                         {/* A game from the family library (Steam's line under Play is hidden): with the restyled look only. */}

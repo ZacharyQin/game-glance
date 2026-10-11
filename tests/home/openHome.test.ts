@@ -150,30 +150,28 @@ describe('missingStats', () => {
 
 describe('extrasParts', () => {
     const found = (main: number | null) => ({ status: 'found' as const, gameId: 1, times: { main, mainExtras: 12, completionist: 24 } });
-    it('the description when Home has its text; the HowLongToBeat card when it found the game with a Main time', () => {
-        expect(extrasParts('A ship in the dark.', found(9))).toBe('desc hltb');
-        expect(extrasParts(null, found(9))).toBe('hltb');
-        expect(extrasParts('  ', undefined)).toBe('');
-        expect(extrasParts('Text', { status: 'notFound' })).toBe('desc');
+    it('the HowLongToBeat card when it found the game with a Main time; never the description (it is not drawn during the open)', () => {
+        expect(extrasParts(found(9))).toBe('hltb');
+        expect(extrasParts(undefined)).toBe('');
+        expect(extrasParts({ status: 'notFound' })).toBe('');
     });
     it('no Main time: no card (the page\'s "—" there would have nothing of Home\'s under it)', () => {
-        expect(extrasParts(null, found(null))).toBe('');
+        expect(extrasParts(found(null))).toBe('');
     });
     it("a new game's Play time (Home shows its Added chip instead): Home draws the page's column, so it is there at the hand-over", () => {
-        expect(extrasParts(null, undefined, undefined, true)).toBe('played');
-        expect(extrasParts('Text', undefined, 'Steam', true)).toBe('desc pills played');
-        expect(extrasParts(null, undefined, undefined, false)).toBe('');
+        expect(extrasParts(undefined, undefined, true)).toBe('played');
+        expect(extrasParts(undefined, 'Steam', true)).toBe('pills played');
+        expect(extrasParts(undefined, undefined, false)).toBe('');
     });
     it("the page's own store pill (and family pill in it) when Home knows the store: drawn at the page's size, it hands over unchanged", () => {
-        expect(extrasParts(null, undefined, 'Steam')).toBe('pills');
-        expect(extrasParts('Text', found(9), 'GOG')).toBe('desc hltb pills');
-        expect(extrasParts(null, undefined, '')).toBe('');
+        expect(extrasParts(undefined, 'Steam')).toBe('pills');
+        expect(extrasParts(found(9), 'GOG')).toBe('hltb pills');
+        expect(extrasParts(undefined, '')).toBe('');
     });
 });
 
 describe('extrasFlags', () => {
     it("tells the page which of its parts Home drew (they show at once instead of arriving)", () => {
-        expect(extrasFlags('desc hltb')).toEqual({ homeDesc: true, homeHltb: true });
         expect(extrasFlags('hltb')).toEqual({ homeHltb: true });
         expect(extrasFlags('')).toEqual({});
     });
@@ -319,14 +317,13 @@ describe('the Unifideck size in the open (Home draws it)', () => {
         expect(pageStatsFromChips(chips, 'clean').map((s) => s.key)).toEqual(['played', 'hltb']);
     });
     it("is one of the extras' parts when Home knows it", () => {
-        expect(extrasParts(null, undefined, 'GOG', false, true)).toBe('pills size');
-        expect(extrasParts(null, undefined, 'GOG', false, false)).toBe('pills');
+        expect(extrasParts(undefined, 'GOG', false, true)).toBe('pills size');
+        expect(extrasParts(undefined, 'GOG', false, false)).toBe('pills');
     });
 });
 
 describe('extrasFlags for the size', () => {
     it('the page shows the size column at once when Home drew it', () => {
         expect(extrasFlags('pills size')).toEqual({ homeSize: true });
-        expect(extrasFlags('desc hltb')).toEqual({ homeDesc: true, homeHltb: true });
     });
 });
