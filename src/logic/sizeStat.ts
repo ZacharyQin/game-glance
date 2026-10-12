@@ -18,11 +18,11 @@ export function sizeStat(bytes: number | null | undefined, installed: boolean, l
 }
 
 /**
- * A Steam game's "Space required" item on its page: shown only for a game Steam reports as not installed (no size on
- * disk), from the space Steam says it needs. Null when installed or unknown. Pure.
+ * A Steam game's "Space Required" item on its page (`label`: Steam's own word, in its language): shown only for a game Steam
+ * reports as not installed (no size on disk), from the space Steam says it needs. Null when installed or unknown. Pure.
  */
-export function steamSpaceStat(overview: unknown, spaceBytes: number | null | undefined, locale: string): SizeStat | null {
+export function steamSpaceStat(overview: unknown, spaceBytes: number | null | undefined, locale: string, label: string): SizeStat | null {
     const onDisk = Number((overview as { size_on_disk?: unknown } | null | undefined)?.size_on_disk ?? 0);
     if (onDisk > 0) return null;
-    return sizeStat(spaceBytes ?? null, false, locale);
+    return sizeStat(spaceBytes ?? null, false, locale, label);
 }

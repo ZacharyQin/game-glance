@@ -33,14 +33,14 @@ describe('sizeStat', () => {
 });
 
 describe("a Steam game that is not installed: its space required", () => {
-    it("shows the install size when Steam reports no size on disk (the page's wording for a game that is not installed)", () => {
-        expect(steamSpaceStat({ appid: 1455840 }, 691079517, 'en')).toEqual({ key: 'size', label: 'Install size', value: formatBytes(691079517, 'en') });
-        expect(steamSpaceStat({ size_on_disk: 0 }, 691079517, 'en')?.label).toBe('Install size');
+    it("shows Steam's own 'Space Required' label (in its language) when Steam reports no size on disk", () => {
+        expect(steamSpaceStat({ appid: 1455840 }, 691079517, 'en', 'Space Required')).toEqual({ key: 'size', label: 'Space Required', value: formatBytes(691079517, 'en') });
+        expect(steamSpaceStat({ size_on_disk: 0 }, 691079517, 'es', 'Espacio necesario')?.label).toBe('Espacio necesario');
     });
 
     it('shows nothing for an installed game, or when the space is not known', () => {
-        expect(steamSpaceStat({ size_on_disk: '11058189790' }, 691079517, 'en')).toBeNull();
-        expect(steamSpaceStat({ appid: 1455840 }, undefined, 'en')).toBeNull();
-        expect(steamSpaceStat({ appid: 1455840 }, null, 'en')).toBeNull();
+        expect(steamSpaceStat({ size_on_disk: '11058189790' }, 691079517, 'en', 'Space Required')).toBeNull();
+        expect(steamSpaceStat({ appid: 1455840 }, undefined, 'en', 'Space Required')).toBeNull();
+        expect(steamSpaceStat({ appid: 1455840 }, null, 'en', 'Space Required')).toBeNull();
     });
 });
