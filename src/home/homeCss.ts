@@ -170,7 +170,7 @@ export function statusRules(): string[] {
         rule('.gh-status-item', 'display: inline-flex; align-items: center; gap: 6px; margin: 0; padding: 0'),
         rule('.gh-status-item svg', 'flex: 0 0 auto; height: 18px; width: auto; display: block'),
         // Your avatar in the pill (#9): a circle, ringed in your status colour (set inline), the pill grows to fit it.
-        rule('.gh-status-avatar', 'flex: 0 0 auto; width: 26px; height: 26px; box-sizing: border-box; border: 2px solid; border-radius: 50%; background-size: cover; background-position: center'),
+        rule('.gh-status-avatar', 'flex: 0 0 auto; width: 26px; height: 26px; box-sizing: border-box; border: 2px solid var(--gh-avatar-ring, #fff); border-radius: 50%; background-size: cover; background-position: center'),
         rule('.gh-status-low', `color: ${CLOUD_COLOURS.bad}`),
         rule('.gh-status-offline svg', 'opacity: .6'),
     ];

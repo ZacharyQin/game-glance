@@ -180,7 +180,7 @@ export function StatusBar({ away: topBarFocus, scale }: { away: boolean; scale: 
                 )}
                 <span className="gh-status-item">{clock}</span>
                 {avatar && dot && (
-                    <span className="gh-status-avatar" role="img" aria-label={DOT_LABEL[dot]()} style={{ backgroundImage: `url(${avatar.url})`, borderColor: avatar.ring }} />
+                    <span className="gh-status-avatar" role="img" aria-label={DOT_LABEL[dot]()} style={{ backgroundImage: `url(${avatar.url})`, '--gh-avatar-ring': avatar.ring } as CSSProperties} />
                 )}
             </div>
             {dot && !avatar && <span className={`gh-status-dot gh-status-dot-${dot}`} role="img" aria-label={DOT_LABEL[dot]()} />}
