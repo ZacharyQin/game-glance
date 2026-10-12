@@ -24,8 +24,8 @@ export function cleanStats(
 ): CleanStat[] {
     const played = minutesToHours(game.playedMinutes);
     const stats: CleanStat[] = [];
-    if (size) stats.push(size); // a Unifideck game's install or download size, ahead of Played
     stats.push({ key: 'played', label: tr('played'), value: formatHours(played, locale) });
+    if (size) stats.push(size); // a game's install or space size, right of Played (Played stays first)
     const a = game.achievements;
     if (a && a.total > 0) {
         stats.push({ key: 'achievements', label: tr('achievements'), value: `${a.achieved} / ${a.total}`, progress: Math.min(1, Math.max(0, a.achieved / a.total)) });
