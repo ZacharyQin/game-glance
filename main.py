@@ -3,7 +3,7 @@ import os
 import decky
 
 from gameglance.heroic import HeroicLibrary, heroic_cache_dirs
-from gameglance.home_errors import append_home_error
+from gameglance.home_errors import FILE_NAME, append_home_error
 from gameglance.kv import KvStore
 from gameglance.migrate import carry_over, old_data_path
 from gameglance.store_lookup import RegistryCache, key_for_appid, store_for_appid
@@ -68,6 +68,13 @@ class Plugin:
 
     async def _main(self):
         decky.logger.info("[game-glance] backend started")
+        # The log folder is made at start-up and its file's path is written to Decky's log, so the location can be checked
+        # on a device without an error (the Home error log, README: If Home shows an error).
+        try:
+            os.makedirs(decky.DECKY_PLUGIN_LOG_DIR, exist_ok=True)
+            decky.logger.info(f"[game-glance] Home error log: {os.path.join(decky.DECKY_PLUGIN_LOG_DIR, FILE_NAME)}")
+        except Exception:
+            decky.logger.exception("[game-glance] Home error log folder failed")
 
     async def _unload(self):
         decky.logger.info("[game-glance] backend stopped")
