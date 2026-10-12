@@ -348,3 +348,10 @@ describe("a Steam game's Space Required chip (not installed): the page's size st
         expect(pageStatsFromChips(home.filter((c) => c.key !== 'size'), 'spotlight').map((s) => s.key)).toEqual(['played', 'hltb']);
     });
 });
+
+describe("the page's size stat when Home's chip drew it (a Steam game's Space Required)", () => {
+    it('Home showed the size chip: the page is told, so its size stat is not hidden while it arrives', () => {
+        expect(extrasFlags('', ['played', 'size', 'hltb'])).toEqual({ homeSize: true });
+        expect(extrasFlags('', ['played', 'hltb'])).toEqual({});
+    });
+});

@@ -199,12 +199,14 @@ export function extrasParts(description: string | null | undefined, hltb: HltbRe
 }
 
 /** The open intent's flags for the parts Home drew (extrasParts words): the page shows those at once. */
-export function extrasFlags(parts: string): { homeDesc?: true; homeHltb?: true; homeSize?: true } {
+export function extrasFlags(parts: string, chipKeys: string[] = []): { homeDesc?: true; homeHltb?: true; homeSize?: true } {
     const words = parts.split(/\s+/);
+    // A size Home drew in its extras (Unifideck's), or as a chip (a Steam game's Space Required): the page's arrives at once.
+    const sized = words.includes('size') || chipKeys.includes('size');
     return {
         ...(words.includes('desc') ? { homeDesc: true as const } : {}),
         ...(words.includes('hltb') ? { homeHltb: true as const } : {}),
-        ...(words.includes('size') ? { homeSize: true as const } : {}),
+        ...(sized ? { homeSize: true as const } : {}),
     };
 }
 
