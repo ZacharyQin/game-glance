@@ -97,6 +97,14 @@ Also in Quick Access:
 - **Clear cached data.**
 - **Updates:** the installed version, **Update to …** when a newer release is out, and **Check for updates**.
 
+## If Home shows an error
+
+If Spotlight Home hits an error, it shows Steam's own Home instead and writes the error to a log file in the plugin's log folder:
+
+`~/homebrew/logs/Game Glance/game-glance.log`
+
+It also records each start-up with the log's path. Attach that file to the issue report. It keeps the newest entries and stays small.
+
 ## Your language
 
 Game Glance follows Steam's language and uses Steam's own words wherever Steam has them ("Última sesión" and "Tiempo de
@@ -161,6 +169,11 @@ A release is a GitHub release tagged `vX.Y.Z` (the version in `package.json`) wi
 
 `scripts/serve.sh` serves the zip on your network for **Install plugin from URL**. The `scripts/cef-*.mjs` helpers
 drive Steam's UI through remote CEF debugging; see the device checklist for the setup.
+
+## Roadmap and progress
+
+Planned work and what is in progress are on the [Game Glance project board](https://github.com/users/michpalm/projects/2).
+Each item links to its issue. To suggest a feature or report a bug, [open an issue](https://github.com/michpalm/game-glance/issues).
 
 ## About this project
 
