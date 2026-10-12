@@ -9,13 +9,14 @@ export interface Settings {
     wishlistDeals: boolean; // look up wishlist sales on Steam's public store
     cleanPage: boolean; // the Game Glance page's Clean look: one row at the bottom, no description or HowLongToBeat cards
     homeStatusBar: boolean; // Spotlight Home's status bar: clock, battery and connection in Steam's top strip
+    statusAvatar: boolean; // your avatar, square and ringed in your status colour, in the status bar instead of the dot
     gameLogo: boolean; // the game's logo instead of its name on Home and the game page (the name when it has none)
     homeRow: string; // Home's games row: 'recent' (Steam's recent games, with those new to the library) or a collection id
     homeRowSort: RowSort; // how a collection's games are sorted in the row
 }
 
 const KEY = 'settings';
-const DEFAULTS: Settings = { enabled: true, autoPreload: true, spotlightHome: false, wishlistDeals: false, cleanPage: false, homeStatusBar: true, gameLogo: false, homeRow: RECENT_ROW, homeRowSort: 'lastPlayed' };
+const DEFAULTS: Settings = { enabled: true, autoPreload: true, spotlightHome: false, wishlistDeals: false, cleanPage: false, homeStatusBar: true, statusAvatar: false, gameLogo: false, homeRow: RECENT_ROW, homeRowSort: 'lastPlayed' };
 
 export function createSettingsStore(kv: KvBackend) {
     let current: Settings = { ...DEFAULTS };
@@ -33,6 +34,7 @@ export function createSettingsStore(kv: KvBackend) {
                 wishlistDeals: pick('wishlistDeals'),
                 cleanPage: pick('cleanPage'),
                 homeStatusBar: pick('homeStatusBar'),
+                statusAvatar: pick('statusAvatar'),
                 gameLogo: pick('gameLogo'),
                 homeRow: typeof raw?.homeRow === 'string' && raw.homeRow !== '' ? raw.homeRow : DEFAULTS.homeRow,
                 homeRowSort: rowSortOf(raw?.homeRowSort),
@@ -42,6 +44,11 @@ export function createSettingsStore(kv: KvBackend) {
         get: (): Settings => current,
         async setEnabled(enabled: boolean): Promise<void> {
             current = { ...current, enabled };
+            emit();
+            await kv.set(KEY, current);
+        },
+        async setStatusAvatar(statusAvatar: boolean): Promise<void> {
+            current = { ...current, statusAvatar };
             emit();
             await kv.set(KEY, current);
         },

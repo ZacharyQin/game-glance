@@ -63,7 +63,7 @@ function UpdatesSection() {
 }
 
 export function SettingsPanel() {
-    const { enabled, autoPreload, spotlightHome, wishlistDeals, cleanPage, homeStatusBar, gameLogo, homeRow, homeRowSort } = useSettings();
+    const { enabled, autoPreload, spotlightHome, wishlistDeals, cleanPage, homeStatusBar, statusAvatar, gameLogo, homeRow, homeRowSort } = useSettings();
     // Read when the panel opens, so a collection made since shows up.
     const collections = useMemo(steamHomeCollections, []);
     const rowChosen = collections.some((c) => c.id === homeRow) ? homeRow : RECENT_ROW;
@@ -137,6 +137,14 @@ export function SettingsPanel() {
                         description="Clock, battery and connection at the top-right. Moving up to Steam's own top bar hides it."
                         checked={homeStatusBar}
                         onChange={(value) => settings.setHomeStatusBar(value)}
+                    />
+                </PanelSectionRow>
+                <PanelSectionRow>
+                    <ToggleField
+                        label="Profile picture in the status bar"
+                        description="Shows your avatar, square and ringed in your online colour, instead of the dot."
+                        checked={statusAvatar}
+                        onChange={(value) => settings.setStatusAvatar(value)}
                     />
                 </PanelSectionRow>
                 <PanelSectionRow>
