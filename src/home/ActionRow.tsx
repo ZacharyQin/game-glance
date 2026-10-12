@@ -12,6 +12,7 @@ import { readSteamPill } from './steamPill';
 import { gameOpenArt, openGame, openLibrary, openPage } from './homeNav';
 import type { DownloadState } from './downloadProgress';
 import { playAction, runGameId } from './homeView';
+import { playNavSound } from './navSound';
 import type { HomeGame } from './useHomeData';
 import { pillWord, tr } from '../i18n/steamText';
 
@@ -252,6 +253,7 @@ export function ActionRow({ game, running = false, download = null, preferred, b
                     steamOr('launch', appId, (api) => {
                         if (!api.RunGame) return false;
                         markLaunch(appId);
+                        playNavSound('LaunchGame'); // Steam's own sound for starting a game
                         api.RunGame(runGameId(appId, game.gameId), '', -1, LAUNCH_SOURCE);
                         return true;
                     });
