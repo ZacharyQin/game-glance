@@ -5,7 +5,6 @@ import { startStatus, statusState, subscribeStatus } from './statusStore';
 import { acquireDownloads, activeDownload, subscribeDownloads } from './downloadStore';
 import { tr } from '../i18n/steamText';
 import { useSettings } from '../data/settings';
-import { useQuickAccessVisible } from '@decky/api';
 
 /** Steam's clock setting, else the locale's. */
 function hours24(): boolean {
@@ -123,8 +122,6 @@ const DOT_LABEL: Record<PersonaDot, () => string> = { online: () => tr('online')
  */
 export function StatusBar({ away: topBarFocus, scale }: { away: boolean; scale: number }) {
     useEffect(() => startStatus(), []);
-    // Quick Access is opened from the top bar: its focus must not hide the bar (#15).
-    const away = statusAway(topBarFocus, useQuickAccessVisible());
     useEffect(() => acquireDownloads(), []);
     const { battery, connection } = useSyncExternalStore(subscribeStatus, statusState, statusState);
     const percent = useSyncExternalStore(subscribeDownloads, downloadPercent, downloadPercent);
@@ -136,6 +133,22 @@ export function StatusBar({ away: topBarFocus, scale }: { away: boolean; scale: 
     const conn = connection ? CONNECTION[connection] : null;
     // Steam's own top bar is held hidden under ours (Steam hides it on Home itself, but forgets after sleep); the document is the one this bar is drawn in.
     const [doc, setDoc] = useState<Document | null>(null);
+    // Quick Access takes the window's focus while it is open (its window blurs, and focus returns when it closes), so
+    // focus is out of this window then: that is what keeps the bar on screen (#15).
+    const [focused, setFocused] = useState(true);
+    useEffect(() => {
+        const win = doc?.defaultView;
+        if (!doc || !win) return undefined;
+        const sync = () => setFocused(doc.hasFocus());
+        sync();
+        win.addEventListener('focus', sync);
+        win.addEventListener('blur', sync);
+        return () => {
+            win.removeEventListener('focus', sync);
+            win.removeEventListener('blur', sync);
+        };
+    }, [doc]);
+    const away = statusAway(topBarFocus, !focused);
     const marker = useCallback((el: HTMLSpanElement | null) => {
         if (el) setDoc(el.ownerDocument);
     }, []);
