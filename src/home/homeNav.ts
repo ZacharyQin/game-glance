@@ -2,6 +2,7 @@ import { Navigation } from '@decky/ui';
 import { LOG_PREFIX } from '../constants';
 import { browserStores, capsuleUrls, heroUrls, landscapeUrls } from './artwork';
 import { markLeaving } from './homeMemory';
+import { playNavSound } from './navSound';
 import { cssLayers, openArtLayers, wideArt } from './homeView';
 import { mountOpenOverlay } from './OpenOverlay';
 import { takeSteamFocus } from './steamFocus';
@@ -182,6 +183,8 @@ function controller(): OpenTransition {
  * throwing mount) still opens the page, without motion; a press while a transition runs is ignored.
  */
 export function openGame(appId: number, source: HTMLElement | null | undefined, art: string[]) {
+    // Steam's own sound for going into a game's page (every open from Home: a card, the info button, a feed card).
+    playNavSound('IntoGameDetail');
     markLeaving();
     let rect: DOMRectLike | null = null;
     try {
