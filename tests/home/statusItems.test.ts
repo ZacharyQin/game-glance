@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { STATUS_BAR, connectionKind, formatClock, msToNextMinute, personaDot, prefers24Hour, protoFields, readBattery, readConnectivity, readNetworkDevices, readSelfPersona, statusPlacement, statusScale, toBytes } from '../../src/home/statusItems';
+import { PERSONA_DOT_COLOURS, STATUS_BAR, batteryColour, connectionKind, formatClock, msToNextMinute, personaDot, prefers24Hour, protoFields, readBattery, readConnectivity, readNetworkDevices, readSelfPersona, statusPlacement, statusScale, toBytes } from '../../src/home/statusItems';
 
 // Minimal protobuf encoder for the fixtures (varint and length-delimited fields).
 const varint = (n: number): number[] => {
@@ -204,5 +204,12 @@ describe('statusScale', () => {
         expect(statusScale(1)).toBe(1);
         expect(statusScale(1.0417)).toBe(1);
         for (const bad of [0, -1, NaN, Infinity]) expect(statusScale(bad)).toBe(1);
+    });
+});
+
+describe('batteryColour (#16: the battery is green while charging)', () => {
+    it('is the online green while charging, and nothing otherwise (the icon keeps its colour)', () => {
+        expect(batteryColour(true)).toBe(PERSONA_DOT_COLOURS.online);
+        expect(batteryColour(false)).toBeNull();
     });
 });

@@ -1,5 +1,5 @@
 import { CSSProperties, ReactElement, useCallback, useEffect, useState, useSyncExternalStore } from 'react';
-import { BatteryView, ConnectionKind, formatClock, msToNextMinute, PersonaDot, personaDot, prefers24Hour, readSelfPersona, SelfPersona, statusPlacement, statusScale } from './statusItems';
+import { BatteryView, batteryColour, ConnectionKind, formatClock, msToNextMinute, PersonaDot, personaDot, prefers24Hour, readSelfPersona, SelfPersona, statusPlacement, statusScale } from './statusItems';
 import { COVER_CSS, useHideSteamBar } from './useHideSteamBar';
 import { startStatus, statusState, subscribeStatus } from './statusStore';
 import { tr } from '../i18n/steamText';
@@ -72,8 +72,9 @@ const CONNECTION: Record<ConnectionKind, { icon: () => ReactElement; label: () =
 /** The battery outline with its fill at the level; a bolt while charging. */
 function BatteryIcon({ battery }: { battery: BatteryView }) {
     const fill = Math.round(15 * battery.percent) / 100;
+    const colour = batteryColour(battery.charging);
     return (
-        <svg viewBox="0 0 24 18" fill="none" aria-hidden="true">
+        <svg viewBox="0 0 24 18" fill="none" aria-hidden="true" style={colour ? { color: colour } : undefined}>
             <rect x="1" y="3" width="19" height="12" rx="3" stroke="currentColor" strokeWidth={1.6} />
             <rect x="21" y="7" width="2" height="4" rx="1" fill="currentColor" />
             <rect x="3" y="5" width={fill} height="8" rx="1.5" fill="currentColor" />

@@ -21,6 +21,11 @@ export interface BatteryView {
 
 export type ConnectionKind = 'wifi' | 'wired' | 'offline';
 
+/** The battery's colour: Steam's online green while charging (#16); null keeps the bar's own colour. */
+export function batteryColour(charging: boolean): string | null {
+    return charging ? PERSONA_DOT_COLOURS.online : null;
+}
+
 /** "16:20" (24 h, hours padded) or "4:20 PM" (12 h). */
 export function formatClock(date: Date, hours24: boolean): string {
     const h = date.getHours();
