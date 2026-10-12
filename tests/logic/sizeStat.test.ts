@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { formatBytes } from '../../src/logic/format';
-import { sizeStat } from '../../src/logic/sizeStat';
+import { sizeStat, steamSpaceStat } from '../../src/logic/sizeStat';
 
 const GB = 1024 ** 3;
 
@@ -29,5 +29,18 @@ describe('sizeStat', () => {
         expect(sizeStat(null, true, 'en-US')).toBeNull();
         expect(sizeStat(undefined, false, 'en-US')).toBeNull();
         expect(sizeStat(0, true, 'en-US')).toBeNull();
+    });
+});
+
+describe("a Steam game that is not installed: its space required", () => {
+    it("shows the install size when Steam reports no size on disk (the page's wording for a game that is not installed)", () => {
+        expect(steamSpaceStat({ appid: 1455840 }, 691079517, 'en')).toEqual({ key: 'size', label: 'Install size', value: formatBytes(691079517, 'en') });
+        expect(steamSpaceStat({ size_on_disk: 0 }, 691079517, 'en')?.label).toBe('Install size');
+    });
+
+    it('shows nothing for an installed game, or when the space is not known', () => {
+        expect(steamSpaceStat({ size_on_disk: '11058189790' }, 691079517, 'en')).toBeNull();
+        expect(steamSpaceStat({ appid: 1455840 }, undefined, 'en')).toBeNull();
+        expect(steamSpaceStat({ appid: 1455840 }, null, 'en')).toBeNull();
     });
 });

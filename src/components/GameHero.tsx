@@ -21,7 +21,8 @@ import { useUnifideckSize } from '../hooks/useUnifideckSize';
 import { useOverrideVersion } from '../hooks/useOverrideVersion';
 import { steamLanguageToLocale } from '../logic/format';
 import { heroicStoreLabel } from '../logic/heroic';
-import { sizeStat } from '../logic/sizeStat';
+import { sizeStat, steamSpaceStat } from '../logic/sizeStat';
+import { memoSpaceRequired } from '../home/detailsMemo';
 import { useDownload } from '../home/useDownload';
 import { useLaunchOverlay } from '../styles/launchOverlay';
 import { accentCss, cleanCss, downloadCss, launchCss, launchSelectors, themeCss, unifideckCss } from '../styles/theme';
@@ -106,7 +107,10 @@ function Hero({ overview, details, restyle, clean }: Props & { restyle: boolean;
     // B and the D-pad go to Steam's gamepad focus, which can land on a hidden tab of Steam's own page on a Unifideck page (logic/gamepadFocus).
     useUnifideckGamepadFocus(pageDoc, game.isShortcut);
     const nativeSizeLabel = useUnifideckSizeLabel(pageDoc, game.appId, uniInstalled, restyle && game.isShortcut);
-    const size = restyle && typeof uniInstalled === 'boolean' ? sizeStat(unifideckSize, uniInstalled, locale, nativeSizeLabel) : null;
+    // A Steam game that is not installed: its install size, from the space Steam says it needs (details, or Home's memo).
+    const spaceNeeded = (details as { lDiskSpaceRequiredBytes?: unknown } | null | undefined)?.lDiskSpaceRequiredBytes;
+    const steamSize = restyle && !game.isShortcut ? steamSpaceStat(overview, typeof spaceNeeded === 'number' ? spaceNeeded : memoSpaceRequired(game.appId), locale) : null;
+    const size = (restyle && typeof uniInstalled === 'boolean' ? sizeStat(unifideckSize, uniInstalled, locale, nativeSizeLabel) : null) ?? steamSize;
     const fillCss = restyle ? downloadCss(download?.percent ?? null) : '';
     // While Steam's launch overlay is up, the page's text fades away so the overlay sits on the game's art alone; after
     // Play on Home (data/launchIntent) the page starts that way, so it never shows before the launch screen.
