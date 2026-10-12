@@ -1,9 +1,10 @@
 import { CSSProperties, ReactElement, useCallback, useEffect, useState, useSyncExternalStore } from 'react';
-import { BatteryView, batteryColour, downloadStatus, ConnectionKind, formatClock, msToNextMinute, PersonaDot, personaDot, prefers24Hour, readSelfPersona, SelfPersona, statusPlacement, statusScale } from './statusItems';
+import { avatarView, BatteryView, batteryColour, downloadStatus, ConnectionKind, formatClock, msToNextMinute, PersonaDot, personaDot, prefers24Hour, readSelfPersona, SelfPersona, statusPlacement, statusScale } from './statusItems';
 import { COVER_CSS, useHideSteamBar } from './useHideSteamBar';
 import { startStatus, statusState, subscribeStatus } from './statusStore';
 import { acquireDownloads, activeDownload, subscribeDownloads } from './downloadStore';
 import { tr } from '../i18n/steamText';
+import { useSettings } from '../data/settings';
 
 /** Steam's clock setting, else the locale's. */
 function hours24(): boolean {
@@ -127,6 +128,8 @@ export function StatusBar({ away, scale }: { away: boolean; scale: number }) {
     const clock = useClock();
     const self = useSelfPersona();
     const dot = personaDot(self);
+    const { statusAvatar } = useSettings();
+    const avatar = avatarView(self, statusAvatar);
     const conn = connection ? CONNECTION[connection] : null;
     // Steam's own top bar is held hidden under ours (Steam hides it on Home itself, but forgets after sleep); the document is the one this bar is drawn in.
     const [doc, setDoc] = useState<Document | null>(null);
@@ -160,8 +163,11 @@ export function StatusBar({ away, scale }: { away: boolean; scale: number }) {
                     </span>
                 )}
                 <span className="gh-status-item">{clock}</span>
+                {avatar && dot && (
+                    <span className="gh-status-avatar" role="img" aria-label={DOT_LABEL[dot]()} style={{ backgroundImage: `url(${avatar.url})`, borderColor: avatar.ring }} />
+                )}
             </div>
-            {dot && <span className={`gh-status-dot gh-status-dot-${dot}`} role="img" aria-label={DOT_LABEL[dot]()} />}
+            {dot && !avatar && <span className={`gh-status-dot gh-status-dot-${dot}`} role="img" aria-label={DOT_LABEL[dot]()} />}
         </div>
         </>
     );

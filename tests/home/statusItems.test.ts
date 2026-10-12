@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PERSONA_DOT_COLOURS, STATUS_BAR, batteryColour, downloadStatus, connectionKind, formatClock, msToNextMinute, personaDot, prefers24Hour, protoFields, readBattery, readConnectivity, readNetworkDevices, readSelfPersona, statusPlacement, statusScale, toBytes } from '../../src/home/statusItems';
+import { PERSONA_DOT_COLOURS, STATUS_BAR, avatarView, batteryColour, downloadStatus, connectionKind, formatClock, msToNextMinute, personaDot, prefers24Hour, protoFields, readBattery, readConnectivity, readNetworkDevices, readSelfPersona, statusPlacement, statusScale, toBytes } from '../../src/home/statusItems';
 
 // Minimal protobuf encoder for the fixtures (varint and length-delimited fields).
 const varint = (n: number): number[] => {
@@ -227,5 +227,26 @@ describe('downloadStatus (#8: the bar shows a running download and its percent)'
         expect(downloadStatus({ kind: 'finalizing', percent: 100 })).toBeNull();
         expect(downloadStatus({ kind: 'downloading', percent: null })).toBeNull();
         expect(downloadStatus(null)).toBeNull();
+    });
+});
+
+describe('the profile picture in the status bar (#9)', () => {
+    const HASH = 'e4c5e2ab869df41657cb2108f0d01723d0ba7ba7';
+    const ui = (extra: Record<string, unknown>) => ({ friendStore: { allFriends: [], m_FriendsUIFriendStore: extra } });
+    const self = (state: number, inGame = false) => ({ state, inGame, avatarHash: HASH });
+    it("reads your avatar hash from Steam's persona", () => {
+        expect(readSelfPersona(ui({ m_eUserPersonaState: 1, self: { persona: { m_ePersonaState: 1, m_strAvatarHash: HASH } } }))).toEqual({ state: 1, inGame: false, avatarHash: HASH });
+    });
+    it('shows a square avatar ringed in the status colour when the setting is on', () => {
+        expect(avatarView(self(1), true)).toEqual({ url: `https://avatars.steamstatic.com/${HASH}_medium.jpg`, ring: PERSONA_DOT_COLOURS.online });
+        expect(avatarView(self(1, true), true)?.ring).toBe(PERSONA_DOT_COLOURS.online);
+        expect(avatarView(self(3), true)?.ring).toBe(PERSONA_DOT_COLOURS.away);
+        expect(avatarView(self(0), true)?.ring).toBe(PERSONA_DOT_COLOURS.off);
+    });
+    it('nothing when the setting is off, there is no avatar or no status yet (the dot stays as it was)', () => {
+        expect(avatarView(self(1), false)).toBeNull();
+        expect(avatarView({ state: 1, inGame: false, avatarHash: '0000000000000000000000000000000000000000' }, true)).toBeNull();
+        expect(avatarView({ state: 1, inGame: false }, true)).toBeNull();
+        expect(avatarView(null, true)).toBeNull();
     });
 });

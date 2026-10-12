@@ -270,6 +270,8 @@ export function statusPlacement(canvasScale: number): StatusPlacement {
 export interface SelfPersona {
     state: number;
     inGame: boolean;
+    /** Your avatar's hash (persona m_strAvatarHash), for the picture in the bar (#9); absent when Steam has none. */
+    avatarHash?: string;
 }
 
 /**
@@ -287,10 +289,22 @@ export function readSelfPersona(globals: unknown): SelfPersona | null {
         const chosen = ui?.m_eUserPersonaState ?? store?.m_eUserPersonaState;
         const state = typeof chosen === 'number' ? chosen : persona?.m_ePersonaState;
         if (typeof state !== 'number' || !Number.isFinite(state)) return null;
-        return { state, inGame: Number(persona?.m_unGamePlayedAppID) > 0 };
+        const hash = persona?.m_strAvatarHash;
+        return { state, inGame: Number(persona?.m_unGamePlayedAppID) > 0, ...(typeof hash === 'string' ? { avatarHash: hash } : {}) };
     } catch {
         return null;
     }
+}
+
+/**
+ * Your avatar in the bar (#9), when the setting is on and Steam has one: its picture, ringed in your status colour (the
+ * dot's colour). Null otherwise: the dot stays. Pure.
+ */
+export function avatarView(self: SelfPersona | null, enabled: boolean): { url: string; ring: string } | null {
+    const dot = personaDot(self);
+    const hash = self?.avatarHash;
+    if (!enabled || !dot || !hash || !/^[0-9a-f]{40}$/.test(hash) || /^0+$/.test(hash)) return null;
+    return { url: `https://avatars.steamstatic.com/${hash}_medium.jpg`, ring: PERSONA_DOT_COLOURS[dot] };
 }
 
 /** The dot for a persona, null when unknown (the dot is then left out). In a game counts as online, as on the Friends tab. */
