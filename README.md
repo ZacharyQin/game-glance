@@ -93,6 +93,14 @@ Also in Quick Access:
 - **Clear cached data.**
 - **Updates:** the installed version, **Update to …** when a newer release is out, and **Check for updates**.
 
+## If Home shows an error
+
+If Spotlight Home hits an error, it shows Steam's own Home instead and writes the error to a log file in the plugin's log folder:
+
+`~/homebrew/logs/Game Glance/game-glance.log`
+
+It also records each start-up with the log's path. Attach that file to the issue report. It keeps the newest entries and stays small.
+
 ## Your language
 
 Game Glance follows Steam's language and uses Steam's own words wherever Steam has them ("Última sesión" and "Tiempo de

@@ -3,6 +3,7 @@ import { LOG_PREFIX } from '../constants';
 import { settings } from '../data/settings';
 import { HOME_ROUTE, isKnownHomeShape } from '../home/guard';
 import { HomeGate } from '../home/HomeGate';
+import { RouteGuard } from '../home/RouteGuard';
 import { cancelOpen } from '../home/homeNav';
 import { homeMode } from '../home/mode';
 import { createHomePatchManager } from './homePatchManager';
@@ -23,7 +24,14 @@ const homeRoutePatch: RoutePatch = (routeProps: any) => {
             }
             return routeProps;
         }
-        return { ...routeProps, children: <HomeGate key={KEY} fallback={routeProps.children} /> };
+        return {
+            ...routeProps,
+            children: (
+                <RouteGuard key={KEY} fallback={routeProps.children}>
+                    <HomeGate fallback={routeProps.children} />
+                </RouteGuard>
+            ),
+        };
     } catch (error) {
         console.warn(`${LOG_PREFIX} Home route patch failed; leaving Steam's Home unchanged`, error);
         return routeProps;
