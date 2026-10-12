@@ -1,7 +1,8 @@
 import { CSSProperties, ReactElement, useCallback, useEffect, useState, useSyncExternalStore } from 'react';
-import { BatteryView, batteryColour, ConnectionKind, formatClock, msToNextMinute, PersonaDot, personaDot, prefers24Hour, readSelfPersona, SelfPersona, statusPlacement, statusScale } from './statusItems';
+import { BatteryView, batteryColour, downloadStatus, ConnectionKind, formatClock, msToNextMinute, PersonaDot, personaDot, prefers24Hour, readSelfPersona, SelfPersona, statusPlacement, statusScale } from './statusItems';
 import { COVER_CSS, useHideSteamBar } from './useHideSteamBar';
 import { startStatus, statusState, subscribeStatus } from './statusStore';
+import { acquireDownloads, activeDownload, subscribeDownloads } from './downloadStore';
 import { tr } from '../i18n/steamText';
 
 /** Steam's clock setting, else the locale's. */
@@ -99,6 +100,18 @@ function useSelfPersona(): SelfPersona | null {
     return self;
 }
 
+/** The running transfer's percent (a primitive, so React sees a change only when it moves), or null (#8). */
+const downloadPercent = () => downloadStatus(activeDownload());
+
+/** A download arrow, as Steam's own bar draws its download item. */
+function DownloadIcon() {
+    return (
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M12 4v11m0 0l-4.5-4.5M12 15l4.5-4.5M5 20h14" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+    );
+}
+
 const DOT_LABEL: Record<PersonaDot, () => string> = { online: () => tr('online'), away: () => tr('away'), off: () => `${tr('invisible')} / ${tr('offline')}` };
 
 /**
@@ -108,7 +121,9 @@ const DOT_LABEL: Record<PersonaDot, () => string> = { online: () => tr('online')
  */
 export function StatusBar({ away, scale }: { away: boolean; scale: number }) {
     useEffect(() => startStatus(), []);
+    useEffect(() => acquireDownloads(), []);
     const { battery, connection } = useSyncExternalStore(subscribeStatus, statusState, statusState);
+    const percent = useSyncExternalStore(subscribeDownloads, downloadPercent, downloadPercent);
     const clock = useClock();
     const self = useSelfPersona();
     const dot = personaDot(self);
@@ -127,6 +142,12 @@ export function StatusBar({ away, scale }: { away: boolean; scale: number }) {
         <style>{COVER_CSS}</style>
         <div className={`gh-status${away ? ' gh-status-away' : ''}`} aria-hidden={away} style={style}>
             <div className="gh-status-pill">
+                {percent !== null && (
+                    <span className="gh-status-item gh-status-download" aria-label={`${tr('download')} ${percent}%`}>
+                        <DownloadIcon />
+                        {percent}%
+                    </span>
+                )}
                 {conn && (
                     <span className={`gh-status-item gh-status-${connection}`} aria-label={conn.label()}>
                         <conn.icon />

@@ -21,6 +21,15 @@ export interface BatteryView {
 
 export type ConnectionKind = 'wifi' | 'wired' | 'offline';
 
+/**
+ * The percent the bar shows for a transfer that is running (a download, an update or an install), rounded; null when
+ * nothing runs (paused, queued, verifying or finishing) or the percent is unknown (#8). Pure.
+ */
+export function downloadStatus(state: { kind: string; percent: number | null } | null): number | null {
+    if (!state || state.percent === null || !Number.isFinite(state.percent)) return null;
+    return ['downloading', 'updating', 'installing'].includes(state.kind) ? Math.round(state.percent) : null;
+}
+
 /** The battery's colour: Steam's online green while charging (#16); null keeps the bar's own colour. */
 export function batteryColour(charging: boolean): string | null {
     return charging ? PERSONA_DOT_COLOURS.online : null;

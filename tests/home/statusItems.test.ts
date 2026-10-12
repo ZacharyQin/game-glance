@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PERSONA_DOT_COLOURS, STATUS_BAR, batteryColour, connectionKind, formatClock, msToNextMinute, personaDot, prefers24Hour, protoFields, readBattery, readConnectivity, readNetworkDevices, readSelfPersona, statusPlacement, statusScale, toBytes } from '../../src/home/statusItems';
+import { PERSONA_DOT_COLOURS, STATUS_BAR, batteryColour, downloadStatus, connectionKind, formatClock, msToNextMinute, personaDot, prefers24Hour, protoFields, readBattery, readConnectivity, readNetworkDevices, readSelfPersona, statusPlacement, statusScale, toBytes } from '../../src/home/statusItems';
 
 // Minimal protobuf encoder for the fixtures (varint and length-delimited fields).
 const varint = (n: number): number[] => {
@@ -211,5 +211,21 @@ describe('batteryColour (#16: the battery is green while charging)', () => {
     it('is the online green while charging, and nothing otherwise (the icon keeps its colour)', () => {
         expect(batteryColour(true)).toBe(PERSONA_DOT_COLOURS.online);
         expect(batteryColour(false)).toBeNull();
+    });
+});
+
+describe('downloadStatus (#8: the bar shows a running download and its percent)', () => {
+    it('shows the rounded percent of a download that is running', () => {
+        expect(downloadStatus({ kind: 'downloading', percent: 41.6 })).toBe(42);
+        expect(downloadStatus({ kind: 'updating', percent: 7 })).toBe(7);
+        expect(downloadStatus({ kind: 'installing', percent: 90.2 })).toBe(90);
+    });
+    it('shows nothing when nothing runs: paused, queued, finishing, unknown percent, or no download', () => {
+        expect(downloadStatus({ kind: 'paused', percent: 30 })).toBeNull();
+        expect(downloadStatus({ kind: 'verifying', percent: 50 })).toBeNull();
+        expect(downloadStatus({ kind: 'queued', percent: null })).toBeNull();
+        expect(downloadStatus({ kind: 'finalizing', percent: 100 })).toBeNull();
+        expect(downloadStatus({ kind: 'downloading', percent: null })).toBeNull();
+        expect(downloadStatus(null)).toBeNull();
     });
 });
