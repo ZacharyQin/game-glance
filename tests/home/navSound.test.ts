@@ -1,6 +1,14 @@
 import { describe, expect, it, vi } from 'vitest';
 import { gameStepSound, navSoundParts, shoulderSound } from '../../src/home/navSound';
 
+// Steam's sound player and its sound names, as the in-page module exports them (numbers from Steam's enum, probed).
+const navPlayer = vi.hoisted(() => ({ PlayNavSound: vi.fn() }));
+vi.mock('@decky/ui', () => {
+    const names = { LaunchGame: 0, IntoGameDetail: 13, ChangeTabs: 20, BasicNav: 24, FailedNav: 25 };
+    const module = { player: navPlayer, names };
+    return { findModule: (test: (m: unknown) => boolean) => (test(module) ? module : undefined) };
+});
+
 describe('navSoundParts', () => {
     // The shape probed on the Ally: one module exports the sound names (an enum) and the player (minified names change).
     const names = { 0: 'LaunchGame', LaunchGame: 0, 20: 'ChangeTabs', ChangeTabs: 20, 24: 'BasicNav', BasicNav: 24, 25: 'FailedNav', FailedNav: 25 };
@@ -36,5 +44,15 @@ describe('gameStepSound', () => {
         expect(gameStepSound(3, 3, 'bumper')).toBeNull();
         expect(gameStepSound(3, 3, 'dpad')).toBeNull();
         expect(gameStepSound(0, null, 'bumper')).toBeNull();
+    });
+});
+
+describe('playNavSound (the game-page open and the game start)', () => {
+    it("plays Steam's IntoGameDetail when a game page opens and its LaunchGame when a game starts", async () => {
+        const { playNavSound } = await import('../../src/home/navSound');
+        playNavSound('IntoGameDetail');
+        playNavSound('LaunchGame');
+        expect(navPlayer.PlayNavSound).toHaveBeenNthCalledWith(1, 13);
+        expect(navPlayer.PlayNavSound).toHaveBeenNthCalledWith(2, 0);
     });
 });
