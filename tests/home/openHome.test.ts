@@ -330,3 +330,21 @@ describe('extrasFlags for the size', () => {
         expect(extrasFlags('desc hltb')).toEqual({ homeDesc: true, homeHltb: true });
     });
 });
+
+describe("a Steam game's Space Required chip (not installed): the page's size stat, handed over unchanged", () => {
+    const home = [
+        { key: 'played', label: 'Played', value: '0 h', bar: false },
+        { key: 'size', label: 'Space Required', value: '659 MB', bar: false },
+        { key: 'hltb', label: 'HLTB main', value: '5 h', bar: true },
+    ];
+    it('the page shows the same Space Required, right of Played, with no size passed in', () => {
+        expect(pageStatsFromChips(home, 'spotlight').map((s) => [s.key, s.label, s.value])).toEqual([
+            ['played', 'Played', '0 h'],
+            ['size', 'Space Required', '659 MB'],
+            ['hltb', 'Main', '5 h'],
+        ]);
+    });
+    it('no size stat when Home shows none', () => {
+        expect(pageStatsFromChips(home.filter((c) => c.key !== 'size'), 'spotlight').map((s) => s.key)).toEqual(['played', 'hltb']);
+    });
+});

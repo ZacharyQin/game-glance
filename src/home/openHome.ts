@@ -152,7 +152,9 @@ export function pageStatsFromChips(chips: ChipText[], look: PageLook, size?: { l
     const played = byKey.get('played');
     if (played) out.push({ key: 'played', label: played.label, value: played.value, bar: look === 'clean' && played.bar });
     else if (byKey.has('added')) out.push({ key: 'played', label: tr('played'), value: '0 h', bar: false });
-    if (size) out.push({ key: 'size', label: size.label, value: size.value, bar: false });
+    // The size item: a Unifideck game's (passed in), else Home's chip for a Steam game's Space Required (the same item).
+    const sized = size ?? (byKey.has('size') ? { label: byKey.get('size')!.label, value: byKey.get('size')!.value } : null);
+    if (sized) out.push({ key: 'size', label: sized.label, value: sized.value, bar: false });
     const add = (key: StatKey, label: string, value: string, bar: boolean) => out.push({ key, label, value, bar: look === 'clean' && bar });
     const ach = byKey.get('achievements');
     if (ach) add('achievements', ach.label, ach.value, ach.bar);
