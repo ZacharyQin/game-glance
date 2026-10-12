@@ -29,6 +29,11 @@ export function useHideSteamBar(doc: Document | null, away: boolean): void {
             }
         };
         update();
+        // A mutation observer runs before the next paint, so Steam's bar is covered as its route change draws it (the
+        // timer alone can let it show for a frame behind ours, which flickered on the game page's entry).
+        const win = doc.defaultView;
+        const observer = win && win.MutationObserver ? new win.MutationObserver(update) : null;
+        observer?.observe(doc.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['class', 'style'] });
         // Quick at first so the bar is hidden as the page opens, then once a second (Steam may re-render its bar).
         let ticks = 0;
         let timer = setInterval(() => {
@@ -39,6 +44,7 @@ export function useHideSteamBar(doc: Document | null, away: boolean): void {
             }
         }, QUICK_MS);
         return () => {
+            observer?.disconnect();
             clearInterval(timer);
             clear();
         };
