@@ -30,6 +30,14 @@ export function downloadStatus(state: { kind: string; percent: number | null } |
     return ['downloading', 'updating', 'installing'].includes(state.kind) ? Math.round(state.percent) : null;
 }
 
+/**
+ * Whether the bar fades out for Steam's top bar: only when focus is up there and Quick Access is closed (#15). Opening
+ * Quick Access moves focus to the top bar, so it must not hide the bar. Pure.
+ */
+export function statusAway(topBarFocus: boolean, quickAccessOpen: boolean): boolean {
+    return topBarFocus && !quickAccessOpen;
+}
+
 /** The battery's colour: Steam's online green while charging (#16); null keeps the bar's own colour. */
 export function batteryColour(charging: boolean): string | null {
     return charging ? PERSONA_DOT_COLOURS.online : null;

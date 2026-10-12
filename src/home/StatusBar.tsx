@@ -1,10 +1,11 @@
 import { CSSProperties, ReactElement, useCallback, useEffect, useState, useSyncExternalStore } from 'react';
-import { avatarView, BatteryView, batteryColour, downloadStatus, ConnectionKind, formatClock, msToNextMinute, PersonaDot, personaDot, prefers24Hour, readSelfPersona, SelfPersona, statusPlacement, statusScale } from './statusItems';
+import { avatarView, BatteryView, batteryColour, downloadStatus, statusAway, ConnectionKind, formatClock, msToNextMinute, PersonaDot, personaDot, prefers24Hour, readSelfPersona, SelfPersona, statusPlacement, statusScale } from './statusItems';
 import { COVER_CSS, useHideSteamBar } from './useHideSteamBar';
 import { startStatus, statusState, subscribeStatus } from './statusStore';
 import { acquireDownloads, activeDownload, subscribeDownloads } from './downloadStore';
 import { tr } from '../i18n/steamText';
 import { useSettings } from '../data/settings';
+import { useQuickAccessVisible } from '@decky/api';
 
 /** Steam's clock setting, else the locale's. */
 function hours24(): boolean {
@@ -120,8 +121,10 @@ const DOT_LABEL: Record<PersonaDot, () => string> = { online: () => tr('online')
  * then a dot for your own online status. `away` fades it all out while focus is in Steam's own top bar. An item Steam
  * has not reported is left out.
  */
-export function StatusBar({ away, scale }: { away: boolean; scale: number }) {
+export function StatusBar({ away: topBarFocus, scale }: { away: boolean; scale: number }) {
     useEffect(() => startStatus(), []);
+    // Quick Access is opened from the top bar: its focus must not hide the bar (#15).
+    const away = statusAway(topBarFocus, useQuickAccessVisible());
     useEffect(() => acquireDownloads(), []);
     const { battery, connection } = useSyncExternalStore(subscribeStatus, statusState, statusState);
     const percent = useSyncExternalStore(subscribeDownloads, downloadPercent, downloadPercent);

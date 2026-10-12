@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PERSONA_DOT_COLOURS, STATUS_BAR, avatarView, batteryColour, downloadStatus, connectionKind, formatClock, msToNextMinute, personaDot, prefers24Hour, protoFields, readBattery, readConnectivity, readNetworkDevices, readSelfPersona, statusPlacement, statusScale, toBytes } from '../../src/home/statusItems';
+import { PERSONA_DOT_COLOURS, STATUS_BAR, avatarView, statusAway, batteryColour, downloadStatus, connectionKind, formatClock, msToNextMinute, personaDot, prefers24Hour, protoFields, readBattery, readConnectivity, readNetworkDevices, readSelfPersona, statusPlacement, statusScale, toBytes } from '../../src/home/statusItems';
 
 // Minimal protobuf encoder for the fixtures (varint and length-delimited fields).
 const varint = (n: number): number[] => {
@@ -248,5 +248,14 @@ describe('the profile picture in the status bar (#9)', () => {
         expect(avatarView({ state: 1, inGame: false, avatarHash: '0000000000000000000000000000000000000000' }, true)).toBeNull();
         expect(avatarView({ state: 1, inGame: false }, true)).toBeNull();
         expect(avatarView(null, true)).toBeNull();
+    });
+});
+
+describe('statusAway (#15: the bar stays while Quick Access is open)', () => {
+    it('is away only when focus is on the top bar and Quick Access is closed', () => {
+        expect(statusAway(true, false)).toBe(true);
+        expect(statusAway(true, true)).toBe(false);
+        expect(statusAway(false, false)).toBe(false);
+        expect(statusAway(false, true)).toBe(false);
     });
 });
