@@ -19,6 +19,7 @@ const p = (token: string, en: string): Phrase => ({ token, en });
 
 export const PHRASES = {
     played: p('AppDetails_SectionTitle_PlayTime', 'Played'),
+    spaceRequired: p('AppDetails_SectionTitle_DiskSpaceRequired', 'Space Required'),
     lastPlayed: p('AppDetails_SectionTitle_LastPlayed', 'Last played'),
     achievements: p('AppDetails_SectionTitle_Achievements', 'Achievements'),
     added: p('Sale_AddedToLibrary', 'Added to library'),

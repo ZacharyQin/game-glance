@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { DETAILS_MEMO_MAX, memoAchievements, memoCloud, memoDetails, noteDetails, resetDetailsMemo, withKnownAchievements } from '../../src/home/detailsMemo';
+import { DETAILS_MEMO_MAX, memoAchievements, memoCloud, memoDetails, memoSpaceRequired, noteDetails, resetDetailsMemo, withKnownAchievements } from '../../src/home/detailsMemo';
 
 describe('detailsMemo', () => {
     afterEach(resetDetailsMemo);
@@ -83,5 +83,23 @@ describe('memoCloud', () => {
         expect(memoCloud(2)).toBeDefined();
         resetDetailsMemo();
         expect(memoCloud(2)).toBeUndefined();
+    });
+});
+
+describe('the space a game needs (Steam: lDiskSpaceRequiredBytes)', () => {
+    afterEach(resetDetailsMemo);
+    it('keeps it from the details callback, and the latest one wins', () => {
+        noteDetails(1455840, { lDiskSpaceRequiredBytes: 691079517 });
+        expect(memoSpaceRequired(1455840)).toBe(691079517);
+        noteDetails(1455840, { lDiskSpaceRequiredBytes: 700000000 });
+        expect(memoSpaceRequired(1455840)).toBe(700000000);
+    });
+    it('ignores zero, junk and details without it', () => {
+        noteDetails(2, { lDiskSpaceRequiredBytes: 0 });
+        noteDetails(3, { lDiskSpaceRequiredBytes: '691079517' });
+        noteDetails(4, { libraryAssets: {} });
+        expect(memoSpaceRequired(2)).toBeUndefined();
+        expect(memoSpaceRequired(3)).toBeUndefined();
+        expect(memoSpaceRequired(4)).toBeUndefined();
     });
 });

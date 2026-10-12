@@ -20,6 +20,7 @@ export const DETAILS_MEMO_MAX = 64;
 const memo = new Map<number, LibraryAssets>();
 const achievementMemo = new Map<number, { achieved: number; total: number }>();
 const cloudMemo = new Map<number, CloudDetails>();
+const spaceMemo = new Map<number, number>();
 type AchievementSink = (appId: number, counts: { achieved: number; total: number }) => void;
 let sink: AchievementSink | null = null;
 
@@ -42,6 +43,7 @@ export function noteDetails(appId: number, details: unknown) {
         if (!Number.isInteger(appId) || appId <= 0) return;
         noteAchievements(appId, details);
         noteCloud(appId, details);
+        noteSpace(appId, details);
         const assets = (details as { libraryAssets?: unknown } | null | undefined)?.libraryAssets;
         if (!assets || typeof assets !== 'object') return;
         const { strHeroImage, strHeaderImage, strLogoImage } = assets as Record<string, unknown>;
@@ -106,6 +108,20 @@ export function withKnownAchievements<T extends { appId: number; isShortcut: boo
     return known ? { ...game, achievements: known } : game;
 }
 
+/** The space Steam says a game needs to install (`lDiskSpaceRequiredBytes`, from the details callback), if it was noted. */
+export function memoSpaceRequired(appId: number): number | undefined {
+    return spaceMemo.get(appId);
+}
+
+/** Remembers the space a game needs; anything but a positive number is ignored. Bounded like the other memos. */
+function noteSpace(appId: number, details: unknown) {
+    const bytes = (details as { lDiskSpaceRequiredBytes?: unknown } | null | undefined)?.lDiskSpaceRequiredBytes;
+    if (typeof bytes !== 'number' || !Number.isFinite(bytes) || bytes <= 0) return;
+    spaceMemo.delete(appId);
+    spaceMemo.set(appId, bytes);
+    while (spaceMemo.size > DETAILS_MEMO_MAX) spaceMemo.delete(spaceMemo.keys().next().value as number);
+}
+
 /** The remembered assets for `appId`, or undefined. */
 export function memoDetails(appId: number): LibraryAssets | undefined {
     return memo.get(appId);
@@ -117,4 +133,5 @@ export function resetDetailsMemo() {
     memo.clear();
     achievementMemo.clear();
     cloudMemo.clear();
+    spaceMemo.clear();
 }

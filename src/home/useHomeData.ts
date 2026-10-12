@@ -36,7 +36,7 @@ import { homeCollections, pickCollectionGames, RECENT_ROW, RowSort } from './col
 import { formatLastPlayed, mergeRecentSources, pickHomeRecents, pickRecents, RawApp, RecentGame } from './recents';
 import { getWishlistDeals } from './wishlist';
 import { pageHidden } from './pageVisible';
-import { noteDetails, withKnownAchievements } from './detailsMemo';
+import { memoSpaceRequired, noteDetails, withKnownAchievements } from './detailsMemo';
 import { neighbourIds } from './heroLayers';
 import { useWarmup, useWarmVersion } from './useWarmup';
 import { forgetHltb, peekDescription, peekHltb, rememberDescription, rememberHltb } from './warmup';
@@ -656,9 +656,11 @@ export function useHomeData(focusIndex = 0): HomeData {
             lastPlayed: merged.lastPlayed,
             hltbMainHours: hltb?.status === 'found' ? hltb.times.main : null,
             addedAt: isNew ? focused.addedAt : undefined,
+            installed: focused.installed,
+            spaceBytes: info?.isShortcut ? null : (memoSpaceRequired(focused.appId) ?? null),
         }, nowSeconds, locale), []);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [focused, info, hltb, locale, unifideck]);
+    }, [focused, info, hltb, locale, unifideck, detailsVersion]);
     // Unifideck knows a last played Steam does not: such a game is no longer "new to library".
     const focusedIsNew = focused?.isNew === true && !unifideck?.lastPlayed;
     const lastPlayedLabel = focused
