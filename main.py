@@ -3,6 +3,7 @@ import os
 import decky
 
 from gameglance.heroic import HeroicLibrary, heroic_cache_dirs
+from gameglance.home_errors import append_home_error
 from gameglance.kv import KvStore
 from gameglance.migrate import carry_over, old_data_path
 from gameglance.store_lookup import RegistryCache, key_for_appid, store_for_appid
@@ -52,6 +53,14 @@ class Plugin:
         except Exception:
             decky.logger.exception("[game-glance] get_heroic_description failed")
             return None
+
+    async def log_home_error(self, entry: str) -> None:
+        # Home recovered from an error (src/home/RouteGuard): kept in the plugin's log folder for a bug report.
+        try:
+            path = append_home_error(decky.DECKY_PLUGIN_LOG_DIR, f"v{decky.DECKY_PLUGIN_VERSION} {entry}"[:8000])
+            decky.logger.info(f"[game-glance] Home error logged to {path}")
+        except Exception:
+            decky.logger.exception("[game-glance] log_home_error failed")
 
     async def get_version(self):
         # The installed version, from package.json at install time (Decky's environment); the updater compares it.
