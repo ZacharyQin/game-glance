@@ -1,9 +1,10 @@
+import datetime
 import os
 
 import decky
 
 from gameglance.heroic import HeroicLibrary, heroic_cache_dirs
-from gameglance.home_errors import FILE_NAME, append_home_error
+from gameglance.home_errors import FILE_NAME, append_log, start_entry
 from gameglance.kv import KvStore
 from gameglance.migrate import carry_over, old_data_path
 from gameglance.store_lookup import RegistryCache, key_for_appid, store_for_appid
@@ -55,10 +56,9 @@ class Plugin:
             return None
 
     async def log_home_error(self, entry: str) -> None:
-        # Home recovered from an error (src/home/RouteGuard): kept in the plugin's log folder for a bug report.
+        # Home recovered from an error (src/home/RouteGuard): kept in the plugin's own log for a bug report.
         try:
-            path = append_home_error(decky.DECKY_PLUGIN_LOG_DIR, f"v{decky.DECKY_PLUGIN_VERSION} {entry}"[:8000])
-            decky.logger.info(f"[game-glance] Home error logged to {path}")
+            append_log(decky.DECKY_PLUGIN_LOG_DIR, f"v{decky.DECKY_PLUGIN_VERSION} {entry}"[:8000])
         except Exception:
             decky.logger.exception("[game-glance] log_home_error failed")
 
@@ -68,13 +68,13 @@ class Plugin:
 
     async def _main(self):
         decky.logger.info("[game-glance] backend started")
-        # The log folder is made at start-up and its file's path is written to Decky's log, so the location can be checked
-        # on a device without an error (the Home error log, README: If Home shows an error).
+        # Our own log records each start-up and where it is, so a report can show the location without an error.
         try:
-            os.makedirs(decky.DECKY_PLUGIN_LOG_DIR, exist_ok=True)
-            decky.logger.info(f"[game-glance] Home error log: {os.path.join(decky.DECKY_PLUGIN_LOG_DIR, FILE_NAME)}")
+            now = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.000Z")
+            path = os.path.join(decky.DECKY_PLUGIN_LOG_DIR, FILE_NAME)
+            append_log(decky.DECKY_PLUGIN_LOG_DIR, start_entry(decky.DECKY_PLUGIN_VERSION, now, path))
         except Exception:
-            decky.logger.exception("[game-glance] Home error log folder failed")
+            decky.logger.exception("[game-glance] start-up log entry failed")
 
     async def _unload(self):
         decky.logger.info("[game-glance] backend stopped")

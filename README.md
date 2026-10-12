@@ -97,9 +97,9 @@ Also in Quick Access:
 
 If Spotlight Home hits an error, it shows Steam's own Home instead and writes the error to a log file in the plugin's log folder:
 
-`~/homebrew/logs/Game Glance/home-errors.log`
+`~/homebrew/logs/Game Glance/game-glance.log`
 
-Attach that file to the issue report. It keeps the newest entries and stays small.
+It also records each start-up with the log's path. Attach that file to the issue report. It keeps the newest entries and stays small.
 
 ## Your language
 
