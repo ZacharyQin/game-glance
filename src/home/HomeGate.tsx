@@ -26,10 +26,10 @@ class HomeErrorBoundary extends Component<{ fallback: ReactElement; children: Re
 }
 
 /**
- * Mounted by the Home route patch only after the route passed `isKnownHomeShape`.
+ * Mounted by the Home route patch in place of what Steam's Home renders; `children` is Steam's own Home tree.
  * Reads the setting live, so toggling in Quick Access swaps Home without a restart.
  */
-export function HomeGate({ fallback }: { fallback: ReactElement }) {
+export function HomeGate({ children: fallback }: { children: ReactElement }) {
     const settings = useSettings();
     if (!homeMode(settings).home) return fallback;
     return (
