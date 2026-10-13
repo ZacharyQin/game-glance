@@ -6,9 +6,11 @@ import { homeErrorEntry } from './homeError';
 const logHomeError = callable<[entry: string], void>('log_home_error');
 
 /**
- * Wraps the whole Home route: Steam's element and ours. An error that gets past Spotlight Home's own boundary (for
- * example in Decky's router wrapper) shows Steam's Home instead of a broken screen, and is written to the plugin's log
- * folder, where a bug report can pick it up (issue #18). Stays on the fallback until Home is left and opened again.
+ * Wraps what the Home route renders: Steam's Home tree (the fallback) and ours. An error that gets past Spotlight
+ * Home's own boundary shows Steam's Home instead of a broken screen, and is written to the plugin's log folder, where
+ * a bug report can pick it up. Stays on the fallback until Home is left and opened again. It sits inside Steam's Home
+ * component, never as the route child: other plugins call that child as a function, and a class there crashed Home
+ * (issue #18).
  */
 export class RouteGuard extends Component<{ fallback: ReactElement; children: ReactNode }, { failed: boolean }> {
     state = { failed: false };

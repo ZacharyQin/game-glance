@@ -211,6 +211,7 @@ Result per item: PASS, FAIL (with a note), or "not checked yet". Handheld unless
 | 113 | Focused Play pill gap | On every game page, the gap between the focused Play pill and the round buttons is even (not too narrow) | PASS (Michael, 2026-10-11, build 2d00d1d) |
 | 114 | Blank logo fallback | A game whose logo file is fully transparent (Deus Ex: Human Revolution) shows its name, on Home and on the page, not a blank title | PASS (Michael, 2026-10-11, build 2d00d1d) |
 | 115 | One card height | Sonic X Shadow Generations (two-line description) and The Witcher 3 (standard) have cards of the same height, before, during and after the open (179 canvas px on the Ally in the live probe) | PASS (Michael, 2026-10-11, build 2d00d1d: "card height is good") |
+| 116 | Spotlight Home with SteamGridDB's Home patch (#18) | SteamGridDB 1.8.1 with Square capsules on: Spotlight Home shows (no React error, no "Class constructor RouteGuard" error) whichever plugin patched Home first: turn Square capsules on with Spotlight Home on (Game Glance first), and turn Spotlight Home off and on with Square capsules on (SteamGridDB first); Home → Library → Home and opening a game page work; Spotlight Home mounts once per visit | PASS (ROG Xbox Ally on SteamOS 3.8.28, test build 97f3a8c, 2026-10-13) |
 
 ## When HowLongToBeat breaks
 
