@@ -1,6 +1,6 @@
 import { displayInfo, loadDecoded, logoCopy, makeCopy } from './artShrink';
 import { browserStores, logoUrls } from './artwork';
-import { alphaBounds, isBlankLogo, knownLogo, LogoChoice, LogoTrim, measureSize, rememberLogo, scaleTrim } from './logo';
+import { isBlankLogo, knownLogo, LogoChoice, measureLogo, PixelReader, rememberLogo } from './logo';
 
 /**
  * Game logos, resolved the way HeroBackground resolves hero art: once per game (the urls tried in order, the first that
@@ -22,33 +22,49 @@ function loadImage(url: string): Promise<HTMLImageElement | null> {
     return loadDecoded(url, true);
 }
 
+/** The pixels a canvas holds after drawing `source` at `size`; null without a 2D context. */
+function drawnPixels(source: CanvasImageSource, size: { width: number; height: number }): Uint8ClampedArray | null {
+    const canvas = document.createElement('canvas');
+    canvas.width = size.width;
+    canvas.height = size.height;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    if (!ctx) return null;
+    ctx.drawImage(source, 0, 0, size.width, size.height);
+    return ctx.getImageData(0, 0, size.width, size.height).data;
+}
+
 /**
- * The visible part of a loaded logo, read from a smaller copy of its pixels (`trim`; null when nothing shows), and whether
- * the pixels could be read at all (`readable`; when not, the trim is null and the file is drawn whole).
+ * Reads a logo's pixels at the measuring size: the file is decoded and shrunk off the main thread (createImageBitmap from
+ * its bytes), so the page only draws the small copy (#31: drawing a 6790 x 3213 file decoded all of it on the main thread,
+ * about 300 ms). Where that is not available or fails, the loaded image is drawn as before. Throws when the pixels
+ * cannot be read (a tainted canvas); measureLogo catches it.
  */
-function measure(img: HTMLImageElement): { readable: boolean; trim: LogoTrim | null } {
-    try {
-        const natural = { width: img.naturalWidth, height: img.naturalHeight };
-        const size = measureSize(natural);
-        if (!size) return { readable: false, trim: null };
-        const canvas = document.createElement('canvas');
-        canvas.width = size.width;
-        canvas.height = size.height;
-        const ctx = canvas.getContext('2d', { willReadFrequently: true });
-        if (!ctx) return { readable: false, trim: null };
-        ctx.drawImage(img, 0, 0, size.width, size.height);
-        const pixels = ctx.getImageData(0, 0, size.width, size.height).data;
-        return { readable: true, trim: scaleTrim(alphaBounds(pixels, size.width, size.height), size.scale, natural) };
-    } catch {
-        return { readable: false, trim: null };
-    }
+function pixelReader(img: HTMLImageElement): PixelReader {
+    return async (url, size) => {
+        try {
+            if (typeof fetch === 'function' && typeof createImageBitmap === 'function') {
+                const response = await fetch(url);
+                if (response.ok) {
+                    const bitmap = await createImageBitmap(await response.blob(), { resizeWidth: size.width, resizeHeight: size.height, resizeQuality: 'medium' });
+                    try {
+                        return drawnPixels(bitmap, size);
+                    } finally {
+                        bitmap.close?.();
+                    }
+                }
+            }
+        } catch {
+            // fall back to the loaded image below
+        }
+        return drawnPixels(img, size);
+    };
 }
 
 async function lookup(appId: number, urls: string[], key: string): Promise<LogoChoice | null> {
     for (const url of urls) {
         const img = await loadImage(url);
         if (!img || !(img.naturalWidth > 0)) continue;
-        const seen = measure(img);
+        const seen = await measureLogo(url, { width: img.naturalWidth, height: img.naturalHeight }, pixelReader(img));
         // A blank file (Steam's local logo can be fully transparent) is no logo: the next source, else the name.
         if (isBlankLogo(seen.readable, seen.trim)) continue;
         const file: LogoChoice = { url, trim: seen.trim, natural: { width: img.naturalWidth, height: img.naturalHeight } };
