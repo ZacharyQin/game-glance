@@ -34,6 +34,26 @@ export function measureSize(natural: { width: number; height: number }): { width
     return { width: Math.max(1, Math.round(natural.width * scale)), height: Math.max(1, Math.round(natural.height * scale)), scale };
 }
 
+/** Reads a file's RGBA pixels at `size` (a smaller copy); null when they cannot be read. */
+export type PixelReader = (url: string, size: { width: number; height: number }) => Promise<ArrayLike<number> | null>;
+
+/**
+ * The visible part of a logo file (`trim`, in its own pixels; null when nothing shows) and whether its pixels could be read
+ * (`readable`; when not, the file is drawn whole). Only the copy at measureSize is read: a 6790 x 3213 SteamGridDB logo
+ * decoded whole on the main thread froze Home for about 300 ms (#31). Never rejects.
+ */
+export async function measureLogo(url: string, natural: { width: number; height: number }, read: PixelReader): Promise<{ readable: boolean; trim: LogoTrim | null }> {
+    const size = measureSize(natural);
+    if (!size) return { readable: false, trim: null };
+    try {
+        const pixels = await read(url, { width: size.width, height: size.height });
+        if (!pixels) return { readable: false, trim: null };
+        return { readable: true, trim: scaleTrim(alphaBounds(pixels, size.width, size.height), size.scale, natural) };
+    } catch {
+        return { readable: false, trim: null };
+    }
+}
+
 /** A crop found on the smaller copy, in the file's own pixels: rounded outward (never cutting the artwork), inside the file. */
 export function scaleTrim(trim: LogoTrim | null, scale: number, natural: { width: number; height: number }): LogoTrim | null {
     if (!trim || !(scale > 0)) return null;
