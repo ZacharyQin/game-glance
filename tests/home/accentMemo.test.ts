@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { accentMemo, knownAccent } from '../../src/home/accentMemo';
+import { accentMemo, ArtKeyedMemo, knownAccent } from '../../src/home/accentMemo';
 
 describe('the accent memo (one for Home and the game page)', () => {
     beforeEach(() => accentMemo.clear());
@@ -13,5 +13,26 @@ describe('the accent memo (one for Home and the game page)', () => {
         accentMemo.set(1, '#111111');
         expect(knownAccent('#222222', 1)).toBe('#222222');
         expect(knownAccent(undefined, 2)).toBeUndefined();
+    });
+});
+
+describe('a colour remembered for art changed since (#32)', () => {
+    it('is forgotten once the art version changes, and a colour set after that is kept', () => {
+        let version = 1;
+        const memo = new ArtKeyedMemo(() => version);
+        memo.set(7, '#df7744');
+        expect(memo.get(7)).toBe('#df7744');
+        expect(memo.has(7)).toBe(true);
+        version = 2;
+        expect(memo.has(7)).toBe(false);
+        expect(memo.get(7)).toBeUndefined();
+        memo.set(7, '#0040c0');
+        expect(memo.get(7)).toBe('#0040c0');
+    });
+
+    it('a game whose art never changes keeps its colour', () => {
+        const memo = new ArtKeyedMemo(() => 0);
+        memo.set(8, '#123456');
+        expect(memo.get(8)).toBe('#123456');
     });
 });

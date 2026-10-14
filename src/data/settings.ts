@@ -9,7 +9,7 @@ export interface Settings {
     wishlistDeals: boolean; // look up wishlist sales on Steam's public store
     cleanPage: boolean; // the Game Glance page's Clean look: one row at the bottom, no description or HowLongToBeat cards
     homeStatusBar: boolean; // Spotlight Home's status bar: clock, battery and connection in Steam's top strip
-    statusAvatar: boolean; // your avatar, square and ringed in your status colour, in the status bar instead of the dot
+    statusAvatar: boolean; // your avatar, round and ringed in your status colour, in the status bar instead of the dot
     gameLogo: boolean; // the game's logo instead of its name on Home and the game page (the name when it has none)
     homeRow: string; // Home's games row: 'recent' (Steam's recent games, with those new to the library) or a collection id
     homeRowSort: RowSort; // how a collection's games are sorted in the row

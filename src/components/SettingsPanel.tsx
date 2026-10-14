@@ -142,7 +142,7 @@ export function SettingsPanel() {
                 <PanelSectionRow>
                     <ToggleField
                         label="Profile picture in the status bar"
-                        description="Shows your avatar, square and ringed in your online colour, instead of the dot."
+                        description="Shows your avatar, round and ringed in your online colour, instead of the dot."
                         checked={statusAvatar}
                         onChange={(value) => settings.setStatusAvatar(value)}
                     />

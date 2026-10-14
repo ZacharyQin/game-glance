@@ -20,7 +20,7 @@ import { steamLanguageToLocale } from '../logic/format';
 import { heroicStoreLabel } from '../logic/heroic';
 import { accentFor, DEFAULT_ACCENT } from './accent';
 import { accentMemo } from './accentMemo';
-import { sampleAccent } from './accentSample';
+import { accentVersion, sampleAccent } from './accentSample';
 import { DownloadState } from './downloadProgress';
 import { useDownload } from './useDownload';
 import { Chip, gameChips, libraryChips, readLibraryCounts, readStorageBytes } from './chips';
@@ -311,7 +311,7 @@ function useAccent(appId: number | null, resting: number | null): string {
         if (!now.fetch || appId === null) return undefined;
         let active = true;
         // accentFor never rejects, but a guard costs nothing and Home must not see an unhandled rejection.
-        accentFor(appId, { cache, sample: sampleAccent })
+        accentFor(appId, { cache, sample: sampleAccent, version: accentVersion })
             .then((color) => {
                 accentMemo.set(appId, color);
                 if (active) setAccent(color);
@@ -335,7 +335,7 @@ const ACCENT_WARMUP_DELAY_MS = 1500;
  * sampled only for a game never seen. Stops on unmount; waits while the page is hidden.
  */
 function useAccentWarmup(ids: number[], neighbours: number[]) {
-    const lookup = (id: number) => accentFor(id, { cache, sample: sampleAccent });
+    const lookup = (id: number) => accentFor(id, { cache, sample: sampleAccent, version: accentVersion });
     const neighbourKey = neighbours.join(',');
     useEffect(() => {
         if (neighbours.length === 0) return;
@@ -448,7 +448,7 @@ export function useCardAccents(appIds: number[], enabled: boolean): (appId: numb
         const ids = key.split(',').map(Number).filter((id) => !accentMemo.has(id));
         (async () => {
             for (let i = 0; i < ids.length && active; i += CARD_ACCENT_BATCH) {
-                await fillMissing(ids.slice(i, i + CARD_ACCENT_BATCH), accentMemo, (id) => accentFor(id, { cache, sample: sampleAccent }), CARD_ACCENT_BATCH, DEFAULT_ACCENT);
+                await fillMissing(ids.slice(i, i + CARD_ACCENT_BATCH), accentMemo, (id) => accentFor(id, { cache, sample: sampleAccent, version: accentVersion }), CARD_ACCENT_BATCH, DEFAULT_ACCENT);
                 if (active) setVersion((v) => v + 1);
             }
         })().catch((error) => console.warn(`${LOG_PREFIX} Home: card accents failed`, error));

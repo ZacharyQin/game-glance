@@ -10,7 +10,7 @@ import { getSourceLabel } from '../data/source';
 import { mergePlaytime } from '../data/unifideckPlaytime';
 import { getDescription, getSteamLanguage, peekSteamLanguage, readGameInfo } from '../data/steam';
 import { accentFor } from '../home/accent';
-import { sampleAccent } from '../home/accentSample';
+import { accentVersion, sampleAccent } from '../home/accentSample';
 import { homeMode } from '../home/mode';
 import { formatLastPlayed } from '../home/recents';
 import { useAsync } from '../hooks/useAsync';
@@ -55,7 +55,7 @@ interface Props {
 /** The game's accent (same source and cache as Spotlight Home), only while restyled; undefined until known. */
 function useGameAccent(appId: number, active: boolean): string | undefined {
     const loaded = useAsync(active && appId !== 0 ? `accent:${appId}` : null, async () => {
-        const color = await accentFor(appId, { cache, sample: sampleAccent });
+        const color = await accentFor(appId, { cache, sample: sampleAccent, version: accentVersion });
         accentMemo.set(appId, color);
         return color;
     });
