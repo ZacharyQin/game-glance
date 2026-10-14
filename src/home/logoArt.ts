@@ -1,5 +1,6 @@
-import { displayInfo, loadDecoded, logoCopy, makeCopy } from './artShrink';
+import { displayInfo, loadDecoded, logoCopy, logoWorkSize, makeCopy } from './artShrink';
 import { browserStores, logoUrls } from './artwork';
+import { imageSize } from './imageSize';
 import { isBlankLogo, knownLogo, LogoChoice, measureLogo, PixelReader, rememberLogo } from './logo';
 
 /**
@@ -33,6 +34,16 @@ function drawnPixels(source: CanvasImageSource, size: { width: number; height: n
     return ctx.getImageData(0, 0, size.width, size.height).data;
 }
 
+/** `source`'s pixels at `size`: shrunk off the main thread (createImageBitmap), so the page only draws the small copy. */
+async function smallPixels(source: ImageBitmapSource, size: { width: number; height: number }): Promise<Uint8ClampedArray | null> {
+    const bitmap = await createImageBitmap(source, { resizeWidth: size.width, resizeHeight: size.height, resizeQuality: 'medium' });
+    try {
+        return drawnPixels(bitmap, size);
+    } finally {
+        bitmap.close?.();
+    }
+}
+
 /**
  * Reads a logo's pixels at the measuring size: the file is decoded and shrunk off the main thread (createImageBitmap from
  * its bytes), so the page only draws the small copy (#31: drawing a 6790 x 3213 file decoded all of it on the main thread,
@@ -44,14 +55,7 @@ function pixelReader(img: HTMLImageElement): PixelReader {
         try {
             if (typeof fetch === 'function' && typeof createImageBitmap === 'function') {
                 const response = await fetch(url);
-                if (response.ok) {
-                    const bitmap = await createImageBitmap(await response.blob(), { resizeWidth: size.width, resizeHeight: size.height, resizeQuality: 'medium' });
-                    try {
-                        return drawnPixels(bitmap, size);
-                    } finally {
-                        bitmap.close?.();
-                    }
-                }
+                if (response.ok) return await smallPixels(await response.blob(), size);
             }
         } catch {
             // fall back to the loaded image below
@@ -60,18 +64,65 @@ function pixelReader(img: HTMLImageElement): PixelReader {
     };
 }
 
+/** Enough of a file's start to find its size in (PNG: 24 bytes; JPEG: after its metadata segments). */
+const HEADER_BYTES = 64 * 1024;
+
+/**
+ * A huge logo file (custom art), decoded once: its size is read from its header (home/imageSize) and the file decoded
+ * straight to logoWorkSize, off the main thread; its visible part is measured on that copy and its drawn copy made from
+ * it. Decoding the #31 logo to load it, to measure it and to copy it took three decodes of 180-340 ms each: the logo was
+ * ready about 1.4 s after Home opened. What to draw; null for a blank file; undefined when the file is not huge, its size
+ * is not in its header, or anything fails (lookOnce looks at it as before).
+ */
+async function lookHuge(url: string): Promise<LogoChoice | null | undefined> {
+    try {
+        if (typeof fetch !== 'function' || typeof createImageBitmap !== 'function') return undefined;
+        const response = await fetch(url);
+        if (!response.ok) return undefined;
+        const blob = await response.blob();
+        const natural = imageSize(new Uint8Array(await blob.slice(0, HEADER_BYTES).arrayBuffer()));
+        const perCanvas = displayInfo().perCanvas;
+        const work = natural && logoWorkSize(natural, perCanvas);
+        if (!natural || !work) return undefined;
+        const bitmap = await createImageBitmap(blob, { resizeWidth: work.width, resizeHeight: work.height, resizeQuality: 'high' });
+        try {
+            const seen = await measureLogo(url, natural, (_url, size) => smallPixels(bitmap, size));
+            if (isBlankLogo(seen.readable, seen.trim)) return null;
+            const file: LogoChoice = { url, trim: seen.trim, natural };
+            const copy = logoCopy(file, perCanvas);
+            if (!copy) return file;
+            // A visible part under half the file is drawn bigger than the work copy holds: copied from the file instead.
+            const fits = copy.natural.width <= work.width && copy.natural.height <= work.height;
+            const src = await makeCopy(url, copy.natural, 'image/png', fits ? bitmap : blob);
+            return src ? { ...copy, src } : file;
+        } finally {
+            bitmap.close?.();
+        }
+    } catch {
+        return undefined;
+    }
+}
+
+/** A logo file looked at: decoded (loadImage), measured, and copied when it is far bigger than it is drawn. */
+async function lookOnce(url: string): Promise<LogoChoice | null> {
+    const img = await loadImage(url);
+    if (!img || !(img.naturalWidth > 0)) return null;
+    const seen = await measureLogo(url, { width: img.naturalWidth, height: img.naturalHeight }, pixelReader(img));
+    if (isBlankLogo(seen.readable, seen.trim)) return null;
+    const file: LogoChoice = { url, trim: seen.trim, natural: { width: img.naturalWidth, height: img.naturalHeight } };
+    // A logo far bigger than it is drawn (custom art: 3841x5405) is drawn from a smaller copy (home/artShrink).
+    const copy = logoCopy(file, displayInfo().perCanvas);
+    const src = copy ? await makeCopy(url, copy.natural, 'image/png') : null;
+    return copy && src ? { ...copy, src } : file;
+}
+
 async function lookup(appId: number, urls: string[], key: string): Promise<LogoChoice | null> {
     for (const url of urls) {
-        const img = await loadImage(url);
-        if (!img || !(img.naturalWidth > 0)) continue;
-        const seen = await measureLogo(url, { width: img.naturalWidth, height: img.naturalHeight }, pixelReader(img));
-        // A blank file (Steam's local logo can be fully transparent) is no logo: the next source, else the name.
-        if (isBlankLogo(seen.readable, seen.trim)) continue;
-        const file: LogoChoice = { url, trim: seen.trim, natural: { width: img.naturalWidth, height: img.naturalHeight } };
-        // A logo far bigger than it is drawn (custom art: 3841x5405) is drawn from a smaller copy (home/artShrink).
-        const copy = logoCopy(file, displayInfo().perCanvas);
-        const src = copy ? await makeCopy(url, copy.natural, 'image/png') : null;
-        const choice: LogoChoice = copy && src ? { ...copy, src } : file;
+        const huge = await lookHuge(url);
+        const choice = huge === undefined ? await lookOnce(url) : huge;
+        // A file that does not load, or a blank one (Steam's local logo can be fully transparent), is no logo: the next
+        // source, else the name.
+        if (!choice) continue;
         rememberLogo(appId, key, choice);
         return choice;
     }

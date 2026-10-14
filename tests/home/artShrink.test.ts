@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { copyPlan, createCopyCache, displayInfo, isPngUrl, logoCopy, noteDisplay, resetDisplay } from '../../src/home/artShrink';
+import { copyPlan, createCopyCache, displayInfo, isPngUrl, logoCopy, logoWorkSize, noteDisplay, resetDisplay } from '../../src/home/artShrink';
 import { logoFit } from '../../src/home/logo';
 
 describe('copyPlan (art drawn with background-size: cover in `box`, device px)', () => {
@@ -54,6 +54,27 @@ describe('logoCopy', () => {
     });
 });
 
+describe('logoWorkSize (a huge logo is decoded once, straight to this size)', () => {
+    it('the #31 logo (6790 x 3213) on the Ally: room for a copy of a visible part at least half the file wide', () => {
+        expect(logoWorkSize({ width: 6790, height: 3213 }, 4 / 3)).toEqual({ width: 2240, height: 1060 });
+    });
+    it('a tall logo is sized by the box width too, the side that limits it least', () => {
+        expect(logoWorkSize({ width: 3841, height: 5405 }, 4 / 3)).toEqual({ width: 2240, height: 3153 });
+    });
+    it('the work copy covers any logoCopy of a visible part at least half the file', () => {
+        const natural = { width: 6790, height: 3213 };
+        const work = logoWorkSize(natural, 4 / 3)!;
+        const copy = logoCopy({ url: 'u', trim: { x: 0, y: 0, width: natural.width / 2, height: 300 }, natural }, 4 / 3)!;
+        expect(copy.natural.width).toBeLessThanOrEqual(work.width);
+        expect(copy.natural.height).toBeLessThanOrEqual(work.height);
+    });
+    it("null for a file not worth it (Steam's 640 px logos) or no size", () => {
+        expect(logoWorkSize({ width: 640, height: 360 }, 4 / 3)).toBeNull();
+        expect(logoWorkSize({ width: 0, height: 360 }, 4 / 3)).toBeNull();
+        expect(logoWorkSize({ width: 6790, height: 3213 }, 0)).toBeNull();
+    });
+});
+
 describe('displayInfo', () => {
     afterEach(() => resetDisplay());
     it("an Ally until Home has measured: 1920x1080, 4/3 device px per canvas px", () => {
@@ -105,6 +126,15 @@ describe('createCopyCache', () => {
         await cache('u', size, 'image/jpeg');
         await cache('u', size, 'image/jpeg');
         expect(make).toHaveBeenCalledTimes(2);
+    });
+    it('hands the source to make (a decoded copy to shrink instead of the file); a hit does not need it', async () => {
+        const make = vi.fn(async (_u: string, _s: unknown, _t: string, source?: unknown) => (source ? 'from-source' : 'from-file'));
+        const cache = createCopyCache(make, 8);
+        const source = {} as ImageBitmap;
+        expect(await cache('u', size, 'image/png', source)).toBe('from-source');
+        expect(make).toHaveBeenLastCalledWith('u', size, 'image/png', source);
+        expect(await cache('u', size, 'image/png')).toBe('from-source');
+        expect(make).toHaveBeenCalledTimes(1);
     });
     it('keeps at most `max` copies', async () => {
         const make = vi.fn(async (url: string) => `c:${url}`);

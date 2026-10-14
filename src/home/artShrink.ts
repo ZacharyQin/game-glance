@@ -1,5 +1,6 @@
 import { loadWithTimeout } from './accentSample';
 import { LogoChoice, logoFit, scaleTrim } from './logo';
+import { LOGO_BOX } from '../styles/logoBox';
 
 /**
  * Smaller copies of oversized art. Custom art (SteamGridDB) is often far bigger than it is drawn: logos of 3841x5405 and
@@ -47,6 +48,20 @@ export function logoCopy(choice: LogoChoice, perCanvas: number): LogoChoice | nu
     const natural = { width: up(choice.natural.width * scale), height: up(choice.natural.height * scale) };
     const actual = natural.width / choice.natural.width;
     return { url: choice.url, trim: scaleTrim(choice.trim, 1 / actual, natural), natural };
+}
+
+/**
+ * The size a huge logo is decoded straight to (createImageBitmap from its bytes), so its file is decoded once: its visible
+ * part is measured on this copy and its drawn copy (logoCopy) made from it, instead of decoding the file three times
+ * (to load it, to measure it, to copy it: about 1.4 s for the #31 logo on the Ally). Room for the copy of a visible part
+ * at least half the file wide or tall (LOGO_BOX on its longer side, perCanvas, LOGO_MARGIN, times 2); a narrower one is
+ * copied from the file again. Null when the file is not much bigger (decoding it as it is costs little).
+ */
+export function logoWorkSize(natural: Size, perCanvas: number): Size | null {
+    if (!valid(natural) || !(perCanvas > 0)) return null;
+    const scale = Math.min(1, 2 * LOGO_MARGIN * perCanvas * Math.max(LOGO_BOX.width / natural.width, LOGO_BOX.height / natural.height));
+    if (scale * MIN_GAIN >= 1) return null;
+    return { width: up(natural.width * scale), height: up(natural.height * scale) };
 }
 
 export interface DisplayInfo {
@@ -104,16 +119,24 @@ export function loadDecoded(url: string, crossOrigin = false): Promise<HTMLImage
     }
 }
 
+/** The file at `url`, as bytes to decode; null when it does not load. */
+async function fetchBlob(url: string): Promise<Blob | null> {
+    if (typeof fetch !== 'function') return null;
+    const response = await fetch(url);
+    return response.ok ? response.blob() : null;
+}
+
 /**
  * A copy of `url` at `size` as a blob url (decoded and resized off the main thread by createImageBitmap, encoded by an
- * OffscreenCanvas), already decoded once; null when anything is missing or fails (the file is drawn instead).
+ * OffscreenCanvas), already decoded once; null when anything is missing or fails (the file is drawn instead). From
+ * `source` when given (the file already decoded, at least `size`), else from the file.
  */
-async function createCopy(url: string, size: Size, type: CopyType): Promise<string | null> {
+async function createCopy(url: string, size: Size, type: CopyType, source?: ImageBitmapSource): Promise<string | null> {
     try {
-        if (typeof createImageBitmap !== 'function' || typeof OffscreenCanvas !== 'function' || typeof fetch !== 'function') return null;
-        const response = await fetch(url);
-        if (!response.ok) return null;
-        const bitmap = await createImageBitmap(await response.blob(), { resizeWidth: size.width, resizeHeight: size.height, resizeQuality: 'high' });
+        if (typeof createImageBitmap !== 'function' || typeof OffscreenCanvas !== 'function') return null;
+        const from = source ?? (await fetchBlob(url));
+        if (!from) return null;
+        const bitmap = await createImageBitmap(from, { resizeWidth: size.width, resizeHeight: size.height, resizeQuality: 'high' });
         const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
         const ctx = canvas.getContext('2d');
         if (!ctx) return null;
@@ -132,7 +155,7 @@ async function createCopy(url: string, size: Size, type: CopyType): Promise<stri
 }
 
 export type CopyType = 'image/jpeg' | 'image/png';
-type CopyMaker = (url: string, size: Size, type: CopyType) => Promise<string | null>;
+type CopyMaker = (url: string, size: Size, type: CopyType, source?: ImageBitmapSource) => Promise<string | null>;
 
 /**
  * `make` remembered by file, size and type (the newest `max`), shared by everyone asking at the same time: a game's art
@@ -140,7 +163,7 @@ type CopyMaker = (url: string, size: Size, type: CopyType) => Promise<string | n
  */
 export function createCopyCache(make: CopyMaker, max: number): CopyMaker {
     const copies = new Map<string, Promise<string | null>>();
-    return (url, size, type) => {
+    return (url, size, type, source) => {
         const key = `${url}|${size.width}x${size.height}|${type}`;
         const hit = copies.get(key);
         if (hit) {
@@ -148,7 +171,7 @@ export function createCopyCache(make: CopyMaker, max: number): CopyMaker {
             copies.set(key, hit);
             return hit;
         }
-        const run = make(url, size, type).then((copy) => {
+        const run = make(url, size, type, source).then((copy) => {
             if (copy === null) copies.delete(key);
             return copy;
         }, () => {
