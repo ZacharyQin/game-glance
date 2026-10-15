@@ -46,8 +46,6 @@ https://github.com/user-attachments/assets/e12cb973-b34c-4dff-8f94-b0b59762a67a
 
 *Spotlight Home on a ROG Xbox Ally: picking games, then opening one in the Clean look and in the Spotlight look.*
 
-![Spotlight Home on a TV: the game's logo, its chips, Play and the games row](docs/images/tv-home-logo.jpg)
-
 An optional new Home screen, off by default (Quick Access → Game Glance → Spotlight Home).
 
 - **One game at a time.** The selected game fills the screen with its art, its title (or logo) and when you last played
