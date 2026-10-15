@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { Box, ExtraColumn, Measure, pageTargets, PageLook, PageStat, StatKey } from '../../src/home/openTargets';
+import { PAGE_LAYOUT } from '../../src/styles/themeCss';
 
 interface Fixture {
     screen: { width: number; height: number };
@@ -125,6 +126,27 @@ describe('pageTargets stats', () => {
     });
     it('no extras asked for: none', () => {
         expect(pageTargets('spotlight', screen, [played, main], measure, store).extras).toBeUndefined();
+    });
+    it('on a screen wider than 16:9 the Spotlight cards keep a 16:9 TV\'s widths: the info card at the left side, HowLongToBeat at the right', () => {
+        const { gridGap, split: [a, b], maxW } = PAGE_LAYOUT.cards;
+        const cards = (w: number, h: number) => pageTargets('spotlight', { width: w, height: h }, [played, main], measure, store).shells;
+        // 21:9 (the Ally's TV window emulated at 1500x643): d = 643 / 810, 56 sides (not a TV by height).
+        const d = 643 / 810;
+        const side = PAGE_LAYOUT.side.base * d;
+        const [info, hltb] = cards(1500, 643);
+        expect(info.x).toBeCloseTo(side, 6);
+        // Wider than 9:5, the description card is as wide as the HowLongToBeat card (Michael, 21:9 on the Ally).
+        expect(hltb.w).toBeCloseTo(((maxW - gridGap) * b) / (a + b) * d, 6);
+        expect(info.w).toBeCloseTo(hltb.w, 6);
+        expect(hltb.x + hltb.w).toBeCloseTo(1500 - side, 6);
+        // 16:9, unchanged (one row edge to edge, the gap between): the handheld (828x466, 56 sides) and the Ally docked to a 1080p TV (1500x844, 24 sides: exactly the cap).
+        for (const [w, h, s] of [[828, 466, PAGE_LAYOUT.side.base], [1500, 844, PAGE_LAYOUT.side.tv]]) {
+            const unit = w / 1440;
+            const [i, t] = cards(w, h);
+            expect(i.x).toBeCloseTo(s * unit, 6);
+            expect(t.x - (i.x + i.w)).toBeCloseTo(gridGap * unit, 6);
+            expect(t.x + t.w).toBeCloseTo(w - s * unit, 6);
+        }
     });
     it('a stat the page lacks has no target', () => {
         const t = pageTargets('spotlight', screen, [{ key: 'played', label: 'Play Time', value: '1 h' }, { key: 'hltb', label: 'Main', value: '9 h' }], measure, store);
