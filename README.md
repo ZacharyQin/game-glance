@@ -187,6 +187,13 @@ occasional breakage; issues are welcome.
 The code was written with [Claude](https://claude.ai) (Anthropic's AI), directed, reviewed and tested on device by the
 author.
 
+## Support
+
+Game Glance is free. If you'd like to support its development, you can do so on Ko-fi. It's entirely optional: bug
+reports and ideas are just as welcome.
+
+[![Support Game Glance on Ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/michpalm)
+
 ## Credits
 
 - HowLongToBeat lookup code from [HLTB for Deck](https://github.com/morwy/hltb-for-deck) (MIT), including the fix from
