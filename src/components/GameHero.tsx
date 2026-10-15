@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { LOG_PREFIX } from '../constants';
+import { withKnownAchievements } from '../home/detailsMemo';
 import { cache } from '../data/cache';
 import { setCurrentGame } from '../data/currentGame';
 import { lookupHltb } from '../data/hltb';
@@ -9,7 +10,7 @@ import { getSourceLabel } from '../data/source';
 import { mergePlaytime } from '../data/unifideckPlaytime';
 import { getDescription, getSteamLanguage, peekSteamLanguage, readGameInfo } from '../data/steam';
 import { accentFor } from '../home/accent';
-import { sampleAccent } from '../home/accentSample';
+import { accentVersion, sampleAccent } from '../home/accentSample';
 import { homeMode } from '../home/mode';
 import { formatLastPlayed } from '../home/recents';
 import { useAsync } from '../hooks/useAsync';
@@ -21,15 +22,20 @@ import { useUnifideckSize } from '../hooks/useUnifideckSize';
 import { useOverrideVersion } from '../hooks/useOverrideVersion';
 import { steamLanguageToLocale } from '../logic/format';
 import { heroicStoreLabel } from '../logic/heroic';
-import { sizeStat, steamSpaceStat } from '../logic/sizeStat';
+import { rememberSizeLabel, sizeStat, steamSpaceStat } from '../logic/sizeStat';
 import { memoSpaceRequired } from '../home/detailsMemo';
 import { useDownload } from '../home/useDownload';
 import { useLaunchOverlay } from '../styles/launchOverlay';
-import { accentCss, cleanCss, downloadCss, launchCss, launchSelectors, themeCss, unifideckCss } from '../styles/theme';
+import { useOpenArrival } from '../hooks/useOpenArrival';
+import { openPending } from '../data/openIntent';
+import { knownDescription, peekHltb, rememberDescription, rememberHltb } from '../home/warmup';
+import { accentMemo, knownAccent } from '../home/accentMemo';
+import { accentCss, arrivingCss, cleanCss, downloadCss, launchCss, launchSelectors, themeCss, unifideckCss } from '../styles/theme';
 import { CleanInfo } from './CleanInfo';
 import { ErrorBoundary } from './ErrorBoundary';
 import { GameStatusBar } from './GameStatusBar';
 import { UnifideckRowNav } from './UnifideckRowNav';
+import { UnifideckCloud } from './UnifideckCloud';
 import { HltbCard } from './HltbCard';
 import { InfoCard } from './InfoCard';
 import { FamilyPill, SourcePill } from './SourcePill';
@@ -45,17 +51,16 @@ interface Props {
     details: unknown;
 }
 
-/** Accents resolved this session, so a page opened again starts on its game's colour instead of the default. */
-const accentMemo = new Map<number, string>();
 
 /** The game's accent (same source and cache as Spotlight Home), only while restyled; undefined until known. */
 function useGameAccent(appId: number, active: boolean): string | undefined {
     const loaded = useAsync(active && appId !== 0 ? `accent:${appId}` : null, async () => {
-        const color = await accentFor(appId, { cache, sample: sampleAccent });
+        const color = await accentFor(appId, { cache, sample: sampleAccent, version: accentVersion });
         accentMemo.set(appId, color);
         return color;
     });
-    return active ? (loaded ?? accentMemo.get(appId)) : undefined;
+    // Until it answers, the colour already known this session (Home's too: home/accentMemo), so the first frame has it.
+    return active ? knownAccent(loaded, appId) : undefined;
 }
 
 /** "Last played · Today" from Steam's overview (Unix seconds); null if never played or unreadable. */
@@ -72,7 +77,9 @@ function lastPlayedEyebrow(overview: unknown, locale: string, unifideckLastPlaye
 }
 
 function Hero({ overview, details, restyle, clean }: Props & { restyle: boolean; clean: boolean }) {
-    const steamGame = readGameInfo(overview, details);
+    // Until Steam has loaded the game's details, the achievement counts Spotlight Home already knows (home/detailsMemo), so the
+    // first frame is complete (the Clean panel no longer gains its Achievements column after the open transition's hand-over).
+    const steamGame = withKnownAchievements(readGameInfo(overview, details));
     // A Unifideck game: its own play time and last played, as on Unifideck's Play row (Steam has none for these).
     const unifideck = useUnifideckPlaytime(steamGame.appId, steamGame.isShortcut);
     const game = unifideck ? { ...steamGame, playedMinutes: mergePlaytime({ minutes: steamGame.playedMinutes, lastPlayed: 0 }, unifideck).minutes } : steamGame;
@@ -85,12 +92,26 @@ function Hero({ overview, details, restyle, clean }: Props & { restyle: boolean;
         getSourceLabel(game.appId, game.isShortcut, undefined, heroicStoreLabel(game.heroic)),
     );
     // Wait for the language so the description is fetched once, in the right language.
-    const description = useAsync(lang === undefined ? null : `desc:${game.appId}:${lang}`, () =>
+    const fetchedDescription = useAsync(lang === undefined ? null : `desc:${game.appId}:${lang}`, () =>
         game.isShortcut ? getShortcutDescription(game, lang ?? 'english') : getDescription(game.appId, lang ?? 'english'),
     );
-    const hltb = useAsync(`hltb:${game.appId}:${overrideVersion}`, () =>
+    // Until the fetch answers, the text Spotlight Home already fetched (home/warmup), so the first frame has it and the
+    // open transition's copy of it hands over unchanged.
+    const description = knownDescription(fetchedDescription, game.appId, lang);
+    useEffect(() => {
+        if (lang !== undefined && fetchedDescription) rememberDescription(game.appId, lang, fetchedDescription);
+    }, [game.appId, lang, fetchedDescription]);
+    const looked = useAsync(`hltb:${game.appId}:${overrideVersion}`, () =>
         lookupHltb({ appId: game.appId, name: game.name, isShortcut: game.isShortcut }),
     );
+    // Until the lookup answers, the times Spotlight Home already knows (its session memo, home/warmup), so the first frame
+    // is complete (the Clean panel no longer narrows for a moment at the open transition's hand-over).
+    const hltb = looked ?? peekHltb(game.appId);
+    useEffect(() => {
+        if (looked) rememberHltb(game.appId, looked);
+    }, [game.appId, looked]);
+    // Opened from Spotlight Home's open transition: Home's eyebrow words, kept for this visit (data/openIntent).
+    const [openedFrom] = useState(() => openPending(game.appId));
 
     const { homeStatusBar: statusBar, gameLogo } = useSettings();
     const accent = useGameAccent(game.appId, restyle);
@@ -111,11 +132,17 @@ function Hero({ overview, details, restyle, clean }: Props & { restyle: boolean;
     const spaceNeeded = (details as { lDiskSpaceRequiredBytes?: unknown } | null | undefined)?.lDiskSpaceRequiredBytes;
     const steamSize = restyle && !game.isShortcut ? steamSpaceStat(overview, typeof spaceNeeded === 'number' ? spaceNeeded : memoSpaceRequired(game.appId), locale, tr('spaceRequired')) : null;
     const size = (restyle && typeof uniInstalled === 'boolean' ? sizeStat(unifideckSize, uniInstalled, locale, nativeSizeLabel) : null) ?? steamSize;
+    // Kept for Home's open, which draws this column before the page (OpenExtras) in Unifideck's own word.
+    useEffect(() => {
+        if (typeof uniInstalled === 'boolean') rememberSizeLabel(uniInstalled, nativeSizeLabel);
+    }, [uniInstalled, nativeSizeLabel]);
     const fillCss = restyle ? downloadCss(download?.percent ?? null) : '';
     // While Steam's launch overlay is up, the page's text fades away so the overlay sits on the game's art alone; after
     // Play on Home (data/launchIntent) the page starts that way, so it never shows before the launch screen.
     const { overlay, hide } = launchSelectors();
     const launching = useLaunchOverlay(heroRef, overlay, hide, game.appId);
+    // Opened from Spotlight Home's open transition: the page's new parts (or the whole page) arrive once it is ready.
+    const arrival = useOpenArrival(heroRef, game.appId);
 
     useEffect(() => {
         setCurrentGame(game, hltb);
@@ -126,13 +153,14 @@ function Hero({ overview, details, restyle, clean }: Props & { restyle: boolean;
     // The Clean look, only where its layout applies (Steam's classes found); otherwise the page keeps its cards.
     const cleanStyle = clean ? cleanCss() : '';
     const family = restyle ? familyPillLabel(game.appId) : null;
-    const eyebrow = restyle ? lastPlayedEyebrow(overview, locale, unifideck?.lastPlayed ?? null) : null;
+    const eyebrow = restyle ? openedFrom?.eyebrow ?? lastPlayedEyebrow(overview, locale, unifideck?.lastPlayed ?? null) : null;
     return (
         <>
             {/* Spotlight Home's status bar, over Steam's top strip, with the restyled page (not while Steam's launch screen is up). */}
             {restyle && statusBar && !launching && <GameStatusBar />}
             {/* A Unifideck game's circle buttons are reordered by CSS; the D-pad then steps by position. */}
             {game.isShortcut && <UnifideckRowNav />}
+            {restyle && game.isShortcut && <UnifideckCloud appId={game.appId} installed={uniInstalled} />}
             {/* Spotlight Home's eyebrow and title; the theme shows them only with its full-screen layout, where Steam's logo was (hidden then). */}
             {restyle && game.name !== '' && (
                 <div className="gg-titleblock">
@@ -148,6 +176,7 @@ function Hero({ overview, details, restyle, clean }: Props & { restyle: boolean;
                 {launching && <style>{launchCss()}</style>}
                 {accent && <style>{accentCss(accent)}</style>}
                 {fillCss && <style>{fillCss}</style>}
+                {arrival && restyle && <style>{arrivingCss(clean ? 'clean' : 'spotlight', arrival.intent.mode, arrival.revealed, { cloud: arrival.intent.homeCloud === false, bars: arrival.intent.homeBars, desc: arrival.intent.homeDesc, hltb: arrival.intent.homeHltb, family: arrival.intent.homeFamily, missing: arrival.intent.homeMissing, size: arrival.intent.homeSize })}</style>}
                 {source && (
                     <SourcePill label={source}>
                         {/* A game from the family library (Steam's line under Play is hidden): with the restyled look only. */}

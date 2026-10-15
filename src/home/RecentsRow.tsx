@@ -1,8 +1,11 @@
 import { Focusable } from '@decky/ui';
 import type { GamepadEvent } from '@decky/ui';
-import { memo, Ref, useMemo } from 'react';
+import { memo, Ref, useEffect, useMemo, useState } from 'react';
 import { browserStores, capsuleUrls, heroUrls, landscapeUrls } from './artwork';
+import { displayInfo } from './artShrink';
+import { ArtBox, cardBox } from './cardArt';
 import { wideArt } from './homeView';
+import { knownCardArt, lastCardArt, resolveCardArt } from './wideCardArt';
 import { clampFocus, isLibraryFocus, MAX_GHOSTS, RecentsGeometry, recentsLayout } from './recentsLayout';
 import type { HomeGame } from './useHomeData';
 import { tr } from '../i18n/steamText';
@@ -22,16 +25,43 @@ function backgrounds(list: string[]): { backgroundImage?: string } {
 }
 
 /**
- * Blurred base, the sharp portrait capsule at the right, then `art` (the wide card's layers, on the expanded
- * capsule only; homeView.wideArt) mounted last so it sits on top and fades in over the portrait. The portrait
- * is never hidden: if every wide url fails to load, base plus portrait remain (the handoff's fallback).
+ * The art to draw on a wide card (null: none yet, or none loads). Known art draws at once; otherwise it is looked up and
+ * drawn once loaded and decoded, so the card never waits on a decode (it used to stack all its files as backgrounds,
+ * the game's 3840 px hero under the landscape art, each decoded on every step).
  */
-function CapsuleArt({ cover, art, blur }: { cover: string[]; art: string[] | null; blur: boolean }) {
+function useCardArt(appId: number, list: string[] | null, box: ArtBox): string | null {
+    const known = list ? knownCardArt(appId, list) : null;
+    const key = list ? `${appId}|${list.join('|')}` : '';
+    const [loaded, setLoaded] = useState<{ key: string; url: string | null } | null>(null);
+    useEffect(() => {
+        if (!list || known !== undefined) return undefined;
+        let live = true;
+        resolveCardArt(appId, list, box).then((url) => {
+            if (live) setLoaded({ key, url });
+        }, () => undefined);
+        return () => {
+            live = false;
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [key]);
+    if (!list) return null;
+    if (known !== undefined) return known;
+    if (loaded && loaded.key === key) return loaded.url;
+    // Steam just listed another file for the game (its details loaded): the art it had stays up while that is looked up.
+    return lastCardArt(appId) ?? null;
+}
+
+/**
+ * Blurred base, the sharp portrait capsule at the right, then `art` (the wide card's art, on the expanded capsule only)
+ * mounted last so it sits on top and fades in over the portrait. The portrait is never hidden: if no wide art loads,
+ * base plus portrait remain (the handoff's fallback).
+ */
+function CapsuleArt({ cover, art, blur }: { cover: string[]; art: string | null; blur: boolean }) {
     return (
         <>
             {blur && <div className="gh-cap-blur" style={backgrounds(cover.slice(0, 1))} />}
             <div className="gh-cap-cover" style={backgrounds(cover)} />
-            {art && <div className="gh-cap-art" style={backgrounds(art)} />}
+            {art && <div className="gh-cap-art" style={backgrounds([art])} />}
         </>
     );
 }
@@ -50,15 +80,16 @@ export function capsuleBlur(i: number, selected: number): boolean {
  * One recents card. Memoized on plain props, so an L1/R1 step re-renders only the cards whose place or state changed;
  * its art urls are read from Steam's stores only when the game or its expanded state changes.
  */
-const GameCapsule = memo(function GameCapsule({ game, left, width, dim, wide, blur }: { game: HomeGame; left: number; width: number; dim: boolean; wide: boolean; blur: boolean }) {
+const GameCapsule = memo(function GameCapsule({ game, left, width, dim, wide, selected, blur, box }: { game: HomeGame; left: number; width: number; dim: boolean; wide: boolean; selected: boolean; blur: boolean; box: ArtBox }) {
     const appId = game.appId;
     const cover = useMemo(() => urls(() => capsuleUrls(appId, browserStores)), [appId]);
-    const art = useMemo(
+    const list = useMemo(
         () => (wide ? wideArt(urls(() => landscapeUrls(appId, browserStores)), urls(() => heroUrls(appId, browserStores)), cover) : null),
         [appId, wide, cover],
     );
+    const art = useCardArt(appId, list, box);
     return (
-        <div className={`gh-cap${wide ? ' gh-cap-wide' : ''}`} style={{ left: `${left}px`, width: `${width}px`, opacity: dim ? 0.35 : 1 }}>
+        <div className={`gh-cap${wide ? ' gh-cap-wide' : selected ? ' gh-cap-sel' : ''}`} style={{ left: `${left}px`, width: `${width}px`, opacity: dim ? 0.35 : 1 }}>
             <CapsuleArt cover={cover} art={art} blur={blur} />
             {/* A game new to the library (the "New to library" setting), as Steam's Home marks it. */}
             {game.isNew && <div className="gh-cap-new">{tr('newMark')}</div>}
@@ -75,6 +106,8 @@ export interface RecentsRowNav {
     onFocus(): void;
     /** Left/Right, L1/R1, View/Menu (focusZones.recentsButton). */
     onButtonDown(evt: GamepadEvent): void;
+    /** A held Left/Right let go: its repeat stops. */
+    onButtonUp?(evt: GamepadEvent): void;
     /** A: the selected game's page, or the Library on the Library card. */
     onActivate(): void;
 }
@@ -87,10 +120,13 @@ export interface RecentsRowNav {
  * still do nothing (pointer events are off in homeCss). Rendered only with games. `geometry` is the card scale's sizes
  * (handheld or docked), the same SpotlightHome gives homeCss.
  */
-export function RecentsRow({ games, selected, geometry, nav }: { games: HomeGame[]; selected: number; geometry: RecentsGeometry; nav: RecentsRowNav }) {
+export function RecentsRow({ games, selected, geometry, nav, expand = true, snap = false }: { games: HomeGame[]; selected: number; geometry: RecentsGeometry; nav: RecentsRowNav; expand?: boolean; snap?: boolean }) {
     const count = games.length;
     const at = clampFocus(count, selected);
-    const layout = recentsLayout(count, at, geometry);
+    const layout = recentsLayout(count, at, geometry, expand);
+    // The wide card in device px: its art is loaded for that size (home/artShrink).
+    const perCanvas = displayInfo().perCanvas;
+    const box = useMemo(() => cardBox(geometry, perCanvas), [geometry, perCanvas]);
     const onLibrary = isLibraryFocus(count, at);
     const library = layout.items[count];
     // The loop preview's portraits, read once per list of games (not on every step).
@@ -105,11 +141,12 @@ export function RecentsRow({ games, selected, geometry, nav }: { games: HomeGame
             onFocus={nav.onFocus}
             onGamepadFocus={nav.onFocus}
             onButtonDown={nav.onButtonDown}
+            onButtonUp={nav.onButtonUp}
             onActivate={nav.onActivate}
             role="listbox"
             aria-label={tr('recentGames')}
         >
-            <div className="gh-recents-track" style={{ transform: `translateX(${layout.scrollX}px)` }}>
+            <div className={`gh-recents-track${snap ? ' gh-recents-snap' : ''}`} style={{ transform: `translateX(${layout.scrollX}px)` }}>
                 {games.map((game, i) => (
                     <GameCapsule
                         key={game.appId}
@@ -117,7 +154,9 @@ export function RecentsRow({ games, selected, geometry, nav }: { games: HomeGame
                         left={layout.items[i].left}
                         width={layout.items[i].width}
                         dim={layout.items[i].dim}
-                        wide={!onLibrary && i === at}
+                        wide={expand && !onLibrary && i === at}
+                        selected={!onLibrary && i === at}
+                        box={box}
                         blur={capsuleBlur(i, at)}
                     />
                 ))}

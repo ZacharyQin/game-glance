@@ -2,7 +2,7 @@ import { memoDetails } from './detailsMemo';
 
 export interface SteamStores {
     details(appId: number): { libraryAssets?: { strHeroImage?: string; strHeaderImage?: string; strLogoImage?: string } } | undefined;
-    overview(appId: number): { header_filename?: string; library_capsule_filename?: string; app_type?: number } | undefined;
+    overview(appId: number): { header_filename?: string; library_capsule_filename?: string; app_type?: number; rt_custom_image_mtime?: number } | undefined;
     /** Steam's own landscape (header) art list for the app, custom art first; root-relative or absolute urls. */
     landscape?(appId: number): string[] | undefined;
     /** Custom (SteamGridDB) hero art, jpg then png; root-relative urls; [] without custom art. */
@@ -65,6 +65,24 @@ export function heroUrls(appId: number, stores: SteamStores): string[] {
     const overview = guarded(() => stores.overview(appId));
     const guessed = !hero && overview?.app_type === GAME_APP_TYPE ? guessedHeroUrls(appId) : [];
     return [...new Set([...custom, ...toUrls(appId, [hero]), ...guessed, ...toUrls(appId, [overview?.header_filename, overview?.library_capsule_filename])])];
+}
+
+/**
+ * The version of a game's custom (SteamGridDB) art: Steam's `rt_custom_image_mtime`, set on every change (probed on the
+ * Ally; Steam's custom art urls carry it as `?v=`). 0 without custom art, or when the store fails.
+ */
+export function customArtVersion(appId: number, stores: SteamStores): number {
+    const mtime = guarded(() => stores.overview(appId))?.rt_custom_image_mtime;
+    return typeof mtime === 'number' && Number.isFinite(mtime) && mtime > 0 ? mtime : 0;
+}
+
+/**
+ * The hero files the accent is sampled from: every custom hero Steam lists (it lists a .jpg and a .png, and only one
+ * exists), then the first of the others (#32: sampling only the first listed file fell back to the capsule).
+ */
+export function accentHeroUrls(appId: number, stores: SteamStores): string[] {
+    const custom = listed(() => stores.customHero?.(appId));
+    return heroUrls(appId, stores).slice(0, custom.length + 1);
 }
 
 /**
