@@ -21,6 +21,8 @@ interface Gesture {
     axis: Axis | null;
     start: number;
     last: number;
+    /** The card pitch when the drag began: a feed row's cards differ in width, and the step must not change mid-drag. */
+    step: number;
     samples: Sample[];
 }
 
@@ -49,7 +51,7 @@ export function useRowDrag(options: RowDragOptions): { dx: number; dragging: boo
     const onPointerDown: Handler = (event) => {
         if (!event.isPrimary) return;
         stopFlick();
-        gesture.current = { id: event.pointerId, x0: event.clientX, y0: event.clientY, axis: null, start: opts.current.index, last: opts.current.index, samples: [] };
+        gesture.current = { id: event.pointerId, x0: event.clientX, y0: event.clientY, axis: null, start: opts.current.index, last: opts.current.index, step: opts.current.step, samples: [] };
     };
     const onPointerMove: Handler = (event) => {
         const g = gesture.current;
@@ -67,7 +69,8 @@ export function useRowDrag(options: RowDragOptions): { dx: number; dragging: boo
         const points = native.getCoalescedEvents?.() ?? [];
         for (const p of points.length > 0 ? points : [native]) g.samples.push({ t: p.timeStamp, x: logical(p.clientX) });
         if (g.samples.length > 64) g.samples.splice(0, g.samples.length - 64);
-        const { step, count } = opts.current;
+        const { step } = g;
+        const { count } = opts.current;
         const dx = logical(event.clientX - g.x0);
         const target = dragTarget(g.start, dragSteps(dx, step), count);
         if (target.index !== g.last) {
@@ -87,7 +90,7 @@ export function useRowDrag(options: RowDragOptions): { dx: number; dragging: boo
         if (g.axis !== 'x') return;
         setState({ dragging: false, dx: 0 });
         const velocity = releaseVelocity(g.samples);
-        const delays = flickRun(velocity, opts.current.step);
+        const delays = flickRun(velocity, g.step);
         if (delays.length === 0) {
             opts.current.onRun(false);
             return;
