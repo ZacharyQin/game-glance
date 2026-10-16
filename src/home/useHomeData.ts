@@ -188,7 +188,7 @@ function withLaunchInfo(picked: RecentGame[], apps: AnyApp[]): HomeGame[] {
  * name for the eyebrow, or Steam's recent games with those new to the library. A collection that is gone, not offered
  * or has no games left falls back to the recent games, so Home is never empty because of the setting.
  */
-function readRowGames(row: string, sort: RowSort): { games: HomeGame[]; collection: string | null } {
+export function readRowGames(row: string, sort: RowSort): { games: HomeGame[]; collection: string | null } {
     if (row !== RECENT_ROW) {
         const chosen = guarded('collection', () => {
             const store = steam.collectionStore;

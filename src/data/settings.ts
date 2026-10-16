@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from 'react';
 import { RECENT_ROW, RowSort, rowSortOf } from '../home/collections';
 import { backendKv, KvBackend } from './kv';
+import { readScreensaverOptions, SCREENSAVER_DEFAULTS, ScreensaverOptions } from '../screensaver/options';
 
 export interface Settings {
     enabled: boolean;
@@ -13,10 +14,11 @@ export interface Settings {
     gameLogo: boolean; // the game's logo instead of its name on Home and the game page (the name when it has none)
     homeRow: string; // Home's games row: 'recent' (Steam's recent games, with those new to the library) or a collection id
     homeRowSort: RowSort; // how a collection's games are sorted in the row
+    screensaver: ScreensaverOptions; // Steam's screensaver drawn by Game Glance (screensaver/options)
 }
 
 const KEY = 'settings';
-const DEFAULTS: Settings = { enabled: true, autoPreload: true, spotlightHome: false, wishlistDeals: false, cleanPage: false, homeStatusBar: true, statusAvatar: false, gameLogo: false, homeRow: RECENT_ROW, homeRowSort: 'lastPlayed' };
+const DEFAULTS: Settings = { enabled: true, autoPreload: true, spotlightHome: false, wishlistDeals: false, cleanPage: false, homeStatusBar: true, statusAvatar: false, gameLogo: false, homeRow: RECENT_ROW, homeRowSort: 'lastPlayed', screensaver: SCREENSAVER_DEFAULTS };
 
 export function createSettingsStore(kv: KvBackend) {
     let current: Settings = { ...DEFAULTS };
@@ -38,6 +40,7 @@ export function createSettingsStore(kv: KvBackend) {
                 gameLogo: pick('gameLogo'),
                 homeRow: typeof raw?.homeRow === 'string' && raw.homeRow !== '' ? raw.homeRow : DEFAULTS.homeRow,
                 homeRowSort: rowSortOf(raw?.homeRowSort),
+                screensaver: readScreensaverOptions(raw?.screensaver),
             };
             emit();
         },
@@ -89,6 +92,12 @@ export function createSettingsStore(kv: KvBackend) {
         },
         async setGameLogo(gameLogo: boolean): Promise<void> {
             current = { ...current, gameLogo };
+            emit();
+            await kv.set(KEY, current);
+        },
+        /** One or more screensaver options. */
+        async setScreensaver(change: Partial<ScreensaverOptions>): Promise<void> {
+            current = { ...current, screensaver: { ...current.screensaver, ...change } };
             emit();
             await kv.set(KEY, current);
         },
