@@ -208,6 +208,14 @@ occasional breakage; issues are welcome.
 The code was written with [Claude](https://claude.ai) (Anthropic's AI), directed, reviewed and tested on device by the
 author.
 
+## Help test and support development
+
+Game Glance is free to use, and bug reports are welcome from everyone. If you’d like to help test upcoming changes on your device, you can [volunteer as a tester](https://github.com/michpalm/game-glance/issues/new?template=tester-interest.yml). Testing is optional; there is no need to join Discord or pay for access.
+
+See the [community testing guide](docs/community-testing.md) for how test rounds work. Please use the existing [device checklist](docs/device-checklist.md) when a test call refers to it, and use the Device test report issue form to report a failure.
+
+If Game Glance has been useful to you, you can also support continued development through the existing Ko-fi link. Support is optional, and all normal releases remain free.
+
 ## Support
 
 Game Glance is free. If you'd like to support its development, you can do so on Ko-fi. It's entirely optional: bug
