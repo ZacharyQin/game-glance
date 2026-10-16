@@ -575,9 +575,11 @@ export function openingRules(): string[] {
         lateFade('gh-open-settle', 0, 1, T.settle, 'ease-in-out'),
         // Always there, hidden: the page's scrims over Home's, the opened game's hero (heroFade), the glass panels.
         rule('.gh-hero-open', 'position: absolute; inset: 0; pointer-events: none; background-image: var(--gho-hero, none); background-size: cover; background-position: center 30%; background-repeat: no-repeat; opacity: 0'),
+        // (Its border is the page cards' 1 CSS px: 1px in the scaled canvas drew 0.5 px on the Ally, and the page's sharper ring
+        // showed at the hand-over.)
         // The glass: the page's cards and Clean panel (.38, its border), never blurred here (a blur under a moving scale is
         // too slow on the Ally); the arriving page grows its blur from none once revealed (themeCss.buildArrivingCss).
-        rule('.gh-open-shell', 'display: none; position: absolute; left: 0; top: 0; margin: 0; padding: 0; pointer-events: none; transform-origin: 0 0; border-radius: 16px; background: rgba(12,16,22,.38); border: 1px solid rgba(255,255,255,.12)'),
+        rule('.gh-open-shell', 'display: none; position: absolute; left: 0; top: 0; margin: 0; padding: 0; pointer-events: none; transform-origin: 0 0; border-radius: 16px; background: rgba(12,16,22,.38); border: calc(1px / var(--gho-x-d, 1)) solid rgba(255,255,255,.12)'),
         rule(O, 'pointer-events: none'),
         // The bridge (openBridge): a frozen copy of Home in its final state; nothing inside it may animate again.
         rule('.gh-root.gh-bridge, .gh-root.gh-bridge *', 'animation: none; transition: none'),
@@ -606,10 +608,12 @@ export function openingRules(): string[] {
         // The Play pill moves; its accent background becomes a layer inside it that grows to the page pill (the pill
         // stops clipping it, and keeps its focus ring on that layer).
         rule(`${M} ${play}`, 'overflow: visible; background: transparent; border-color: transparent; box-shadow: none'),
-        rule(`${M} ${play}::before`, "content: ''; position: absolute; left: 0; top: 0; width: 100%; height: 100%; border-radius: 999px; background: var(--glance-accent); transform-origin: 0 0; pointer-events: none"),
+        // (Both layers start at the pill's outer edge, its 1px border, as openMotion's scales are of its outer size: from inside
+        // the border they ended a border's width short all round, and the page pill grew at the hand-over.)
+        rule(`${M} ${play}::before`, "content: ''; position: absolute; left: -1px; top: -1px; width: calc(100% + 2px); height: calc(100% + 2px); border-radius: 999px; background: var(--glance-accent); transform-origin: 0 0; pointer-events: none"),
         // The page focuses Play (its white ring and accent glow, as Home's focus): the page's focused pill at its exact size
         // (round ends; the stretched layer's are oval) fades in as the pill comes to rest, under the glyph and label.
-        rule(`${M} ${play}::after`, "content: ''; position: absolute; left: 0; top: var(--gho-play-dy); width: calc(100% * var(--gho-play-sx)); height: calc(100% * var(--gho-play-sy)); border-radius: 999px; background: var(--glance-accent); box-shadow: 0 0 0 2px rgba(255,255,255,.9), 0 14px 40px -8px var(--glance-accent); pointer-events: none"),
+        rule(`${M} ${play}::after`, "content: ''; position: absolute; left: -1px; top: calc(var(--gho-play-dy) - 1px); width: calc((100% + 2px) * var(--gho-play-sx)); height: calc((100% + 2px) * var(--gho-play-sy)); border-radius: 999px; background: var(--glance-accent); box-shadow: 0 0 0 2px rgba(255,255,255,.9), 0 14px 40px -8px var(--glance-accent); pointer-events: none"),
         soft(`${M} ${play}::after`, 'opacity: 0'),
         rule([`${M} ${play} > .gh-btn-icon`, `${M} ${play} > .gh-btn-label`, `${M} ${play} > .gh-play-arrow`].join(', '), 'z-index: 1'),
         rule(`${M} ${play} > .gh-play-arrow`, 'transform-origin: 100% 50%'),

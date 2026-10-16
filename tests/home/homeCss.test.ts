@@ -118,6 +118,14 @@ describe('homeCss', () => {
         expect(css).toMatch(/\.gh-status-dot-away\s*\{[^}]*background:\s*#4cb4ff/);
         expect(css).toMatch(/\.gh-status-dot-off\s*\{[^}]*background:\s*rgba\(196,201,209,\.85\)/);
     });
+    it('the open transition lands on the page\'s exact edges: the glass panels\' 1px border and the Play pill\'s outer size', () => {
+        const css = homeCss(CARD_SCALE_HANDHELD);
+        // The panels are drawn in the scaled canvas: their border is the page cards' 1 CSS px, not 1 canvas px (0.5 px on the Ally).
+        expect(css).toMatch(/\.gh-open-shell \{[^}]*border: calc\(1px \/ var\(--gho-x-d, 1\)\) solid rgba\(255,255,255,\.12\)/);
+        // The pill's layers that grow into the page pill start at its outer edge (its 1px border), as openMotion's scales assume.
+        expect(css).toMatch(/\.gh-btn\[data-action="play"\]::before \{[^}]*left: -1px[^}]*top: -1px[^}]*width: calc\(100% \+ 2px\)[^}]*height: calc\(100% \+ 2px\)/);
+        expect(css).toMatch(/\.gh-btn\[data-action="play"\]::after \{[^}]*left: -1px[^}]*top: calc\(var\(--gho-play-dy\) - 1px\)[^}]*width: calc\(\(100% \+ 2px\) \* var\(--gho-play-sx\)\)[^}]*height: calc\(\(100% \+ 2px\) \* var\(--gho-play-sy\)\)/);
+    });
     it('never marks transform or opacity !important: Chromium will not run an animation of an !important property on its compositor', () => {
         // (compositeFailed 262144, kAffectsImportantProperty, probed on the Ally: the open transition's motion then ran on the
         // main thread and repainted every frame, the GPU near its limit, and stalled and jumped to its end on the screen.)
@@ -476,9 +484,9 @@ describe('homeCss open transition', () => {
         expect(all.some(([sel]) => sel.includes('.gh-open-shell::'))).toBe(false);
         // The pill: the page's focused pill at its exact size, faded in as the stretched layer stops.
         const pill = body((sel) => sel.includes('data-gh-opening="morph"') && !sel.includes('data-gh-phase') && sel.endsWith('[data-action="play"]::after'));
-        expect(pill).toContain('width: calc(100% * var(--gho-play-sx))');
-        expect(pill).toContain('height: calc(100% * var(--gho-play-sy))');
-        expect(pill).toContain('top: var(--gho-play-dy)');
+        expect(pill).toContain('width: calc((100% + 2px) * var(--gho-play-sx))');
+        expect(pill).toContain('height: calc((100% + 2px) * var(--gho-play-sy))');
+        expect(pill).toContain('top: calc(var(--gho-play-dy) - 1px)');
         expect(pill).not.toContain('transform: var(--gho-play-bg)');
         expect(body((sel) => sel.includes('data-gh-phase="to"') && sel.endsWith('[data-action="play"]::after'))).toContain(`animation: gh-open-settle ${OPEN_TIMINGS.morph}ms linear both`);
         expect(css).toContain(`@keyframes gh-open-settle { 0%, ${settleAt}% { opacity: 0; animation-timing-function: ease-in-out; } 100% { opacity: 1; } }`);
