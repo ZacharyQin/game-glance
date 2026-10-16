@@ -98,10 +98,11 @@ export const PAGE_LAYOUT = {
     /** The title block's bottom above the Play row (Spotlight look). */
     titleGap: 36,
     /**
-     * maxW: the cards never grow wider than in a 16:9 TV's row (canvas 1440 minus the TV sides, 2 x 24), so a 21:9 screen
-     * keeps compact cards; from equalFromAspect (9:5, wider than any 16:9 window) both are as wide as the HowLongToBeat card.
+     * infoW / hltbW: the cards' widest outer widths, sized to their content rather than the row (issue #53): HowLongToBeat fits
+     * three 3-digit times (406 of its 420 content), the info card a little wider. Where the row has room to spare the art
+     * shows between them. From equalFromAspect (9:5, wider than any 16:9 window) both are as wide as the HowLongToBeat card.
      */
-    cards: { gridGap: 18, padX: 24, padY: 20, colGap: 12, hltbGap: 10, split: [1.1, 1] as const, maxW: 1392, equalFromAspect: 1.8 },
+    cards: { gridGap: 18, padX: 24, padY: 20, colGap: 12, hltbGap: 10, split: [1.1, 1] as const, infoW: 540, hltbW: 470, equalFromAspect: 1.8 },
     stats: { label: 11, value: 30, colGapInfo: 40, colGapHltb: 36, rowGap: 4 },
     /** The title block: the gap between title and eyebrow, and the eyebrow's type size. */
     titleBlock: { gap: 14, eyebrow: 12, title: 64 },
@@ -129,18 +130,19 @@ const PILL_FOCUS = pillFocusScale(PAGE_LAYOUT.playW, PAGE_LAYOUT.icon);
 const TV_QUERY = `@media (min-width: ${PAGE_LAYOUT.tvQuery.minWidth}px) and (min-height: ${PAGE_LAYOUT.tvQuery.minHeight}px)`;
 
 /**
- * The Spotlight cards' widest widths in handoff px, [info, HowLongToBeat]: their widths in a row of cards.maxW (a 16:9 TV's
- * row), so on a wider screen they keep those and the art shows between them. On a screen of `aspect` cards.equalFromAspect
- * or wider, the info card is as wide as the HowLongToBeat card. Shared by the theme and the open transition.
+ * The Spotlight cards' widest widths in handoff px, [info, HowLongToBeat]: cards.infoW and hltbW, so where the row is wider
+ * the art shows between them. On a screen of `aspect` cards.equalFromAspect or wider, the info card is as wide as the
+ * HowLongToBeat card. Shared by the theme and the open transition.
  */
 export function cardMaxWidths(aspect = 0): [number, number] {
-    const { gridGap, split: [a, b], maxW, equalFromAspect } = PAGE_LAYOUT.cards;
-    const hltb = ((maxW - gridGap) * b) / (a + b);
-    return [aspect >= equalFromAspect ? hltb : ((maxW - gridGap) * a) / (a + b), hltb];
+    const { infoW, hltbW, equalFromAspect } = PAGE_LAYOUT.cards;
+    return [aspect >= equalFromAspect ? hltbW : infoW, hltbW];
 }
 
 /** A card's max-width for its outer width `outer` (handoff px): the cards are content-box, so less the padding and the 1 px borders. */
 const cardContentMax = (outer: number) => `calc(${d(outer - 2 * PAGE_LAYOUT.cards.padX)} - 2 * 1px)`;
+/** A card's width filling its grid column, content-box as above: a plain 100% overflowed the column by the padding and borders. */
+const CARD_FILL_WIDTH = `calc(100% - ${d(2 * PAGE_LAYOUT.cards.padX)} - 2 * 1px)`;
 
 /** The page's d unit (CSS px per handoff px) for a Big Picture window of `width` x `height` CSS px, as --gg-d: Home's scale. */
 export function pageDUnit(width: number, height: number): number {
@@ -543,7 +545,7 @@ function restyleRules({ header, details, root, play, shared }: ThemeClasses, lay
             filter: drop-shadow(0 ${d(4)} ${d(24)} rgba(0, 0, 0, 0.45)); }`,
 
         // Cards: grid 1.1fr / 1fr, gap 18; padding 20x24, radius 16, the handoff's glass; its type sizes. Each card at most
-        // its width on a 16:9 TV (cardMaxWidths): on a wider screen the info card stays left, HowLongToBeat at the right edge.
+        // its own width (cardMaxWidths): with room to spare the info card stays left, HowLongToBeat at the right edge.
         `.gg-cards { display: grid; grid-template-columns: minmax(0, ${PAGE_LAYOUT.cards.split[0]}fr) minmax(0, ${PAGE_LAYOUT.cards.split[1]}fr); gap: ${d(PAGE_LAYOUT.cards.gridGap)}; }`,
         `.gg-card { display: flex; flex-direction: column; gap: ${d(PAGE_LAYOUT.cards.colGap)}; padding: ${d(PAGE_LAYOUT.cards.padY)} ${d(PAGE_LAYOUT.cards.padX)}; border-radius: ${d(16)};
             background: rgba(12, 16, 22, 0.38); border-color: rgba(255, 255, 255, 0.12); backdrop-filter: blur(${d(16)});
@@ -551,7 +553,7 @@ function restyleRules({ header, details, root, play, shared }: ThemeClasses, lay
         // (One height for every game: three description lines' worth, as The Witcher's (its content: stats, gap and three
         // lines, 136 of the 178 the cards take with their padding and border; measured 179 on the Ally with Steam's border); a short description, or none, left
         // them shorter, which the open transition's panels (openTargets, the same height) then shrank to after the hand-over.)
-        `.gg-card.gg-hltb { gap: ${d(PAGE_LAYOUT.cards.hltbGap)}; width: 100%; max-width: ${cardContentMax(cardMaxWidths()[1])}; justify-self: end; }`,
+        `.gg-card.gg-hltb { gap: ${d(PAGE_LAYOUT.cards.hltbGap)}; width: ${CARD_FILL_WIDTH}; max-width: ${cardContentMax(cardMaxWidths()[1])}; justify-self: end; }`,
         // (9/5: cards.equalFromAspect as a media query ratio.)
         `@media (min-aspect-ratio: 9/5) { .gg-card { max-width: ${cardContentMax(cardMaxWidths(PAGE_LAYOUT.cards.equalFromAspect)[0])}; } }`,
         `.gg-label { font-size: ${d(PAGE_LAYOUT.stats.label)}; letter-spacing: 0.18em; color: rgba(255, 255, 255, 0.62); }`,
