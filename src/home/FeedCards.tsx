@@ -49,13 +49,16 @@ function confirmJoin(url: string, question: string, from: HTMLElement | null) {
  * A opens `item.opens`: a game's page with the open transition (homeNav.openGame), expanding from this card with
  * its own art; a wishlist deal's store page or a news event without it (homeNav.openStorePage / openNews).
  */
-export function FeedCard({ item, left, accent, preferred, onFocused, setRef }: {
+export function FeedCard({ item, left, accent, preferred, onFocused, setRef, hoverKey, hover = false }: {
     item: FeedItem;
     left: number;
     accent: string;
     preferred: boolean;
     onFocused(): void;
     setRef(el: HTMLDivElement | null): void;
+    /** The card's key for a mouse over it (FeedSheet, home/useMouse.useHover), and whether the mouse is. */
+    hoverKey?: string;
+    hover?: boolean;
 }) {
     const last = useRef(0);
     const self = useRef<HTMLDivElement | null>(null);
@@ -79,6 +82,7 @@ export function FeedCard({ item, left, accent, preferred, onFocused, setRef }: {
     if (item.fit) classes.push('gh-card-fitted');
     if (item.avatar?.inGame) classes.push('gh-card-ingame');
     if (item.avatar) classes.push(item.avatar.ring ? `gh-card-ring-${item.avatar.ring}` : 'gh-card-offline');
+    if (hover) classes.push('gh-card-hover');
     return (
         <Focusable
             ref={(el: HTMLDivElement | null) => {
@@ -96,6 +100,7 @@ export function FeedCard({ item, left, accent, preferred, onFocused, setRef }: {
             onClick={press}
             role="button"
             aria-label={item.title}
+            data-hover={hoverKey}
         >
             {item.backdrop && (
                 // Under the art: shows wherever the game art is missing or fails to load.

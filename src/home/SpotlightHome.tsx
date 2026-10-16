@@ -10,6 +10,8 @@ import { LOG_PREFIX } from '../constants';
 import { useSettings } from '../data/settings';
 import { recentsButton, selectionForButton, type Zone } from './focusZones';
 import { sheetSwipe } from './rowDrag';
+import { rowWheelTarget } from './mouse';
+import { useWheelStep } from './useMouse';
 import { HeroBackground } from './HeroBackground';
 import { neighbourIds } from './heroLayers';
 import { HERO_PRELOAD_DELAY_MS, HERO_PRELOAD_RADIUS, RETURN_TIMINGS } from './motion';
@@ -334,6 +336,19 @@ export function SpotlightHome() {
     const onRootPointerCancel = () => {
         swipeStart.current = null;
     };
+    // The mouse wheel anywhere on Home with the sheet down steps through the games, one notch a card (home/mouse), with
+    // controller focus on the row, as a tap; it stops at the ends. A quick spin is a fast run as quick taps of
+    // Left/Right are (home/fastCycle). With the sheet up the feed rows take the wheel (FeedSheet).
+    const wheelAt = useRef(focusIndex);
+    wheelAt.current = focusIndex;
+    const onRootWheel = useWheelStep((steps) => {
+        if (sheetUp || rootRef.current?.hasAttribute('data-gh-opening')) return;
+        const next = rowWheelTarget(wheelAt.current, steps, data.games.length);
+        if (next === wheelAt.current) return;
+        wheelAt.current = next;
+        focusGames();
+        setRecentIndex(next);
+    });
     // Which action button holds focus (its index among the row's buttons), remembered for the way back.
     const onActionsFocus = (event: { target: EventTarget }) => {
         setZone('actions');
@@ -424,7 +439,7 @@ export function SpotlightHome() {
     }, [contentUp, restoring]);
 
     return (
-        <div ref={rootRef} className={`gh-root${back ? ' gh-back' : ''}`} onPointerDown={onRootPointerDown} onPointerUp={onRootPointerUp} onPointerCancel={onRootPointerCancel} style={{ '--glance-accent': accent, '--glance-accent-text': legibleAccent(accent), '--gh-dim': sheetUp ? DIM_SHEET : DIM_REST, '--gh-side': `${side}px`, '--gh-row': `${rowInset(side, tv)}px`, '--gh-pill': `${pillInset(tv)}px`, '--gh-bottom': `${legend}px`, '--gh-shift': `${stackShift(logicalHeight, legend, false)}px`, '--gh-raise': `${FEED_SHEET.raise + raiseDelta}px` } as CSSProperties}>
+        <div ref={rootRef} className={`gh-root${back ? ' gh-back' : ''}`} onPointerDown={onRootPointerDown} onPointerUp={onRootPointerUp} onPointerCancel={onRootPointerCancel} onWheel={onRootWheel} style={{ '--glance-accent': accent, '--glance-accent-text': legibleAccent(accent), '--gh-dim': sheetUp ? DIM_SHEET : DIM_REST, '--gh-side': `${side}px`, '--gh-row': `${rowInset(side, tv)}px`, '--gh-pill': `${pillInset(tv)}px`, '--gh-bottom': `${legend}px`, '--gh-shift': `${stackShift(logicalHeight, legend, false)}px`, '--gh-raise': `${FEED_SHEET.raise + raiseDelta}px` } as CSSProperties}>
             <style>{css}</style>
             {enterOff && <style>{enterOff}</style>}
             {/* No game until the restore is applied (Home back on B): the first game's art would flash before the selected one's. */}

@@ -394,6 +394,10 @@ export function homeCss(cardScale: number = CARD_SCALE_HANDHELD): string {
         rule('.gh-cap-sel', '--gh-edge: rgba(255,255,255,.35)'),
         // A game not installed here (RecentsRow.greyedOut) is grey until selected, as Steam's library shows them.
         rule('.gh-cap-off:not(.gh-cap-sel)', 'filter: grayscale(1) brightness(.7)'),
+        // A mouse over a card (home/mouse.hoverKey, never a finger): a faint white ring, half the selection's and without
+        // its accent glow, and a little brighter; an uninstalled game loses some of its grey. Not the selected card.
+        rule('.gh-cap.gh-cap-hover:not(.gh-cap-sel):not(.gh-cap-lib-on)', `box-shadow: 0 0 0 2px rgba(255,255,255,.45), ${capShadow}; filter: brightness(1.12)`),
+        rule('.gh-cap-off.gh-cap-hover:not(.gh-cap-sel)', 'filter: grayscale(.5) brightness(.9)'),
         // The way back (B from a page): the art is there at once; Home's title, chips, buttons and row fade in over it.
         rule('.gh-root.gh-back .gh-safe', `animation: gh-fade-in ${RETURN_TIMINGS.fade}ms ease both`),
         rule('.gh-recents-snap .gh-cap', `transition: left ${SETTLE_WIDEN_MS}ms ${SLIDE_EASE}, width ${SETTLE_WIDEN_MS}ms ${SLIDE_EASE}, opacity ${CAP_STATE_MS}ms, filter ${CAP_STATE_MS}ms`),
@@ -454,6 +458,8 @@ export function homeCss(cardScale: number = CARD_SCALE_HANDHELD): string {
         rule('.gh-card::after', `content: ''; position: absolute; inset: 0; margin: 0; padding: 0; border-radius: inherit; pointer-events: none;
             box-shadow: inset 0 0 0 1px var(--gh-edge); transition: box-shadow 300ms`),
         rule('.gh-card.gh-card-focus', `box-shadow: ${GLOW}; --gh-edge: rgba(255,255,255,.3); transform: translateY(-4px)`),
+        // A mouse over a feed card: the recents' faint ring and half the focused card's lift.
+        rule('.gh-card.gh-card-hover:not(.gh-card-focus)', 'box-shadow: 0 0 0 2px rgba(255,255,255,.45), 0 6px 20px -10px rgba(0,0,0,.6); transform: translateY(-2px)'),
         // Avatar rings: green online or in game, Steam's away blue away; offline: no ring and a dimmed avatar.
         rule('.gh-card-ring-online', `--gh-ring: ${FRIEND_COLOURS.online}`),
         rule('.gh-card-ring-away', `--gh-ring: ${FRIEND_COLOURS.away}`),

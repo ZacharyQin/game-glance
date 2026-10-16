@@ -118,6 +118,19 @@ describe('homeCss', () => {
         expect(css).toMatch(/\.gh-status-dot-away\s*\{[^}]*background:\s*#4cb4ff/);
         expect(css).toMatch(/\.gh-status-dot-off\s*\{[^}]*background:\s*rgba\(196,201,209,\.85\)/);
     });
+    it('a mouse lights the card under it: a faint ring, weaker than the selection, never on the selected card', () => {
+        const css = homeCss(CARD_SCALE_HANDHELD);
+        // Games row: a half-strength white ring, no accent glow, and a little brighter.
+        expect(css).toMatch(/\.gh-cap\.gh-cap-hover:not\(\.gh-cap-sel\):not\(\.gh-cap-lib-on\)\s*\{[^}]*box-shadow:\s*0 0 0 2px rgba\(255,255,255,\.45\)[^}]*filter:\s*brightness\(1\.12\)/);
+        expect(css).not.toMatch(/\.gh-cap-hover[^{]*\{[^}]*glance-accent/);
+        // An uninstalled game loses some of its grey under the cursor (after the grey rule, so it wins).
+        const off = css.indexOf('.gh-cap-off:not(.gh-cap-sel)');
+        const offHover = css.search(/\.gh-cap-off\.gh-cap-hover:not\(\.gh-cap-sel\)\s*\{[^}]*grayscale\(\.5\)/);
+        expect(off).toBeGreaterThan(-1);
+        expect(offHover).toBeGreaterThan(off);
+        // Feed cards: the same ring and a 2px lift (a focused card lifts 4px).
+        expect(css).toMatch(/\.gh-card\.gh-card-hover:not\(\.gh-card-focus\)\s*\{[^}]*box-shadow:\s*0 0 0 2px rgba\(255,255,255,\.45\)[^}]*transform:\s*translateY\(-2px\)/);
+    });
     it('the recents row takes touch: pointer events on, its own gestures, off under the sheet and while opening', () => {
         const css = homeCss(CARD_SCALE_HANDHELD);
         expect(css).toMatch(/\.gh-recents\s*\{[^}]*pointer-events:\s*auto\s*!important[^}]*touch-action:\s*none\s*!important[^}]*user-select:\s*none\s*!important/);

@@ -1,6 +1,6 @@
 import { Focusable } from '@decky/ui';
 import type { GamepadEvent, NavEntryPositionPreferences } from '@decky/ui';
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { PointerEvent as ReactPointerEvent, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { FaUserFriends } from 'react-icons/fa';
 import { LOG_PREFIX } from '../constants';
 import { browserStores, capsuleUrls, heroUrls, landscapeUrls, storeHeaderUrl } from './artwork';
@@ -12,6 +12,8 @@ import { clampTab, HomeMemory, noteHome, RESTORE_WAIT_MS, restoreStep } from './
 import { useCardAccents } from './useHomeData';
 import { playNavSound, shoulderSound } from './navSound';
 import { useRowDrag } from './useRowDrag';
+import { rowWheelTarget } from './mouse';
+import { useHover, useWheelStep } from './useMouse';
 import { tr } from '../i18n/steamText';
 
 const PREFERRED_CHILD = PREFERRED as NavEntryPositionPreferences;
@@ -120,6 +122,32 @@ export function FeedSheet({ data, raised, viewport, space, onZone, onBackToGames
         onRun: () => {},
     });
     const drags = [useRowDrag(rowDrag(0)), useRowDrag(rowDrag(1))];
+    // A mouse: the wheel over a raised row steps through its cards (one notch, one card; never wrapping), and the card
+    // under the cursor is lit (home/mouse). `wheelAt` follows the steps between renders, so a quick spin loses none.
+    const wheelAt = useRef<[number, number]>([0, 0]);
+    wheelAt.current = [sel[0], sel[1]];
+    const wheelRow = (r: 0 | 1) => (steps: -1 | 1) => {
+        if (!raised) return;
+        const next = rowWheelTarget(wheelAt.current[r], steps, rows[r].length - 1);
+        if (next === wheelAt.current[r]) return;
+        wheelAt.current[r] = next;
+        focusElement(cardRefs.current[flat(r, next)], `feed card ${next}`);
+    };
+    const wheels = [useWheelStep(wheelRow(0)), useWheelStep(wheelRow(1))];
+    const hover = useHover();
+    const rowHandlers = (r: 0 | 1) => ({
+        ...drags[r].handlers,
+        onPointerDown: (event: ReactPointerEvent<HTMLElement>) => {
+            hover.clear();
+            drags[r].handlers.onPointerDown(event);
+        },
+        onPointerMove: (event: ReactPointerEvent<HTMLElement>) => {
+            hover.onPointerMove(event);
+            drags[r].handlers.onPointerMove(event);
+        },
+        onPointerLeave: hover.clear,
+        onWheel: wheels[r],
+    });
     const lefts = rows.map((list) => {
         const out: number[] = [];
         list.reduce((x, item) => {
@@ -265,7 +293,7 @@ export function FeedSheet({ data, raised, viewport, space, onZone, onBackToGames
                                     navEntryPreferPosition={entry}
                                     onCancel={backFromFeed}
                                     onButtonDown={shoulder('feed')}
-                                    {...drags[r].handlers}
+                                    {...rowHandlers(r)}
                                     style={{ transform: `translateX(${-scrolls[r] + (drags[r].dragging ? drags[r].offset : 0)}px)` }}
                                 >
                                     {rows[r].map((item, i) => (
@@ -282,6 +310,8 @@ export function FeedSheet({ data, raised, viewport, space, onZone, onBackToGames
                                             setRef={(el) => {
                                                 cardRefs.current[flat(r, i)] = el;
                                             }}
+                                            hoverKey={`r${r}c${i}`}
+                                            hover={hover.hovered === `r${r}c${i}`}
                                         />
                                     ))}
                                 </Focusable>
