@@ -17,10 +17,10 @@ export const GLIDE_MS = 400;
 /** Below this speed (px/ms) a glide has come to rest. */
 const GLIDE_STOP = 0.05;
 /**
- * A flick's bounce at a row's end: it peaks this long after hitting the end and is handed back at 3 x this, the row's own
+ * A flick's bounce at a row's end: it peaks about this long after hitting the end and is handed back at 3 x this, the row's own
  * settle transition taking the last of the way home while the run ends (so the card widens right after the bounce).
  */
-export const BOUNCE_MS = 80;
+export const BOUNCE_MS = 55;
 
 /** The axis a drag moves along, once it has passed `slop`; null before. A tie goes to the row (x). */
 export function axisLock(dx: number, dy: number, slop = DRAG_SLOP): Axis | null {
