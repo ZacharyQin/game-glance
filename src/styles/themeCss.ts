@@ -1,6 +1,7 @@
 import { DOWNLOAD_FILL_COLOR, DOWNLOAD_FILL_MS } from './downloadFill';
 import { DEFAULT_ACCENT, legibleAccent } from '../home/accent';
 import { CLOUD_COLOURS, CLOUD_FOCUS_BAD } from '../home/cloud';
+import { homeCanvas } from '../home/scale';
 import { LOGO_BOX } from './logoBox';
 import { SCALE_UNIT_CSS } from './screenScale';
 import { sourcePillIcon, sourcePillLook } from './sourcePill';
@@ -77,8 +78,11 @@ export const PAGE_SCRIMS = PAGE_SCRIM_LAYERS.join(', ');
  * transition's targets (home/openTargets). Values in px are CSS px; everything else is in d units.
  */
 export const PAGE_LAYOUT = {
-    /** --gg-d = 100vw / canvas: the 1440 wide canvas, or 1280 at an aspect of 17/10 or narrower. */
-    canvas: { wide: 1440, deck: 1280, deckMaxAspect: 1.7 },
+    /**
+     * --gg-d = min(100vw / width, 100vh / height): the 1440x810 canvas, or 1280x800 at an aspect of 17/10 or narrower,
+     * scaled by the limiting side as Home's (home/scale.ts homeCanvas).
+     */
+    canvas: { wide: 1440, wideHeight: 810, deck: 1280, deckHeight: 800, deckMaxAspect: 1.7 },
     /** The TV media query (CSS px). */
     tvQuery: { minWidth: 1408, minHeight: 793 },
     side: { base: 56, tv: 24 },
@@ -93,7 +97,11 @@ export const PAGE_LAYOUT = {
     clean: { bottom: 36, minBelowRow: 61, gap: 28, storeGap: 20 },
     /** The title block's bottom above the Play row (Spotlight look). */
     titleGap: 36,
-    cards: { gridGap: 18, padX: 24, padY: 20, colGap: 12, hltbGap: 10, split: [1.1, 1] as const },
+    /**
+     * maxW: the cards never grow wider than in a 16:9 TV's row (canvas 1440 minus the TV sides, 2 x 24), so a 21:9 screen
+     * keeps compact cards; from equalFromAspect (9:5, wider than any 16:9 window) both are as wide as the HowLongToBeat card.
+     */
+    cards: { gridGap: 18, padX: 24, padY: 20, colGap: 12, hltbGap: 10, split: [1.1, 1] as const, maxW: 1392, equalFromAspect: 1.8 },
     stats: { label: 11, value: 30, colGapInfo: 40, colGapHltb: 36, rowGap: 4 },
     /** The title block: the gap between title and eyebrow, and the eyebrow's type size. */
     titleBlock: { gap: 14, eyebrow: 12, title: 64 },
@@ -120,10 +128,23 @@ const PILL_FOCUS = pillFocusScale(PAGE_LAYOUT.playW, PAGE_LAYOUT.icon);
 /** The TV media query as CSS. */
 const TV_QUERY = `@media (min-width: ${PAGE_LAYOUT.tvQuery.minWidth}px) and (min-height: ${PAGE_LAYOUT.tvQuery.minHeight}px)`;
 
-/** The page's d unit (CSS px per handoff px) for a Big Picture window of `width` x `height` CSS px, as --gg-d. */
+/**
+ * The Spotlight cards' widest widths in handoff px, [info, HowLongToBeat]: their widths in a row of cards.maxW (a 16:9 TV's
+ * row), so on a wider screen they keep those and the art shows between them. On a screen of `aspect` cards.equalFromAspect
+ * or wider, the info card is as wide as the HowLongToBeat card. Shared by the theme and the open transition.
+ */
+export function cardMaxWidths(aspect = 0): [number, number] {
+    const { gridGap, split: [a, b], maxW, equalFromAspect } = PAGE_LAYOUT.cards;
+    const hltb = ((maxW - gridGap) * b) / (a + b);
+    return [aspect >= equalFromAspect ? hltb : ((maxW - gridGap) * a) / (a + b), hltb];
+}
+
+/** A card's max-width for its outer width `outer` (handoff px): the cards are content-box, so less the padding and the 1 px borders. */
+const cardContentMax = (outer: number) => `calc(${d(outer - 2 * PAGE_LAYOUT.cards.padX)} - 2 * 1px)`;
+
+/** The page's d unit (CSS px per handoff px) for a Big Picture window of `width` x `height` CSS px, as --gg-d: Home's scale. */
 export function pageDUnit(width: number, height: number): number {
-    const { wide, deck, deckMaxAspect } = PAGE_LAYOUT.canvas;
-    return width / (width / height > deckMaxAspect ? wide : deck);
+    return homeCanvas(width, height).scale;
 }
 
 export interface ThemeOptions {
@@ -456,8 +477,8 @@ function restyleRules({ header, details, root, play, shared }: ThemeClasses, lay
         // The game's accent (buildAccentCss sets it on the page container) becomes the theme's accent:
         // the Play pill, the HLTB goal value and bar. Registered so it can animate, as on Home.
         `@property --glance-accent { syntax: '<color>'; inherits: true; initial-value: ${DEFAULT_ACCENT}; }`,
-        `:root { --gg-d: calc(100vw / ${PAGE_LAYOUT.canvas.wide}); }`,
-        `@media (max-aspect-ratio: 17/10) { :root { --gg-d: calc(100vw / ${PAGE_LAYOUT.canvas.deck}); } }`,
+        `:root { --gg-d: min(calc(100vw / ${PAGE_LAYOUT.canvas.wide}), calc(100vh / ${PAGE_LAYOUT.canvas.wideHeight})); }`,
+        `@media (max-aspect-ratio: 17/10) { :root { --gg-d: min(calc(100vw / ${PAGE_LAYOUT.canvas.deck}), calc(100vh / ${PAGE_LAYOUT.canvas.deckHeight})); } }`,
         rule(inner, ` --gg-accent: var(--glance-accent); transition: --glance-accent ${ACCENT_MS}ms ease; `),
 
         // Side insets 56: Steam's Play row (2.8vw of its own) and everything placed by --gg-side move together,
@@ -521,15 +542,18 @@ function restyleRules({ header, details, root, play, shared }: ThemeClasses, lay
         `.gg-logo { display: block; width: auto; height: auto; max-width: ${d(LOGO_BOX.width)}; max-height: ${d(LOGO_BOX.height)}; object-fit: contain; object-position: left bottom;
             filter: drop-shadow(0 ${d(4)} ${d(24)} rgba(0, 0, 0, 0.45)); }`,
 
-        // Cards: grid 1.1fr / 1fr, gap 18; padding 20x24, radius 16, the handoff's glass; its type sizes.
+        // Cards: grid 1.1fr / 1fr, gap 18; padding 20x24, radius 16, the handoff's glass; its type sizes. Each card at most
+        // its width on a 16:9 TV (cardMaxWidths): on a wider screen the info card stays left, HowLongToBeat at the right edge.
         `.gg-cards { display: grid; grid-template-columns: minmax(0, ${PAGE_LAYOUT.cards.split[0]}fr) minmax(0, ${PAGE_LAYOUT.cards.split[1]}fr); gap: ${d(PAGE_LAYOUT.cards.gridGap)}; }`,
         `.gg-card { display: flex; flex-direction: column; gap: ${d(PAGE_LAYOUT.cards.colGap)}; padding: ${d(PAGE_LAYOUT.cards.padY)} ${d(PAGE_LAYOUT.cards.padX)}; border-radius: ${d(16)};
             background: rgba(12, 16, 22, 0.38); border-color: rgba(255, 255, 255, 0.12); backdrop-filter: blur(${d(16)});
-            min-height: ${d(PAGE_LAYOUT.playTop.tvCards - 2 * PAGE_LAYOUT.cards.padY - 2)}; }`,
+            min-height: ${d(PAGE_LAYOUT.playTop.tvCards - 2 * PAGE_LAYOUT.cards.padY - 2)}; max-width: ${cardContentMax(cardMaxWidths()[0])}; }`,
         // (One height for every game: three description lines' worth, as The Witcher's (its content: stats, gap and three
         // lines, 136 of the 178 the cards take with their padding and border; measured 179 on the Ally with Steam's border); a short description, or none, left
         // them shorter, which the open transition's panels (openTargets, the same height) then shrank to after the hand-over.)
-        `.gg-card.gg-hltb { gap: ${d(PAGE_LAYOUT.cards.hltbGap)}; }`,
+        `.gg-card.gg-hltb { gap: ${d(PAGE_LAYOUT.cards.hltbGap)}; width: 100%; max-width: ${cardContentMax(cardMaxWidths()[1])}; justify-self: end; }`,
+        // (9/5: cards.equalFromAspect as a media query ratio.)
+        `@media (min-aspect-ratio: 9/5) { .gg-card { max-width: ${cardContentMax(cardMaxWidths(PAGE_LAYOUT.cards.equalFromAspect)[0])}; } }`,
         `.gg-label { font-size: ${d(PAGE_LAYOUT.stats.label)}; letter-spacing: 0.18em; color: rgba(255, 255, 255, 0.62); }`,
         `.gg-value { font-size: ${d(PAGE_LAYOUT.stats.value)}; line-height: 1.2; }`,
         `.gg-stats { gap: ${d(PAGE_LAYOUT.stats.colGapInfo)}; margin-top: 0; }`,

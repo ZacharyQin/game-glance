@@ -1,6 +1,7 @@
 import { sourcePillIcon, sourcePillLook } from '../../src/styles/sourcePill';
 import { describe, expect, it } from 'vitest';
 import { buildAccentCss, buildArrivingCss, buildCleanCss, buildSteamEnterOffCss, steamFooterSelector, buildDownloadCss, buildLaunchCss, buildThemeCss, buildUnifideckCss, launchTargets, ThemeClasses } from '../../src/styles/themeCss';
+import { homeCanvas } from '../../src/home/scale';
 import { PAGE_LAYOUT, PAGE_SCRIM_LAYERS, PAGE_SCRIMS, pageDUnit, pillFocusScale, STEAM_LEGEND_PX } from '../../src/styles/themeCss';
 
 const full: ThemeClasses = {
@@ -512,8 +513,8 @@ describe('buildThemeCss restyle (Spotlight Home on)', () => {
         expect(rulesFor(restyled, '.ad_Inner')).toContain('transition: --glance-accent 500ms ease;');
         expect(rulesFor(restyled, '.rt_PlayBtn > div:has(> [role="button"].gpfocus)')).toContain('var(--glance-accent)');
         // handoff px scaled like Home: its 1440 canvas on 16:9, its 1280 canvas on 16:10
-        expect(restyled).toContain(':root { --gg-d: calc(100vw / 1440); }');
-        expect(restyled).toContain('@media (max-aspect-ratio: 17/10) { :root { --gg-d: calc(100vw / 1280); } }');
+        expect(restyled).toContain(':root { --gg-d: min(calc(100vw / 1440), calc(100vh / 810)); }');
+        expect(restyled).toContain('@media (max-aspect-ratio: 17/10) { :root { --gg-d: min(calc(100vw / 1280), calc(100vh / 800)); } }');
         // eyebrow and 64px/800 title
         expect(rulesFor(restyled, '.gg-eyebrow')).toContain('color: var(--glance-accent-text)');
         expect(rulesFor(restyled, '.gg-eyebrow')).toContain('text-transform: uppercase');
@@ -535,6 +536,21 @@ describe('buildThemeCss restyle (Spotlight Home on)', () => {
         // cards: grid 1.1fr / 1fr, gap 18, padding 20x24, radius 16, side insets 56
         expect(rulesFor(restyled, '.gg-cards')).toContain('grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr)');
         expect(rulesFor(restyled, '.gg-cards')).toContain('gap: calc(18 * var(--gg-d))');
+        // Each card at most its width on a 16:9 TV: on 21:9 the cards stay compact, HowLongToBeat at the right edge, the art between.
+        const { gridGap, split: [a, b], maxW, padX } = PAGE_LAYOUT.cards;
+        expect(maxW).toBe(PAGE_LAYOUT.canvas.wide - 2 * PAGE_LAYOUT.side.tv);
+        expect(rulesFor(restyled, '.gg-cards')).not.toContain('max-width');
+        // The cards are content-box: the cap is the outer width less the padding (2 x padX) and the 1 px borders.
+        const content = (outer: number) => `max-width: calc(calc(${outer - 2 * padX} * var(--gg-d)) - 2 * 1px)`;
+        expect(rulesFor(restyled, '.gg-card')).toContain(content(((maxW - gridGap) * a) / (a + b)));
+        const hltbRules = rulesFor(restyled, '.gg-card.gg-hltb');
+        expect(hltbRules).toContain(content(((maxW - gridGap) * b) / (a + b)));
+        // Wider than 9:5 (21:9, 32:9) the description card is as wide as HowLongToBeat; 16:9 keeps the 1.1 : 1 split.
+        expect(PAGE_LAYOUT.cards.equalFromAspect).toBe(1.8);
+        expect(restyled).toContain(`@media (min-aspect-ratio: 9/5) { .gg-card { ${content(((maxW - gridGap) * b) / (a + b))}; } }`);
+        // Aligned to the row's right end at its full (capped) width, not shrunk to its content.
+        expect(hltbRules).toContain('justify-self: end');
+        expect(hltbRules).toContain('width: 100%');
         expect(rulesFor(restyled, '.gg-card')).toContain('padding: calc(20 * var(--gg-d)) calc(24 * var(--gg-d))');
         expect(rulesFor(restyled, '.gg-card')).toContain('border-radius: calc(16 * var(--gg-d))');
         expect(rulesFor(restyled, '.gg-value')).toContain('font-size: calc(30 * var(--gg-d))');
@@ -651,8 +667,9 @@ describe('buildThemeCss restyle (Spotlight Home on)', () => {
                 expect([selector, prop]).toEqual([selector, expect.stringMatching(/^(--gg-accent|--gg-play-top|--gg-row-h|--gg-ok|--gg-warn|--gg-bad|--gg-off|transition|color|background|border|filter|box-shadow|visibility|padding-left|padding-right|padding-top|padding-bottom|font-size|font-weight|width|height|margin-right|top|min-width|flex|padding|backdrop-filter|display|object-position|transform)$/)]);
             }
         }
-        // (100vh only in the Play row's anchor variable, which the 1.1.1 layout rules read: the default and the TV's)
-        expect(extra(steam).replace(/--gg-play-top: [^;]*;/g, '')).not.toMatch(/z-index|100vh/);
+        // (100vh only in the Play row's anchor variable, which the 1.1.1 layout rules read: the default and the TV's, and in
+        // the d unit's height limit, the shared scale rule with Home: home/scale.ts)
+        expect(extra(steam).replace(/--gg-play-top: [^;]*;/g, '').replace(/--gg-d: min\([^;]*\);/g, '')).not.toMatch(/z-index|100vh/);
     });
 });
 
@@ -722,6 +739,13 @@ describe('the page layout constants', () => {
         expect(pageDUnit(1500, 844)).toBeCloseTo(1500 / 1440);
         expect(pageDUnit(1280, 800)).toBeCloseTo(1);
         expect(pageDUnit(828, 466)).toBeCloseTo(828 / 1440);
+    });
+    it('pageDUnit scales a screen wider than 16:9 by its height, as Home does (one rule keeps the open transition aligned)', () => {
+        expect(pageDUnit(1500, 643)).toBeCloseTo(643 / 810);
+        expect(pageDUnit(2560, 1080)).toBeCloseTo(1080 / 810);
+        for (const [w, h] of [[1920, 1080], [1280, 800], [1500, 844], [1500, 643], [2560, 1080], [3440, 1440], [1024, 768]]) {
+            expect(pageDUnit(w, h)).toBeCloseTo(homeCanvas(w, h).scale, 10);
+        }
     });
     it('the restyled theme is built from them', () => {
         const css = buildThemeCss(full, { restyle: true });
