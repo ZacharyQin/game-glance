@@ -633,8 +633,8 @@ function restyleRules({ header, details, root, play, shared }: ThemeClasses, lay
 
 /** The page's new parts' fade-in after the open transition (motion.OPEN_TIMINGS.reveal, rise feedRise). */
 const ARRIVE_MS = 200;
-/** The page's glass growing its blur from none after the open transition (Michael: the blur coming in, cinematic). */
-export const ARRIVE_BLUR_MS = 600;
+/** The page's glass growing its blur from none after the open transition (Michael: the blur coming in, cinematic; shortened from 600 once the page's blur worked, 2026-10-16). */
+export const ARRIVE_BLUR_MS = 250;
 const ARRIVE_BLUR_EASE = 'cubic-bezier(.25,.1,.25,1)';
 const ARRIVE_RISE_PX = 14;
 

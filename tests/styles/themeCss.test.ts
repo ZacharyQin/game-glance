@@ -834,7 +834,7 @@ describe('the page arriving after the open transition', () => {
     it("the page's glass arrives unblurred, as Home's copy is, and grows its blur once revealed (Michael: the blur, cinematic)", () => {
         for (const look of ['spotlight', 'clean'] as const) {
             expect(buildArrivingCss(full, look, 'parts'), look).toContain('.gg-clean-info, .gg-card { backdrop-filter: blur(0px) !important; }');
-            expect(buildArrivingCss(full, look, 'parts', true), look).toContain('.gg-clean-info, .gg-card { backdrop-filter: blur(calc(16 * var(--gg-d))) !important; transition: backdrop-filter 600ms cubic-bezier(.25,.1,.25,1) !important; }');
+            expect(buildArrivingCss(full, look, 'parts', true), look).toContain('.gg-clean-info, .gg-card { backdrop-filter: blur(calc(16 * var(--gg-d))) !important; transition: backdrop-filter 250ms cubic-bezier(.25,.1,.25,1) !important; }');
         }
     });
     it('Spotlight: the description and the HowLongToBeat card are there at once when Home drew them as it opened', () => {
