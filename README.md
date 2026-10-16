@@ -76,6 +76,23 @@ An optional new Home screen, off by default (Quick Access → Game Glance → Sp
     (the new price, then the old one struck through).
 - **Safe.** If anything in Spotlight Home fails, you get Steam's own Home instead of a broken screen.
 
+## Screensaver
+
+Steam's screensaver (Settings → Customization → Screensaver, Game Slideshow) drawn by Game Glance, on by default
+(Quick Access → Game Glance → Screensaver).
+
+- **Your games, your art.** The games of Home's Games row (your recent games or the chosen collection), in shuffled
+  order, each with its art filling the screen, your custom SteamGridDB art first. Steam's own slideshow always shows
+  Steam's recent games.
+- **Logo.** The game's logo at the bottom left, cropped and sized as on Home (its name when it has none).
+- **Stats.** A small card at the bottom right: your play time, the HowLongToBeat time you are working toward (the
+  first one you have not reached, with a bar) and your achievements. It stays readable on any screen shape.
+- **Status bar.** Home's clock, battery and connection at the top right.
+- **Like Steam's.** 20 seconds per game, a 2 second crossfade and a slow drift of the art. Logo, Status bar and Stats are
+  each a switch; with all three off only the art is left. **Preview** shows it at once.
+- Game Glance's screensaver needs a Steam client with the screensaver; on an older one Quick Access says so and Steam's
+  stays as it is. With Steam's Bouncing Logo chosen, Game Glance leaves it alone.
+
 ## Settings
 
 Quick Access (…) → Game Glance:
@@ -90,6 +107,8 @@ Quick Access (…) → Game Glance:
 | Games row | Recent Games | What Home's row shows: your recent games, or one of your Steam collections (Favorites, Locally Installed Games and your own). With a collection, **Sort By** offers Last Played, Alphabetical or Date Added to Library, and the line under the title starts with the collection's name. |
 | Show wishlist deals | Off | Wishlist games on sale in the Recommended tab (see Privacy). |
 | Pre-load new games automatically | On | Fetches times and descriptions for new installs, every 30 minutes. |
+| Game Glance screensaver | On | Steam's screensaver (Game Slideshow) with your Games row and its art (see Screensaver). Off returns Steam's own. |
+| Logo, Status bar, Stats (Screensaver) | On | The screensaver's logo, status bar and stats card. All three off: only the art. |
 
 Also in Quick Access:
 
@@ -97,6 +116,7 @@ Also in Quick Access:
 - **Pre-load game info for installed games:** fetches times and descriptions for every installed game, about one per
   second. A game that does not answer is skipped, and Stop ends it at once.
 - **Clear cached data.**
+- **Screensaver → Preview:** shows the screensaver at once (any button ends it).
 - **Updates:** the installed version, **Update to …** when a newer release is out, and **Check for updates**.
 
 ## If Home shows an error
@@ -152,6 +172,9 @@ sends game names and Steam app IDs, nothing about you.
 - **From the Steam client:** Spotlight Home's news, friends, status bar and art, and the family owner's name (from your
   friends list). Art, logos and news images Steam has not stored on the device yet load from Steam's image servers, as
   on Steam's own Home.
+- **Screensaver:** its HowLongToBeat times and achievement counts are only what Game Glance already saved on the device;
+  it looks nothing up. Its art and logos come from the Steam client as on Home (from Steam's image servers when not
+  stored on the device yet).
 
 Everything Game Glance stores stays on the device, in Decky's settings folder.
 
