@@ -2,7 +2,7 @@ import { sourcePillIcon, sourcePillLook } from '../../src/styles/sourcePill';
 import { describe, expect, it } from 'vitest';
 import { buildAccentCss, buildArrivingCss, buildCleanCss, buildSteamEnterOffCss, steamFooterSelector, buildDownloadCss, buildLaunchCss, buildThemeCss, buildUnifideckCss, launchTargets, ThemeClasses } from '../../src/styles/themeCss';
 import { homeCanvas } from '../../src/home/scale';
-import { PAGE_LAYOUT, PAGE_SCRIM_LAYERS, PAGE_SCRIMS, pageDUnit, pillFocusScale, STEAM_LEGEND_PX } from '../../src/styles/themeCss';
+import { cardMaxWidths, PAGE_LAYOUT, PAGE_SCRIM_LAYERS, PAGE_SCRIMS, pageDUnit, pillFocusScale, STEAM_LEGEND_PX } from '../../src/styles/themeCss';
 
 const full: ThemeClasses = {
     header: { TopCapsule: 'hd_Top', BoxSizer: 'hd_Box' },
@@ -536,18 +536,21 @@ describe('buildThemeCss restyle (Spotlight Home on)', () => {
         // cards: grid 1.1fr / 1fr, gap 18, padding 20x24, radius 16, side insets 56
         expect(rulesFor(restyled, '.gg-cards')).toContain('grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr)');
         expect(rulesFor(restyled, '.gg-cards')).toContain('gap: calc(18 * var(--gg-d))');
-        // Each card at most its width on a 16:9 TV: on 21:9 the cards stay compact, HowLongToBeat at the right edge, the art between.
-        const { gridGap, split: [a, b], maxW, padX } = PAGE_LAYOUT.cards;
-        expect(maxW).toBe(PAGE_LAYOUT.canvas.wide - 2 * PAGE_LAYOUT.side.tv);
+        // Each card at most its own width (cards.infoW / hltbW), sized to its content rather than the row: HowLongToBeat fits
+        // three 3-digit times, the info card a little wider. On a screen with room to spare the art shows between them.
+        const { infoW, hltbW, padX } = PAGE_LAYOUT.cards;
+        expect([infoW, hltbW]).toEqual([540, 470]);
+        expect(cardMaxWidths()).toEqual([infoW, hltbW]);
         expect(rulesFor(restyled, '.gg-cards')).not.toContain('max-width');
         // The cards are content-box: the cap is the outer width less the padding (2 x padX) and the 1 px borders.
         const content = (outer: number) => `max-width: calc(calc(${outer - 2 * padX} * var(--gg-d)) - 2 * 1px)`;
-        expect(rulesFor(restyled, '.gg-card')).toContain(content(((maxW - gridGap) * a) / (a + b)));
+        expect(rulesFor(restyled, '.gg-card')).toContain(content(infoW));
         const hltbRules = rulesFor(restyled, '.gg-card.gg-hltb');
-        expect(hltbRules).toContain(content(((maxW - gridGap) * b) / (a + b)));
-        // Wider than 9:5 (21:9, 32:9) the description card is as wide as HowLongToBeat; 16:9 keeps the 1.1 : 1 split.
+        expect(hltbRules).toContain(content(hltbW));
+        // Wider than 9:5 (21:9, 32:9) the description card is as wide as HowLongToBeat.
         expect(PAGE_LAYOUT.cards.equalFromAspect).toBe(1.8);
-        expect(restyled).toContain(`@media (min-aspect-ratio: 9/5) { .gg-card { ${content(((maxW - gridGap) * b) / (a + b))}; } }`);
+        expect(cardMaxWidths(PAGE_LAYOUT.cards.equalFromAspect)).toEqual([hltbW, hltbW]);
+        expect(restyled).toContain(`@media (min-aspect-ratio: 9/5) { .gg-card { ${content(hltbW)}; } }`);
         // Aligned to the row's right end at its full (capped) width, not shrunk to its content. Content-box like the cap:
         // a plain 100% added the padding and borders, spilling 2 x padX + 2 px left over the info card (issue #53, the Deck).
         expect(hltbRules).toContain('justify-self: end');

@@ -11,14 +11,15 @@ interface Fixture {
 }
 const fixture = (name: string): Fixture => JSON.parse(readFileSync(resolve(__dirname, 'fixtures/openLayout', `${name}.json`), 'utf8'));
 
-// The fixtures were captured before the page had data-stat: columns by order (device notes).
-const COLUMNS: Record<PageLook, Array<[string, StatKey]>> = {
-    spotlight: [['col0', 'played'], ['col1', 'achievements'], ['hltb', 'hltb']],
-    clean: [['col0', 'played'], ['col1', 'achievements'], ['col2', 'hltb']],
-};
+// The Clean fixtures were captured before the page had data-stat: columns by order (device notes).
+const CLEAN_COLUMNS: Array<[string, StatKey]> = [['col0', 'played'], ['col1', 'achievements'], ['col2', 'hltb']];
+/** A fixture's stat columns: by data-stat when it was captured with it (scripts/cef-layout.mjs), else by order. */
+const STAT_KEYS: StatKey[] = ['played', 'size', 'achievements', 'hltb'];
+const columnsOf = (f: Fixture): Array<[string, StatKey]> =>
+    f.rects['stat:played:label'] ? STAT_KEYS.filter((key) => f.rects[`stat:${key}:label`]).map((key) => [key, key]) : CLEAN_COLUMNS;
 
 function pageStats(look: PageLook, f: Fixture): PageStat[] {
-    return COLUMNS[look].map(([col, key]) => ({
+    return columnsOf(f).map(([col, key]) => ({
         key,
         label: f.texts[`stat:${col}:label`],
         value: f.texts[`stat:${col}:value`],
@@ -37,7 +38,7 @@ function measureFrom(look: PageLook, f: Fixture): Measure {
         for (const key of look === 'spotlight' ? EXTRA_KEYS : []) {
             if (f.texts[`stat:${key}:label`] === text || f.texts[`stat:${key}:value`] === text) return f.rects[`stat:${key}:label`].w;
         }
-        for (const [col] of COLUMNS[look]) {
+        for (const [col] of columnsOf(f)) {
             const label = f.rects[`stat:${col}:label`];
             const bar = f.rects[`stat:${col}:bar`];
             if (f.texts[`stat:${col}:label`] === text || f.texts[`stat:${col}:value`] === text) return bar && Math.abs(bar.w - label.w) < 0.5 ? 0 : label.w;
@@ -62,11 +63,14 @@ for (const look of ['spotlight', 'clean'] as const) {
         it(`matches the measured ${look} page at ${size} within 2 px`, () => {
             const f = fixture(`${look}-${size}`);
             const r = f.rects;
-            // The fixture's game had a bar (its caption: "7.3 h left in main story").
+            // The fixtures' games had a bar (captions "7.3 h left in main story", "7.2 h left in main story").
             const extras = { columns: extraColumns(f), bar: true };
             const t = pageTargets(look, f.screen, pageStats(look, f), measureFrom(look, f), { w: r.store.w, h: r.store.h }, extras);
             nearBox(t.play, r.play, 'play');
-            for (let i = 0; i < 3; i++) nearBox(t.circles[i], r[`circle${i}`], `circle${i}`);
+            // The circles the page drew (three for an installed game, two before it is installed).
+            const circles = Object.keys(r).filter((k) => /^circle\d$/.test(k));
+            expect(circles.length).toBeGreaterThanOrEqual(2);
+            for (let i = 0; i < circles.length; i++) nearBox(t.circles[i], r[`circle${i}`], `circle${i}`);
             near(t.store.x, r.store.x, 'store.x');
             near(t.store.y, r.store.y, 'store.y');
             // The title block grows upward: its eyebrow sits at the bottom, the title above it.
@@ -89,7 +93,7 @@ for (const look of ['spotlight', 'clean'] as const) {
                 nearBox(t.shells[0], r.clean, 'Clean panel');
                 expect(t.extras, 'the Clean look shows no description or HowLongToBeat card').toBeUndefined();
             }
-            for (const [col, key] of COLUMNS[look]) {
+            for (const [col, key] of columnsOf(f)) {
                 nearBox(t.stats[key]?.label, r[`stat:${col}:label`], `${key} label`);
                 nearBox(t.stats[key]?.value, r[`stat:${col}:value`], `${key} value`);
                 // Clean's progress bars are targets too (Home's chip bars move into them); the Spotlight cards' are not.
@@ -127,8 +131,8 @@ describe('pageTargets stats', () => {
     it('no extras asked for: none', () => {
         expect(pageTargets('spotlight', screen, [played, main], measure, store).extras).toBeUndefined();
     });
-    it('on a screen wider than 16:9 the Spotlight cards keep a 16:9 TV\'s widths: the info card at the left side, HowLongToBeat at the right', () => {
-        const { gridGap, split: [a, b], maxW } = PAGE_LAYOUT.cards;
+    it('the Spotlight cards keep their own widths: the info card at the left side, HowLongToBeat at the right, the art between', () => {
+        const { infoW, hltbW } = PAGE_LAYOUT.cards;
         const cards = (w: number, h: number) => pageTargets('spotlight', { width: w, height: h }, [played, main], measure, store).shells;
         // 21:9 (the Ally's TV window emulated at 1500x643): d = 643 / 810, 56 sides (not a TV by height).
         const d = 643 / 810;
@@ -136,16 +140,19 @@ describe('pageTargets stats', () => {
         const [info, hltb] = cards(1500, 643);
         expect(info.x).toBeCloseTo(side, 6);
         // Wider than 9:5, the description card is as wide as the HowLongToBeat card (Michael, 21:9 on the Ally).
-        expect(hltb.w).toBeCloseTo(((maxW - gridGap) * b) / (a + b) * d, 6);
+        expect(hltb.w).toBeCloseTo(hltbW * d, 6);
         expect(info.w).toBeCloseTo(hltb.w, 6);
         expect(hltb.x + hltb.w).toBeCloseTo(1500 - side, 6);
-        // 16:9, unchanged (one row edge to edge, the gap between): the handheld (828x466, 56 sides) and the Ally docked to a 1080p TV (1500x844, 24 sides: exactly the cap).
-        for (const [w, h, s] of [[828, 466, PAGE_LAYOUT.side.base], [1500, 844, PAGE_LAYOUT.side.tv]]) {
-            const unit = w / 1440;
+        // 16:9 and 16:10 (the Ally's 828x466, the Deck's 854x534, 56 sides; a 1080p TV, 24 sides): each card its own width,
+        // pinned to its side, so the HowLongToBeat card has no empty space after its times (issue #53).
+        for (const [w, h, s, logical] of [[828, 466, PAGE_LAYOUT.side.base, 1440], [854, 534, PAGE_LAYOUT.side.base, 1280], [1500, 844, PAGE_LAYOUT.side.tv, 1440]]) {
+            const unit = w / logical;
             const [i, t] = cards(w, h);
             expect(i.x).toBeCloseTo(s * unit, 6);
-            expect(t.x - (i.x + i.w)).toBeCloseTo(gridGap * unit, 6);
+            expect(i.w).toBeCloseTo(infoW * unit, 6);
+            expect(t.w).toBeCloseTo(hltbW * unit, 6);
             expect(t.x + t.w).toBeCloseTo(w - s * unit, 6);
+            expect(t.x).toBeGreaterThan(i.x + i.w + PAGE_LAYOUT.cards.gridGap * unit);
         }
     });
     it('a stat the page lacks has no target', () => {

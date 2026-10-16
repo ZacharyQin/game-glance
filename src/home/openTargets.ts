@@ -112,7 +112,7 @@ export function pageTargets(
     let extras: PageExtras | undefined;
     if (look === 'spotlight') {
         const top = playTop + L.rowH * d;
-        // As the page's grid: the columns share the width between the sides; each card at most cardMaxWidths (a 16:9 TV's),
+        // As the page's grid: the columns share the width between the sides; each card at most its cardMaxWidths,
         // the info card at the left, HowLongToBeat at the right end, so on a wider screen the art shows between them.
         const inner = W - 2 * side - L.cards.gridGap * d;
         const [a, b] = L.cards.split;
