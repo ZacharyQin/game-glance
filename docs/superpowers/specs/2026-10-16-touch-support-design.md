@@ -50,14 +50,14 @@ A drag drives Home's existing selection machinery, like holding the stick:
 - **Following the finger:** the layout carries the row from card to card as the selection steps, and the track adds the finger's remainder beyond the selected card (`dragView`). A release only settles that remainder, so nothing springs back. In Steam style the layout doesn't scroll until the selection passes the middle, so there the highlight moves along the cards until then, as with the stick. (Final review: the earlier "track at its start position plus the finger" sprang the row back on release in Steam style.)
 - **Release:** the remainder settles through the row's existing transition.
 - **No click from a drag:** a sideways drag swallows the click a short quick slide can still produce; a flick stops at the row's end and while a game opens.
-- **Flick:** the release velocity continues as a short run of further steps, each delay longer than the last, through the same path.
+- **Flick:** the row glides on at the release speed, slowing down smoothly frame by frame (`glide`: the speed falls by e every 400 ms, so it runs on about speed × 400 px), through the same view as the drag, and comes to rest on a card or at the row's end. (Michael, after the first device build: the stepped flick felt jerky and stopped too soon.)
 - **Ends:** past the first game or the Library card, a rubber-band offset springs back on release. A drag never wraps; Left/Right presses still wrap as today.
 
 ### `src/home/rowDrag.ts` (pure, tested)
 - `axisLock(dx, dy, slop)`: `null` until the move passes `slop` logical px, then `'x'` (the row) or `'y'` (the sheet, section 2).
 - `dragSteps(dx, step)`: whole cards to move, rounded to the nearest card (signed).
 - `releaseVelocity(samples)`: logical px/ms from a least-squares fit over the samples of the last ~100 ms (`getCoalescedEvents()` for the full rate).
-- `flickRun(velocity, step)`: the extra steps and their delays, empty below a minimum speed.
+- `glide(velocity, t)`: how far a flick has run on `t` ms after release, and whether it has come to rest; nothing below a minimum speed.
 - `rubberBand(overscroll, limit)`: increasing, never past `limit`.
 
 ### Wiring
@@ -83,7 +83,7 @@ A drag drives Home's existing selection machinery, like holding the stick:
 - **Unifideck's layout** keeps `pointer-events: none` on `.gg-hero` (`themeCss.ts:405`) except on the cards. The Clean look has no cards and is unchanged.
 
 ## Tests and docs
-- **New:** `tests/home/rowDrag.test.ts` covers the axis lock, steps at both card scales, velocity from uneven samples, the flick run and the rubber band.
+- **New:** `tests/home/rowDrag.test.ts` covers the axis lock, steps at both card scales, velocity from uneven samples, the glide and the rubber band.
 - **Changed:** `tests/home/homeCss.test.ts:121-138` currently asserts the row's `pointer-events: none` and no pointer cursor. It moves to the new rules.
 - **Docs:**
   - `docs/device-checklist.md`: rows 32 and 41 rewritten, plus a row per gesture.

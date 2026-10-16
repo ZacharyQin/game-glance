@@ -1,5 +1,5 @@
 import { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent, useEffect, useRef, useState } from 'react';
-import { Axis, axisLock, dragTarget, dragView, flickRun, releaseVelocity, Sample } from './rowDrag';
+import { Axis, axisLock, dragView, glide, releaseVelocity, Sample } from './rowDrag';
 
 export interface RowDragOptions {
     /** The selected card, and the last one (the games row: the Library card). */
@@ -33,7 +33,8 @@ type Handler = (event: ReactPointerEvent<HTMLElement>) => void;
 /**
  * A row under a finger (rowDrag): a sideways drag steps the selection one card per `step` px; the row's `offset` is the
  * finger's movement beyond the selected card's place (rubber-banded past the ends), so the layout carries the row and a
- * release only settles that remainder. On release a flick runs on a few cards, slowing down, and stops at the row's end.
+ * release only settles that remainder. On release a flick glides on at the finger's speed, slowing down smoothly frame by
+ * frame (rowDrag.glide) through the same view, and comes to rest on a card (or at the row's end).
  * A sideways drag never ends in a click (a short quick slide can pass Chromium's tap slop): it is swallowed. A vertical
  * swipe is left to bubble up (SpotlightHome raises or lowers the feed sheet). One finger only (the primary pointer);
  * Steam taking the touch (pointercancel) ends the run.
@@ -49,14 +50,20 @@ export function useRowDrag(options: RowDragOptions): {
     const gesture = useRef<Gesture | null>(null);
     // The last gesture was a sideways drag: the click it may still produce is not a tap.
     const dragged = useRef(false);
-    const flick = useRef<Array<ReturnType<typeof setTimeout>>>([]);
+    // A flick gliding on, frame by frame in Steam's window.
+    const gliding = useRef<{ view: Window; id: number } | null>(null);
     const stopFlick = () => {
-        if (flick.current.length === 0) return;
-        flick.current.forEach(clearTimeout);
-        flick.current = [];
+        const g = gliding.current;
+        if (!g) return;
+        g.view.cancelAnimationFrame(g.id);
+        gliding.current = null;
+        setState({ dragging: false, offset: 0 });
         opts.current.onRun(false);
     };
-    useEffect(() => () => flick.current.forEach(clearTimeout), []);
+    useEffect(() => () => {
+        const g = gliding.current;
+        if (g) g.view.cancelAnimationFrame(g.id);
+    }, []);
     const logical = (px: number) => px / (opts.current.scale() || 1);
 
     const onPointerDown: Handler = (event) => {
@@ -94,32 +101,33 @@ export function useRowDrag(options: RowDragOptions): {
         if (!g || event.pointerId !== g.id) return;
         gesture.current = null;
         if (g.axis !== 'x') return;
-        setState({ dragging: false, offset: 0 });
         const velocity = releaseVelocity(g.samples);
-        const delays = flickRun(velocity, g.step);
-        if (delays.length === 0) {
+        const view = event.currentTarget.ownerDocument?.defaultView ?? window;
+        if (glide(velocity, 0).done || typeof view.requestAnimationFrame !== 'function') {
+            setState({ dragging: false, offset: 0 });
             opts.current.onRun(false);
             return;
         }
-        // A finger moving left (velocity < 0) runs on to later cards.
-        const direction = velocity < 0 ? 1 : -1;
+        // The flick carries the finger's movement on: the same view as the drag, from where the finger let go.
+        const released = logical(event.clientX - g.x0);
+        const t0 = view.performance.now();
         let at = g.last;
-        let when = 0;
-        const steps = delays.map((delay) => {
-            when += delay;
-            return setTimeout(() => {
-                const next = dragTarget(at, direction, opts.current.count).index;
-                // At the row's end (or with a game opening) the flick is over: the art catches up at once.
-                if (next === at || opts.current.canStep?.() === false) {
-                    stopFlick();
-                    return;
-                }
-                at = next;
+        const frame = (now: number) => {
+            if (opts.current.canStep?.() === false) return stopFlick();
+            const { dx, done } = glide(velocity, now - t0);
+            const { count } = opts.current;
+            const shown = dragView(released + dx, g.start, count, g.step);
+            if (shown.index !== at) {
+                at = shown.index;
                 opts.current.onSelect(at);
-            }, when);
-        });
-        // After the last step the run ends.
-        flick.current = [...steps, setTimeout(stopFlick, when + 1)];
+            }
+            // At rest, or run into the row's end (the rubber band is for a finger): settle on the card.
+            const atEnd = (shown.index >= count && velocity < 0) || (shown.index <= 0 && velocity > 0);
+            if (done || atEnd) return stopFlick();
+            setState({ dragging: true, offset: shown.offset });
+            if (gliding.current) gliding.current.id = view.requestAnimationFrame(frame);
+        };
+        gliding.current = { view, id: view.requestAnimationFrame(frame) };
     };
     const onPointerCancel: Handler = (event) => {
         const g = gesture.current;

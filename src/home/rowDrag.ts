@@ -12,11 +12,10 @@ export const DRAG_SLOP = 10;
 export const SWIPE_SHEET = 60;
 /** The slowest release that still flicks on. */
 export const FLICK_MIN = 0.5;
-/** A flick's steps: its speed times this many ms, in cards. */
-const FLICK_MS = 160;
-const FLICK_MAX_STEPS = 8;
-const FLICK_FIRST_DELAY = 60;
-const FLICK_DELAY_GROWTH = 1.35;
+/** A flick's slow-down: its speed falls by e every GLIDE_MS, so it runs on about speed x GLIDE_MS px in all. */
+export const GLIDE_MS = 400;
+/** Below this speed (px/ms) a glide has come to rest. */
+const GLIDE_STOP = 0.05;
 
 /** The axis a drag moves along, once it has passed `slop`; null before. A tie goes to the row (x). */
 export function axisLock(dx: number, dy: number, slop = DRAG_SLOP): Axis | null {
@@ -62,12 +61,14 @@ export function releaseVelocity(samples: Sample[], windowMs = 100): number {
     return den === 0 ? 0 : num / den;
 }
 
-/** A flick's extra steps after release, as the delay before each (they grow, so the run slows down); none when slow. */
-export function flickRun(velocity: number, step: number): number[] {
-    const speed = Math.abs(velocity);
-    if (speed < FLICK_MIN || step <= 0) return [];
-    const steps = Math.min(FLICK_MAX_STEPS, Math.round((speed * FLICK_MS) / step));
-    return Array.from({ length: steps }, (_, i) => FLICK_FIRST_DELAY * FLICK_DELAY_GROWTH ** i);
+/**
+ * A flick `t` ms after release: how much further the row has moved (`dx`, the release speed's sign) as it slows down
+ * smoothly, and whether it has come to rest. Too slow a release (below FLICK_MIN) doesn't glide at all.
+ */
+export function glide(velocity: number, t: number): { dx: number; done: boolean } {
+    if (Math.abs(velocity) < FLICK_MIN) return { dx: 0, done: true };
+    const fade = Math.exp(-Math.max(0, t) / GLIDE_MS);
+    return { dx: velocity * GLIDE_MS * (1 - fade), done: Math.abs(velocity) * fade < GLIDE_STOP };
 }
 
 /** How far the row gives past its ends for an overscroll of `overscroll` px: ever slower, never reaching `limit`. */

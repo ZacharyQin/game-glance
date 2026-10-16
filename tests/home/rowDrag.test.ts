@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CARD_SCALE_DOCKED, recentsGeometry } from '../../src/home/recentsLayout';
-import { axisLock, cardTap, dragSteps, dragTarget, flickRun, releaseVelocity, rubberBand, Sample, sheetSwipe, dragView } from '../../src/home/rowDrag';
+import { axisLock, cardTap, dragSteps, dragTarget, FLICK_MIN, glide, GLIDE_MS, releaseVelocity, rubberBand, Sample, sheetSwipe, dragView } from '../../src/home/rowDrag';
 
 describe('rowDrag', () => {
     it('axisLock waits for the slop, then picks the larger axis (a tie goes to the row)', () => {
@@ -41,12 +41,26 @@ describe('rowDrag', () => {
         expect(releaseVelocity([{ t: 10, x: 3 }])).toBe(0);
         expect(releaseVelocity([])).toBe(0);
     });
-    it('flickRun gives growing delays for the extra steps, none for a slow release, at most 8', () => {
-        expect(flickRun(0.3, 168)).toEqual([]);
-        expect(flickRun(0, 168)).toEqual([]);
-        expect(flickRun(2, 168).map(Math.round)).toEqual([60, 81]);
-        expect(flickRun(-2, 168).map(Math.round)).toEqual([60, 81]);
-        expect(flickRun(20, 168)).toHaveLength(8);
+    it('glide carries a flick on at the release speed, slowing down smoothly, and goes a good way further than a step', () => {
+        // Too slow to flick: nothing.
+        expect(glide(FLICK_MIN * 0.6, 0)).toEqual({ dx: 0, done: true });
+        // At release it starts where the finger left off and keeps the speed.
+        expect(glide(2, 0)).toEqual({ dx: 0, done: false });
+        // Exponential slow-down with a 400 ms time constant: the distance tends to speed x 400.
+        expect(GLIDE_MS).toBe(400);
+        expect(glide(-2, 200).dx).toBeCloseTo(-2 * 400 * (1 - Math.exp(-0.5)), 6);
+        expect(glide(-2, 200).done).toBe(false);
+        const end = glide(2, 3000);
+        expect(end.done).toBe(true);
+        expect(end.dx).toBeGreaterThan(780);
+        expect(end.dx).toBeLessThanOrEqual(800);
+        // A 2 px/ms flick runs on more than four handheld cards (the old stepped flick: two).
+        expect(end.dx / 168).toBeGreaterThan(4);
+        // It only moves forward, ever slower.
+        const a = glide(2, 100).dx;
+        const b = glide(2, 200).dx;
+        const c = glide(2, 300).dx;
+        expect(b - a).toBeGreaterThan(c - b);
     });
     it('rubberBand grows ever more slowly and never reaches its limit', () => {
         expect(rubberBand(0, 40)).toBe(0);
