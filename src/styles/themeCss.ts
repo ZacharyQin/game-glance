@@ -141,6 +141,8 @@ export function cardMaxWidths(aspect = 0): [number, number] {
 
 /** A card's max-width for its outer width `outer` (handoff px): the cards are content-box, so less the padding and the 1 px borders. */
 const cardContentMax = (outer: number) => `calc(${d(outer - 2 * PAGE_LAYOUT.cards.padX)} - 2 * 1px)`;
+/** A card's width filling its grid column, content-box as above: a plain 100% overflowed the column by the padding and borders. */
+const CARD_FILL_WIDTH = `calc(100% - ${d(2 * PAGE_LAYOUT.cards.padX)} - 2 * 1px)`;
 
 /** The page's d unit (CSS px per handoff px) for a Big Picture window of `width` x `height` CSS px, as --gg-d: Home's scale. */
 export function pageDUnit(width: number, height: number): number {
@@ -551,7 +553,7 @@ function restyleRules({ header, details, root, play, shared }: ThemeClasses, lay
         // (One height for every game: three description lines' worth, as The Witcher's (its content: stats, gap and three
         // lines, 136 of the 178 the cards take with their padding and border; measured 179 on the Ally with Steam's border); a short description, or none, left
         // them shorter, which the open transition's panels (openTargets, the same height) then shrank to after the hand-over.)
-        `.gg-card.gg-hltb { gap: ${d(PAGE_LAYOUT.cards.hltbGap)}; width: 100%; max-width: ${cardContentMax(cardMaxWidths()[1])}; justify-self: end; }`,
+        `.gg-card.gg-hltb { gap: ${d(PAGE_LAYOUT.cards.hltbGap)}; width: ${CARD_FILL_WIDTH}; max-width: ${cardContentMax(cardMaxWidths()[1])}; justify-self: end; }`,
         // (9/5: cards.equalFromAspect as a media query ratio.)
         `@media (min-aspect-ratio: 9/5) { .gg-card { max-width: ${cardContentMax(cardMaxWidths(PAGE_LAYOUT.cards.equalFromAspect)[0])}; } }`,
         `.gg-label { font-size: ${d(PAGE_LAYOUT.stats.label)}; letter-spacing: 0.18em; color: rgba(255, 255, 255, 0.62); }`,

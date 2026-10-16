@@ -548,9 +548,11 @@ describe('buildThemeCss restyle (Spotlight Home on)', () => {
         // Wider than 9:5 (21:9, 32:9) the description card is as wide as HowLongToBeat; 16:9 keeps the 1.1 : 1 split.
         expect(PAGE_LAYOUT.cards.equalFromAspect).toBe(1.8);
         expect(restyled).toContain(`@media (min-aspect-ratio: 9/5) { .gg-card { ${content(((maxW - gridGap) * b) / (a + b))}; } }`);
-        // Aligned to the row's right end at its full (capped) width, not shrunk to its content.
+        // Aligned to the row's right end at its full (capped) width, not shrunk to its content. Content-box like the cap:
+        // a plain 100% added the padding and borders, spilling 2 x padX + 2 px left over the info card (issue #53, the Deck).
         expect(hltbRules).toContain('justify-self: end');
-        expect(hltbRules).toContain('width: 100%');
+        expect(hltbRules).toContain(`width: calc(100% - calc(${2 * padX} * var(--gg-d)) - 2 * 1px)`);
+        expect(hltbRules).not.toContain('width: 100%;');
         expect(rulesFor(restyled, '.gg-card')).toContain('padding: calc(20 * var(--gg-d)) calc(24 * var(--gg-d))');
         expect(rulesFor(restyled, '.gg-card')).toContain('border-radius: calc(16 * var(--gg-d))');
         expect(rulesFor(restyled, '.gg-value')).toContain('font-size: calc(30 * var(--gg-d))');
