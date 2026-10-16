@@ -31,10 +31,14 @@ const boxOf = (el: Element | null | undefined): Box | null => {
 /**
  * The window's exact size in CSS px: the page lays out from 100vw / 100vh, which are fractional at the Ally's pixel
  * ratio (466.38, where innerHeight says 466), so the targets must be too. innerWidth / innerHeight without a viewport.
+ * With its pixel ratio: the page draws its cards' borders and edges on whole device px.
  */
-export function viewportSize(win: { innerWidth: number; innerHeight: number; visualViewport?: { width: number; height: number } | null }): { width: number; height: number } {
+export function viewportSize(win: {
+    innerWidth: number; innerHeight: number; devicePixelRatio?: number; visualViewport?: { width: number; height: number } | null;
+}): { width: number; height: number; dpr?: number } {
     const v = win.visualViewport;
-    return v && v.width > 0 && v.height > 0 ? { width: v.width, height: v.height } : { width: win.innerWidth, height: win.innerHeight };
+    const size = v && v.width > 0 && v.height > 0 ? { width: v.width, height: v.height } : { width: win.innerWidth, height: win.innerHeight };
+    return { ...size, dpr: win.devicePixelRatio };
 }
 
 /** The page's stat columns (Play time, Achievements, HowLongToBeat Main) Home showed no chip for, by Home's chip keys. Pure. */

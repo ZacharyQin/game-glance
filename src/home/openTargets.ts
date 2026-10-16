@@ -27,6 +27,8 @@ export interface PageTargets {
     stats: Partial<Record<StatKey, { label: Box; value: Box; bar?: Box }>>;
     /** Spotlight look, when asked for: the description and the rest of the HowLongToBeat card. */
     extras?: PageExtras;
+    /** The cards' and the Clean panel's border as drawn (cardBorder), CSS px; 1 when not given. */
+    border?: number;
 }
 /** One of the HowLongToBeat card's columns after Main (Spotlight look), with the texts it shows. */
 export interface ExtraColumn { key: 'mainExtras' | 'completionist'; label: string; value: string }
@@ -49,8 +51,13 @@ export interface PageExtras {
 /** A text's width in CSS px as the page draws it: a stat label (uppercase, its letter spacing), a card value or a Clean value. */
 export type Measure = (text: string, role: 'label' | 'value' | 'cleanValue', fontPx: number) => number;
 
-/** The cards' and the Clean panel's border (CSS px, not scaled). */
-const BORDER = 1;
+/**
+ * The cards' and the Clean panel's 1 px border as Chromium draws it at `dpr` device px per CSS px: a whole number of
+ * device px, at least one (2 at the Ally's 2.32, so 0.862 CSS px). CSS px; 1 when the ratio is not known.
+ */
+export function cardBorder(dpr?: number): number {
+    return dpr && dpr > 0 ? Math.max(1, Math.floor(dpr)) / dpr : 1;
+}
 /**
  * The page's line heights: labels inherit Steam's 1.5, values are set to 1.2 (themeCss), the HowLongToBeat caption inherits
  * the font's normal one (measured on the device: 1.45). Home's open transition draws the same texts with them.
@@ -63,12 +70,23 @@ const CAPTION_LINE = PAGE_LINES.caption;
 const CARDS_H = PAGE_LAYOUT.playTop.tvCards;
 
 export function pageTargets(
-    look: PageLook, screen: { width: number; height: number }, stats: PageStat[], measure: Measure, storeSize: { w: number; h: number }, asked?: ExtrasAsked,
+    look: PageLook, screen: { width: number; height: number; dpr?: number }, stats: PageStat[], measure: Measure, storeSize: { w: number; h: number }, asked?: ExtrasAsked,
 ): PageTargets {
     const L = PAGE_LAYOUT;
     const W = screen.width;
     const H = screen.height;
     const d = pageDUnit(W, H);
+    const BORDER = cardBorder(screen.dpr);
+    // The cards' widths allow for 1 px borders (themeCss.cardContentMax, CARD_FILL_WIDTH): a thinner one as drawn makes
+    // them this much narrower.
+    const thinner = 2 * (1 - BORDER);
+    // A panel's edges where Chromium draws the card's: on whole device px.
+    const snap = (v: number) => (screen.dpr && screen.dpr > 0 ? Math.round(v * screen.dpr) / screen.dpr : v);
+    const snapBox = (b: Box): Box => {
+        const x = snap(b.x);
+        const y = snap(b.y);
+        return { x, y, w: snap(b.x + b.w) - x, h: snap(b.y + b.h) - y };
+    };
     const tv = W >= L.tvQuery.minWidth && H >= L.tvQuery.minHeight;
     const side = (tv ? L.side.tv : L.side.base) * d;
     const playTop = look === 'clean'
@@ -117,10 +135,12 @@ export function pageTargets(
         const inner = W - 2 * side - L.cards.gridGap * d;
         const [a, b] = L.cards.split;
         const [infoMax, hltbMax] = cardMaxWidths(W / H);
-        const info: Box = { x: side, y: top, w: Math.min((inner * a) / (a + b), infoMax * d), h: CARDS_H * d };
-        const hltbW = Math.min((inner * b) / (a + b), hltbMax * d);
-        const hltb: Box = { x: W - side - hltbW, y: top, w: hltbW, h: CARDS_H * d };
-        shells = [info, hltb];
+        // Their min-height is CARDS_H less 2 for the borders, in d units, and the borders as drawn come on top.
+        const cardH = (CARDS_H - 2) * d + 2 * BORDER;
+        const info: Box = { x: side, y: top, w: Math.min((inner * a) / (a + b), infoMax * d - thinner), h: cardH };
+        const hltbW = Math.min((inner * b) / (a + b), hltbMax * d) - thinner;
+        const hltb: Box = { x: W - side - hltbW, y: top, w: hltbW, h: cardH };
+        shells = [snapBox(info), snapBox(hltb)];
         const pad = (card: Box) => ({ x: card.x + BORDER + L.cards.padX * d, y: card.y + BORDER + L.cards.padY * d });
         const i0 = pad(info);
         row(stats.filter((s) => s.key !== 'hltb'), i0.x, i0.y, L.stats.colGapInfo * d);
@@ -163,8 +183,8 @@ export function pageTargets(
             s.value = { ...s.value, x: s.value.x + ox, y: s.value.y + oy };
             if (s.bar) s.bar = { ...s.bar, x: s.bar.x + ox, y: s.bar.y + oy };
         }
-        shells = [panel];
+        shells = [snapBox(panel)];
         store = { x: W - side - storeSize.w, y: playTop - L.clean.storeGap * d - storeSize.h, w: storeSize.w, h: storeSize.h };
     }
-    return { titleBottomLeft, eyebrowBottomLeft, play, circles, store, shells, stats: out, extras };
+    return { titleBottomLeft, eyebrowBottomLeft, play, circles, store, shells, stats: out, extras, border: BORDER };
 }

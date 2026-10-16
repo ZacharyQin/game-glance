@@ -136,6 +136,10 @@ describe('viewportSize', () => {
         expect(viewportSize({ innerWidth: 828, innerHeight: 466 })).toEqual({ width: 828, height: 466 });
         expect(viewportSize({ innerWidth: 828, innerHeight: 466, visualViewport: { width: 0, height: 0 } })).toEqual({ width: 828, height: 466 });
     });
+    it('and its pixel ratio, where the page draws its borders and edges (whole device px)', () => {
+        expect(viewportSize({ innerWidth: 828, innerHeight: 466, devicePixelRatio: 2.32 }).dpr).toBe(2.32);
+        expect(viewportSize({ innerWidth: 828, innerHeight: 466 }).dpr).toBeUndefined();
+    });
 });
 
 describe('missingStats', () => {
