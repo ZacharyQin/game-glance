@@ -330,7 +330,8 @@ export function SpotlightHome() {
     useLayoutEffect(() => {
         if (size) noteDisplay(size.width, size.height, rootRef.current?.ownerDocument?.defaultView?.devicePixelRatio ?? 1, canvas.scale);
     }, [size, canvas.scale]);
-    // Width is the authored one; height follows the real screen so the reserved bars sit on Steam's bars, and the
+    // Width is the authored one (wider on a screen wider than 16:9: homeCanvas scales those by height, so the height is
+    // never shorter than the authored one); height follows the real screen so the reserved bars sit on Steam's bars, and the
     // whole stack moves down into the slack under the tab strip (homeCss.stackShift), or with the bottom section hidden
     // into the tab strip's place too.
     const logicalHeight = size ? size.height / canvas.scale : canvas.logicalHeight;

@@ -1,4 +1,4 @@
-import { PAGE_LAYOUT, pageDUnit, STEAM_LEGEND_PX } from '../styles/themeCss';
+import { cardMaxWidths, PAGE_LAYOUT, pageDUnit, STEAM_LEGEND_PX } from '../styles/themeCss';
 
 /**
  * Where the Game Glance page (restyled, Spotlight or Clean look) puts the things Spotlight Home morphs into during the
@@ -112,10 +112,14 @@ export function pageTargets(
     let extras: PageExtras | undefined;
     if (look === 'spotlight') {
         const top = playTop + L.rowH * d;
+        // As the page's grid: the columns share the width between the sides; each card at most cardMaxWidths (a 16:9 TV's),
+        // the info card at the left, HowLongToBeat at the right end, so on a wider screen the art shows between them.
         const inner = W - 2 * side - L.cards.gridGap * d;
         const [a, b] = L.cards.split;
-        const info: Box = { x: side, y: top, w: (inner * a) / (a + b), h: CARDS_H * d };
-        const hltb: Box = { x: info.x + info.w + L.cards.gridGap * d, y: top, w: (inner * b) / (a + b), h: CARDS_H * d };
+        const [infoMax, hltbMax] = cardMaxWidths(W / H);
+        const info: Box = { x: side, y: top, w: Math.min((inner * a) / (a + b), infoMax * d), h: CARDS_H * d };
+        const hltbW = Math.min((inner * b) / (a + b), hltbMax * d);
+        const hltb: Box = { x: W - side - hltbW, y: top, w: hltbW, h: CARDS_H * d };
         shells = [info, hltb];
         const pad = (card: Box) => ({ x: card.x + BORDER + L.cards.padX * d, y: card.y + BORDER + L.cards.padY * d });
         const i0 = pad(info);
