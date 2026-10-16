@@ -47,14 +47,14 @@ Decisions (Michael):
 A drag drives Home's existing selection machinery, like holding the stick:
 - **Each step:** every `step` logical px (the card pitch of the current layout, handheld or docked) the finger moves selects the next or previous card through `select()`.
 - **A run:** the drag counts as one for `useFastCycle` (`SpotlightHome.tsx:154`), as held Left/Right and L1/R1 already do. The hero, accent and wide card hold, then update when the drag settles. In Spotlight style the cards stay uniform during the run, as in fast runs.
-- **Following the finger:** between steps, the track gets the leftover fraction of a step as an extra offset.
-- **Release:** the leftover settles to the nearest card through the row's existing transition.
+- **Following the finger:** while the finger is down, the track sits where it was when the drag began plus the finger's movement. In Steam style the layout doesn't scroll until the selection passes the middle, so the cards follow the finger exactly in both styles.
+- **Release:** the track settles to the layout's position for the selected card through the row's existing transition.
 - **Flick:** the release velocity continues as a short run of further steps, each delay longer than the last, through the same path.
 - **Ends:** past the first game or the Library card, a rubber-band offset springs back on release. A drag never wraps; Left/Right presses still wrap as today.
 
 ### `src/home/rowDrag.ts` (pure, tested)
 - `axisLock(dx, dy, slop)`: `null` until the move passes `slop` logical px, then `'x'` (the row) or `'y'` (the sheet, section 2).
-- `dragSteps(dx, step)`: `{ steps, leftover }` (whole cards and the remaining fraction, signed).
+- `dragSteps(dx, step)`: whole cards to move, rounded to the nearest card (signed).
 - `releaseVelocity(samples)`: logical px/ms from a least-squares fit over the samples of the last ~100 ms (`getCoalescedEvents()` for the full rate).
 - `flickRun(velocity, step)`: the extra steps and their delays, empty below a minimum speed.
 - `rubberBand(overscroll, limit)`: increasing, never past `limit`.
@@ -82,7 +82,7 @@ A drag drives Home's existing selection machinery, like holding the stick:
 - **Unifideck's layout** keeps `pointer-events: none` on `.gg-hero` (`themeCss.ts:405`) except on the cards. The Clean look has no cards and is unchanged.
 
 ## Tests and docs
-- **New:** `tests/home/rowDrag.test.ts` covers the axis lock, steps and leftover at both card scales, velocity from uneven samples, the flick run and the rubber band.
+- **New:** `tests/home/rowDrag.test.ts` covers the axis lock, steps at both card scales, velocity from uneven samples, the flick run and the rubber band.
 - **Changed:** `tests/home/homeCss.test.ts:121-138` currently asserts the row's `pointer-events: none` and no pointer cursor. It moves to the new rules.
 - **Docs:**
   - `docs/device-checklist.md`: rows 32 and 41 rewritten, plus a row per gesture.
