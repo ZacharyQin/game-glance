@@ -575,11 +575,10 @@ export function openingRules(): string[] {
         lateFade('gh-open-settle', 0, 1, T.settle, 'ease-in-out'),
         // Always there, hidden: the page's scrims over Home's, the opened game's hero (heroFade), the glass panels.
         rule('.gh-hero-open', 'position: absolute; inset: 0; pointer-events: none; background-image: var(--gho-hero, none); background-size: cover; background-position: center 30%; background-repeat: no-repeat; opacity: 0'),
-        // (Its border is the page cards' 1 CSS px: 1px in the scaled canvas drew 0.5 px on the Ally, and the page's sharper ring
-        // showed at the hand-over.)
-        // The glass: the page's cards and Clean panel (.38, its border), never blurred here (a blur under a moving scale is
-        // too slow on the Ally); the arriving page grows its blur from none once revealed (themeCss.buildArrivingCss).
-        rule('.gh-open-shell', 'display: none; position: absolute; left: 0; top: 0; margin: 0; padding: 0; pointer-events: none; transform-origin: 0 0; border-radius: 16px; background: rgba(12,16,22,.38); border: calc(1px / var(--gho-x-d, 1)) solid rgba(255,255,255,.12)'),
+        // The glass: the page's cards and Clean panel, their tint, border and blur, so the page's arrive as they are (Michael,
+        // on the Ally: moving blurred felt more seamless than a blur growing in after the hand-over). 16 canvas px is the page's
+        // 16 d units. (Its border is the page cards' 1 CSS px: 1px in the scaled canvas drew 0.5 px on the Ally.)
+        rule('.gh-open-shell', 'display: none; position: absolute; left: 0; top: 0; margin: 0; padding: 0; pointer-events: none; transform-origin: 0 0; border-radius: 16px; background: rgba(12,16,22,.38); border: calc(1px / var(--gho-x-d, 1)) solid rgba(255,255,255,.12); backdrop-filter: blur(16px)'),
         rule(O, 'pointer-events: none'),
         // The bridge (openBridge): a frozen copy of Home in its final state; nothing inside it may animate again.
         rule('.gh-root.gh-bridge, .gh-root.gh-bridge *', 'animation: none; transition: none'),

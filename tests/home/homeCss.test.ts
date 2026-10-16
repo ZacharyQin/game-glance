@@ -473,14 +473,15 @@ describe('homeCss open transition', () => {
         expect(bar?.[1]).toContain('opacity: var(--gho-chip-2-bar-o, 0)');
         expect(all.some(([sel, body]) => sel.includes('data-gh-opening') && sel.includes('.gh-chip-bar') && /transform-origin:\s*0 0/.test(body))).toBe(true);
     });
-    it("the morph ends on the page's own look: the glass is the page's tint without blur (the page grows its blur), the pill its exact round shape", () => {
+    it("the morph ends on the page's own look: the glass is the page's tint and blur, the pill its exact round shape", () => {
         const all = rules(css);
         const body = (pred: (sel: string) => boolean) => all.filter(([sel]) => pred(sel)).map(([, b]) => b).join(' ');
         const settleAt = Math.round(((OPEN_TIMINGS.morph - OPEN_TIMINGS.settle) / OPEN_TIMINGS.morph) * 100000) / 1000;
-        // The glass: the page panel's tint from the start, never blurred on Home (the arriving page grows the blur).
+        // The glass: the page panel's tint and blur from the start (Michael, on the Ally: moving blurred felt more seamless
+        // than a blur growing in after the hand-over). 16 canvas px, the page's 16 d units.
         const shell = body((sel) => sel === '.gh-open-shell');
         expect(shell).toMatch(/background:\s*rgba\(12,16,22,\.38\)/);
-        expect(shell).not.toContain('backdrop-filter');
+        expect(shell).toContain('backdrop-filter: blur(16px)');
         expect(all.some(([sel]) => sel.includes('.gh-open-shell::'))).toBe(false);
         // The pill: the page's focused pill at its exact size, faded in as the stretched layer stops.
         const pill = body((sel) => sel.includes('data-gh-opening="morph"') && !sel.includes('data-gh-phase') && sel.endsWith('[data-action="play"]::after'));

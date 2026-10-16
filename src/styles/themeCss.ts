@@ -633,9 +633,6 @@ function restyleRules({ header, details, root, play, shared }: ThemeClasses, lay
 
 /** The page's new parts' fade-in after the open transition (motion.OPEN_TIMINGS.reveal, rise feedRise). */
 const ARRIVE_MS = 200;
-/** The page's glass growing its blur from none after the open transition (Michael: the blur coming in, cinematic; shortened from 600 once the page's blur worked, 2026-10-16). */
-export const ARRIVE_BLUR_MS = 250;
-const ARRIVE_BLUR_EASE = 'cubic-bezier(.25,.1,.25,1)';
 const ARRIVE_RISE_PX = 14;
 
 /**
@@ -687,11 +684,8 @@ export function buildArrivingCss(
     // Home's copy already shows Play focused, so the page's must be lit at once.
     const playButton = cls(root, 'ActionButtonAndStatusPanel');
     const focusAtOnce = rule(playButton && [`${playButton} [role="button"]`, `${playButton} > div:has(> [role="button"])`], ' transition: none !important; ');
-    // The glass (Clean panel, Spotlight cards) arrives unblurred, as Home's copy draws it, and grows its blur once revealed.
-    const glass = rule('.gg-clean-info, .gg-card', revealed
-        ? ` backdrop-filter: blur(${d(16)}) !important; transition: backdrop-filter ${ARRIVE_BLUR_MS}ms ${ARRIVE_BLUR_EASE} !important; `
-        : ' backdrop-filter: blur(0px) !important; ');
-    return [steamFade, rule(list, body), focusAtOnce, glass].filter((r) => r.length > 0).join('\n');
+    // (The glass, Clean panel and Spotlight cards, keeps its own blur: Home's copy draws it blurred too.)
+    return [steamFade, rule(list, body), focusAtOnce].filter((r) => r.length > 0).join('\n');
 }
 
 /** Clean's bars that arrive: all of them, or (`brought`: the stats whose bar Home's morph moved into place) the others. */
