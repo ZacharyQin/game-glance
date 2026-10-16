@@ -131,6 +131,8 @@ export interface RecentsRowNav {
     scale(): number;
     /** A drag (with its flick) is running: a fast run, like a held stick (home/fastCycle). */
     onRun(running: boolean): void;
+    /** False while a game opens: a flick stops instead of moving the selection under the transition. */
+    canStep?(): boolean;
 }
 
 /**
@@ -165,12 +167,10 @@ export function RecentsRow({ games, selected, geometry, nav, rowStyle = 'spotlig
         if (cardTap(index, focused) === 'open') n.onActivate();
         else n.onSelect(index);
     }, []);
-    // A finger on the row: drags step the selection, the track following the finger from where it was when the drag
-    // began (in Steam's style the layout only scrolls once the selection passes the middle).
-    const drag = useRowDrag({ index: at, count, step: geometry.step, scale: () => nav.scale(), onSelect: (i) => nav.onSelect(i), onRun: (r) => nav.onRun(r) });
-    const dragStart = useRef(layout.scrollX);
-    if (!drag.dragging) dragStart.current = layout.scrollX;
-    const trackX = drag.dragging ? dragStart.current + drag.dx : layout.scrollX;
+    // A finger on the row: drags step the selection (the layout carries the row) and the track adds the finger's
+    // remainder beyond the selected card, so a release only settles that (useRowDrag).
+    const drag = useRowDrag({ index: at, count, step: geometry.step, scale: () => nav.scale(), onSelect: (i) => nav.onSelect(i), onRun: (r) => nav.onRun(r), canStep: () => nav.canStep?.() !== false });
+    const trackX = layout.scrollX + (drag.dragging ? drag.offset : 0);
     return (
         <Focusable
             ref={nav.setRef as Ref<HTMLDivElement>}

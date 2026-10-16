@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CARD_SCALE_DOCKED, recentsGeometry } from '../../src/home/recentsLayout';
-import { axisLock, cardTap, dragSteps, dragTarget, flickRun, releaseVelocity, rubberBand, Sample, sheetSwipe } from '../../src/home/rowDrag';
+import { axisLock, cardTap, dragSteps, dragTarget, flickRun, releaseVelocity, rubberBand, Sample, sheetSwipe, dragView } from '../../src/home/rowDrag';
 
 describe('rowDrag', () => {
     it('axisLock waits for the slop, then picks the larger axis (a tie goes to the row)', () => {
@@ -53,6 +53,23 @@ describe('rowDrag', () => {
         expect(rubberBand(40, 40)).toBeCloseTo(20, 6);
         expect(rubberBand(1e9, 40)).toBeLessThan(40);
         expect(rubberBand(-40, 40)).toBeCloseTo(-20, 6);
+    });
+    it('dragView gives the card under the finger and only the leftover as the row\'s offset (no spring back on release)', () => {
+        // Within the row: the nearest card, and the part of a card still under the finger.
+        expect(dragView(-170, 2, 10, 168)).toEqual({ index: 3, offset: -2 });
+        expect(dragView(90, 2, 10, 168)).toEqual({ index: 1, offset: -78 });
+        expect(dragView(0, 2, 10, 168)).toEqual({ index: 2, offset: 0 });
+        // Past the last card (the Library card) or the first game, the leftover is rubber-banded, never more than half a card.
+        const end = dragView(-400, 9, 10, 168);
+        expect(end.index).toBe(10);
+        expect(end.offset).toBeLessThan(0);
+        expect(end.offset).toBeGreaterThan(-84);
+        expect(end.offset).toBeCloseTo(-rubberBand(232, 84), 6);
+        const start = dragView(300, 0, 10, 168);
+        expect(start.index).toBe(0);
+        expect(start.offset).toBeCloseTo(rubberBand(300, 84), 6);
+        // A leftover pulling back from the end is not banded.
+        expect(dragView(-140, 9, 10, 168)).toEqual({ index: 10, offset: 28 });
     });
     it('sheetSwipe raises the sheet on a long enough swipe up, lowers it on one down, and ignores sideways or short ones', () => {
         expect(sheetSwipe(4, -70, false)).toBe('raise');

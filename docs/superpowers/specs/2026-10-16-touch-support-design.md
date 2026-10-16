@@ -47,8 +47,9 @@ Decisions (Michael):
 A drag drives Home's existing selection machinery, like holding the stick:
 - **Each step:** every `step` logical px (the card pitch of the current layout, handheld or docked) the finger moves selects the next or previous card through `select()`.
 - **A run:** the drag counts as one for `useFastCycle` (`SpotlightHome.tsx:154`), as held Left/Right and L1/R1 already do. The hero, accent and wide card hold, then update when the drag settles. In Spotlight style the cards stay uniform during the run, as in fast runs.
-- **Following the finger:** while the finger is down, the track sits where it was when the drag began plus the finger's movement. In Steam style the layout doesn't scroll until the selection passes the middle, so the cards follow the finger exactly in both styles.
-- **Release:** the track settles to the layout's position for the selected card through the row's existing transition.
+- **Following the finger:** the layout carries the row from card to card as the selection steps, and the track adds the finger's remainder beyond the selected card (`dragView`). A release only settles that remainder, so nothing springs back. In Steam style the layout doesn't scroll until the selection passes the middle, so there the highlight moves along the cards until then, as with the stick. (Final review: the earlier "track at its start position plus the finger" sprang the row back on release in Steam style.)
+- **Release:** the remainder settles through the row's existing transition.
+- **No click from a drag:** a sideways drag swallows the click a short quick slide can still produce; a flick stops at the row's end and while a game opens.
 - **Flick:** the release velocity continues as a short run of further steps, each delay longer than the last, through the same path.
 - **Ends:** past the first game or the Library card, a rubber-band offset springs back on release. A drag never wraps; Left/Right presses still wrap as today.
 

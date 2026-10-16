@@ -1,5 +1,5 @@
-import { PointerEvent as ReactPointerEvent, useEffect, useRef, useState } from 'react';
-import { Axis, axisLock, dragSteps, dragTarget, flickRun, releaseVelocity, rubberBand, Sample } from './rowDrag';
+import { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent, useEffect, useRef, useState } from 'react';
+import { Axis, axisLock, dragTarget, dragView, flickRun, releaseVelocity, Sample } from './rowDrag';
 
 export interface RowDragOptions {
     /** The selected card, and the last one (the games row: the Library card). */
@@ -12,6 +12,8 @@ export interface RowDragOptions {
     onSelect(next: number): void;
     /** A drag (and its flick) is a run, like a held stick: the hero holds until it ends (home/fastCycle). */
     onRun(running: boolean): void;
+    /** False stops a flick between steps (a game opening, the row gone): no selection moves under the transition. */
+    canStep?(): boolean;
 }
 
 interface Gesture {
@@ -29,15 +31,24 @@ interface Gesture {
 type Handler = (event: ReactPointerEvent<HTMLElement>) => void;
 
 /**
- * A row under a finger (rowDrag): a sideways drag steps the selection one card per `step` px, the row following the
- * finger (`dx`, rubber-banded past the ends); on release a flick runs on a few cards, slowing down. A vertical swipe is
- * left to bubble up (SpotlightHome raises or lowers the feed sheet). One finger only (the primary pointer); Steam taking the touch (pointercancel) ends the run.
+ * A row under a finger (rowDrag): a sideways drag steps the selection one card per `step` px; the row's `offset` is the
+ * finger's movement beyond the selected card's place (rubber-banded past the ends), so the layout carries the row and a
+ * release only settles that remainder. On release a flick runs on a few cards, slowing down, and stops at the row's end.
+ * A sideways drag never ends in a click (a short quick slide can pass Chromium's tap slop): it is swallowed. A vertical
+ * swipe is left to bubble up (SpotlightHome raises or lowers the feed sheet). One finger only (the primary pointer);
+ * Steam taking the touch (pointercancel) ends the run.
  */
-export function useRowDrag(options: RowDragOptions): { dx: number; dragging: boolean; handlers: { onPointerDown: Handler; onPointerMove: Handler; onPointerUp: Handler; onPointerCancel: Handler } } {
+export function useRowDrag(options: RowDragOptions): {
+    offset: number;
+    dragging: boolean;
+    handlers: { onPointerDown: Handler; onPointerMove: Handler; onPointerUp: Handler; onPointerCancel: Handler; onClickCapture(event: ReactMouseEvent): void };
+} {
     const opts = useRef(options);
     opts.current = options;
-    const [state, setState] = useState({ dragging: false, dx: 0 });
+    const [state, setState] = useState({ dragging: false, offset: 0 });
     const gesture = useRef<Gesture | null>(null);
+    // The last gesture was a sideways drag: the click it may still produce is not a tap.
+    const dragged = useRef(false);
     const flick = useRef<Array<ReturnType<typeof setTimeout>>>([]);
     const stopFlick = () => {
         if (flick.current.length === 0) return;
@@ -51,6 +62,7 @@ export function useRowDrag(options: RowDragOptions): { dx: number; dragging: boo
     const onPointerDown: Handler = (event) => {
         if (!event.isPrimary) return;
         stopFlick();
+        dragged.current = false;
         gesture.current = { id: event.pointerId, x0: event.clientX, y0: event.clientY, axis: null, start: opts.current.index, last: opts.current.index, step: opts.current.step, samples: [] };
     };
     const onPointerMove: Handler = (event) => {
@@ -61,6 +73,7 @@ export function useRowDrag(options: RowDragOptions): { dx: number; dragging: boo
             if (g.axis !== 'x') return;
             // The row follows from here: no jump by the slop.
             g.x0 = event.clientX;
+            dragged.current = true;
             event.currentTarget.setPointerCapture?.(event.pointerId);
             opts.current.onRun(true);
         }
@@ -69,26 +82,19 @@ export function useRowDrag(options: RowDragOptions): { dx: number; dragging: boo
         const points = native.getCoalescedEvents?.() ?? [];
         for (const p of points.length > 0 ? points : [native]) g.samples.push({ t: p.timeStamp, x: logical(p.clientX) });
         if (g.samples.length > 64) g.samples.splice(0, g.samples.length - 64);
-        const { step } = g;
-        const { count } = opts.current;
-        const dx = logical(event.clientX - g.x0);
-        const target = dragTarget(g.start, dragSteps(dx, step), count);
-        if (target.index !== g.last) {
-            g.last = target.index;
-            opts.current.onSelect(target.index);
+        const view = dragView(logical(event.clientX - g.x0), g.start, opts.current.count, g.step);
+        if (view.index !== g.last) {
+            g.last = view.index;
+            opts.current.onSelect(view.index);
         }
-        // Past the first or last card the row gives ever less (finger left: dx < 0 reaches later cards).
-        const minDx = -(count - g.start) * step;
-        const maxDx = g.start * step;
-        const shown = dx < minDx ? minDx + rubberBand(dx - minDx, step * 0.5) : dx > maxDx ? maxDx + rubberBand(dx - maxDx, step * 0.5) : dx;
-        setState({ dragging: true, dx: shown });
+        setState({ dragging: true, offset: view.offset });
     };
     const onPointerUp: Handler = (event) => {
         const g = gesture.current;
         if (!g || event.pointerId !== g.id) return;
         gesture.current = null;
         if (g.axis !== 'x') return;
-        setState({ dragging: false, dx: 0 });
+        setState({ dragging: false, offset: 0 });
         const velocity = releaseVelocity(g.samples);
         const delays = flickRun(velocity, g.step);
         if (delays.length === 0) {
@@ -99,28 +105,35 @@ export function useRowDrag(options: RowDragOptions): { dx: number; dragging: boo
         const direction = velocity < 0 ? 1 : -1;
         let at = g.last;
         let when = 0;
-        flick.current = delays.map((delay, i) => {
+        const steps = delays.map((delay) => {
             when += delay;
             return setTimeout(() => {
                 const next = dragTarget(at, direction, opts.current.count).index;
-                if (next !== at) {
-                    at = next;
-                    opts.current.onSelect(at);
+                // At the row's end (or with a game opening) the flick is over: the art catches up at once.
+                if (next === at || opts.current.canStep?.() === false) {
+                    stopFlick();
+                    return;
                 }
-                if (i === delays.length - 1) {
-                    flick.current = [];
-                    opts.current.onRun(false);
-                }
+                at = next;
+                opts.current.onSelect(at);
             }, when);
         });
+        // After the last step the run ends.
+        flick.current = [...steps, setTimeout(stopFlick, when + 1)];
     };
     const onPointerCancel: Handler = (event) => {
         const g = gesture.current;
         if (!g || event.pointerId !== g.id) return;
         gesture.current = null;
         if (g.axis !== 'x') return;
-        setState({ dragging: false, dx: 0 });
+        setState({ dragging: false, offset: 0 });
         opts.current.onRun(false);
     };
-    return { dx: state.dx, dragging: state.dragging, handlers: { onPointerDown, onPointerMove, onPointerUp, onPointerCancel } };
+    const onClickCapture = (event: ReactMouseEvent) => {
+        if (!dragged.current) return;
+        dragged.current = false;
+        event.stopPropagation();
+        event.preventDefault();
+    };
+    return { offset: state.offset, dragging: state.dragging, handlers: { onPointerDown, onPointerMove, onPointerUp, onPointerCancel, onClickCapture } };
 }

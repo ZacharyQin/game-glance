@@ -110,7 +110,7 @@ export function FeedSheet({ data, raised, viewport, space, onZone, onBackToGames
     const selRow: 0 | 1 = row === 1 && rows[1].length > 0 ? 1 : 0;
     const scrolls = [0, 1].map((r) => feedScroll(sel[r], rows[r].map((i) => i.width), FEED_GAP, viewport));
     // A finger on a row (useRowDrag): a sideways drag steps through its cards by moving focus to them, as Left/Right
-    // do; the track follows the finger from where it was when the drag began. A tap keeps opening the card (FeedCard).
+    // do; the track adds the finger's remainder beyond the selected card. A tap keeps opening the card (FeedCard).
     const rowDrag = (r: 0 | 1) => ({
         index: sel[r],
         count: Math.max(0, rows[r].length - 1),
@@ -120,8 +120,6 @@ export function FeedSheet({ data, raised, viewport, space, onZone, onBackToGames
         onRun: () => {},
     });
     const drags = [useRowDrag(rowDrag(0)), useRowDrag(rowDrag(1))];
-    const dragStart = useRef<[number, number]>([0, 0]);
-    for (const r of [0, 1] as const) if (!drags[r].dragging) dragStart.current[r] = scrolls[r];
     const lefts = rows.map((list) => {
         const out: number[] = [];
         list.reduce((x, item) => {
@@ -268,7 +266,7 @@ export function FeedSheet({ data, raised, viewport, space, onZone, onBackToGames
                                     onCancel={backFromFeed}
                                     onButtonDown={shoulder('feed')}
                                     {...drags[r].handlers}
-                                    style={{ transform: `translateX(${drags[r].dragging ? -dragStart.current[r] + drags[r].dx : -scrolls[r]}px)` }}
+                                    style={{ transform: `translateX(${-scrolls[r] + (drags[r].dragging ? drags[r].offset : 0)}px)` }}
                                 >
                                     {rows[r].map((item, i) => (
                                         <FeedCard

@@ -76,6 +76,20 @@ export function rubberBand(overscroll: number, limit: number): number {
     return Math.sign(overscroll) * limit * (1 - 1 / (1 + Math.abs(overscroll) / limit));
 }
 
+/**
+ * A drag of `dx` from card `start`: the card under the finger, and the row's offset from that card's own place, the part
+ * of a card the finger has moved beyond it (rubber-banded past the first and last card). The layout puts the selected
+ * card in place, the offset follows the finger from there, so a release only settles that remainder (in Steam's row
+ * style, which only scrolls once the selection passes the middle, the cards don't spring back).
+ */
+export function dragView(dx: number, start: number, count: number, step: number): { index: number; offset: number } {
+    const { index } = dragTarget(start, dragSteps(dx, step), count);
+    const rest = dx + (index - start) * step;
+    const outward = (index >= count && rest < 0) || (index <= 0 && rest > 0);
+    const offset = outward ? rubberBand(rest, step * 0.5) : rest;
+    return { index, offset: offset === 0 ? 0 : offset };
+}
+
 /** A finished swipe of (dx, dy) on Home: a vertical one of SWIPE_SHEET or more raises the sheet (up) or lowers it (down). */
 export function sheetSwipe(dx: number, dy: number, sheetUp: boolean): 'raise' | 'lower' | null {
     if (axisLock(dx, dy) !== 'y' || Math.abs(dy) < SWIPE_SHEET) return null;

@@ -127,8 +127,10 @@ describe('homeCss', () => {
         expect(css).toMatch(/\.gh-root\[data-gh-opening\] \.gh-recents\s*\{[^}]*pointer-events:\s*none\s*!important/);
         // While a finger drags the row the track follows it directly: no slide transition (useRowDrag).
         expect(css).toMatch(/\.gh-recents-drag \.gh-recents-track\s*\{[^}]*transition:\s*none\s*!important/);
-        // The loop preview's ghosts take taps too (a ghost selects its game).
-        expect(css).toMatch(/\.gh-ghost\s*\{[^}]*cursor:\s*default[^}]*pointer-events:\s*auto/);
+        // The loop preview's ghosts take taps as part of the row (a ghost selects its game): they inherit the row's
+        // pointer-events, so they too take none under the sheet or while a game opens (an explicit auto would escape both).
+        expect(css).toMatch(/\.gh-ghost\s*\{[^}]*cursor:\s*default/);
+        expect(css).not.toMatch(/\.gh-ghost\s*\{[^}]*pointer-events/);
         // While the card row has focus, the selected (or Library) card gets a white ring outside it and an even accent
         // glow (no y offset), and no bar along its bottom edge. Wide or narrow (a fast L1/R1 run), only the selected card
         // (gh-cap-sel): in Steam's row style the wide card is the first game, selected or not, and gets no ring.

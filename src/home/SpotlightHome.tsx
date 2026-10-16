@@ -299,10 +299,13 @@ export function SpotlightHome() {
         onButtonUp: directions.onButtonUp,
         onActivate: onRecentsActivate,
         // A tap on another card: controller focus moves to the row with it, so the stick goes on from there.
+        // (setRecentIndex, not select: select hands focus to the pill on the Library card, which is for L1/R1; a touch
+        // leaves focus on the row, where the finger was.)
         onSelect: (index: number) => {
             focusGames();
-            select(index);
+            setRecentIndex(index);
         },
+        canStep: () => !rootRef.current?.hasAttribute('data-gh-opening'),
         scale: () => canvasScale(),
         onRun: setDragRunning,
     };

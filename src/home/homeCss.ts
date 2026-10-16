@@ -408,7 +408,7 @@ export function homeCss(cardScale: number = CARD_SCALE_HANDHELD): string {
         rule('.gh-lib-label', `font-size: ${k(10.5)}px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; line-height: 1.4; text-wrap: balance; color: #fff`),
         // Loop preview: the first games again, decorative only (not focusable).
         // Opacity is inline per ghost (recentsLayout.ghostOpacity): .4 (.55 on the Library card) fading to .08.
-        rule('.gh-ghost', 'cursor: default; pointer-events: auto; --gh-edge: rgba(255,255,255,.06); box-shadow: none; filter: grayscale(.6) brightness(.75)'),
+        rule('.gh-ghost', 'cursor: default; --gh-edge: rgba(255,255,255,.06); box-shadow: none; filter: grayscale(.6) brightness(.75)'),
         rule('.gh-ghost.gh-cap-off', 'filter: grayscale(1) brightness(.65)'),
         rule('.gh-ghost-badge', `position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: ${k(6)}px; background: rgba(5,7,10,.45)`),
         rule('.gh-ghost-icon', `width: ${k(36)}px; height: ${k(36)}px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: ${k(20)}px; font-weight: 700; line-height: 1; background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.35); color: #fff`),
