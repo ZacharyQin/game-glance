@@ -43,6 +43,11 @@ function rule(selector: string, body: string): string {
     return `${withDomFocus(selector)} { ${decls.join('; ')}; }`;
 }
 
+/**
+ * Home's parts with a backdrop blur (the glass), inside .gh-safe: the chips, the buttons, the store pill and the family
+ * pill inside it, the Library card's body, the feed cards.
+ */
+export const HOME_GLASS = ['.gh-chip', '.gh-btn', '.gh-source', '.gh-family', '.gh-lib-body', '.gh-card'];
 const GLASS = 'background: rgba(12,16,22,.38); border: 1px solid rgba(255,255,255,.12); backdrop-filter: blur(14px)';
 const SCRIM = '5,7,10';
 const GLOW = '0 0 0 1px var(--glance-accent), 0 16px 40px -12px var(--glance-accent)';
@@ -408,8 +413,13 @@ export function homeCss(cardScale: number = CARD_SCALE_HANDHELD): string {
         // its accent glow, and a little brighter; an uninstalled game loses some of its grey. Not the selected card.
         rule('.gh-cap.gh-cap-hover:not(.gh-cap-sel):not(.gh-cap-lib-on)', `box-shadow: 0 0 0 2px rgba(255,255,255,.45), ${capShadow}; filter: brightness(1.12)`),
         rule('.gh-cap-off.gh-cap-hover:not(.gh-cap-sel)', 'filter: grayscale(.5) brightness(.9)'),
-        // The way back (B from a page): the art is there at once; Home's title, chips, buttons and row fade in over it.
-        rule('.gh-root.gh-back .gh-safe', `animation: gh-fade-in ${RETURN_TIMINGS.fade}ms ease both`),
+        // The way back (B from a page): the art is there at once; Home's title, chips, buttons and row fade in over it. Never
+        // as one layer: a parent fading (opacity under 1) cuts the glass inside it off from the art, which showed unblurred
+        // until the fade ended (Michael on the Ally). The glass fades itself, and around it the largest parts that hold no
+        // glass, each once; from transparent to its own opacity (what rests hidden stays hidden). Not in the open's copy.
+        `@keyframes gh-return-in { from { opacity: 0; } }`,
+        rule(`.gh-root.gh-back:not(.gh-bridge) .gh-safe :is(${HOME_GLASS.join(', ')}), .gh-root.gh-back:not(.gh-bridge) :is(.gh-safe, .gh-safe :has(${HOME_GLASS.join(', ')})) > :not(:has(${HOME_GLASS.join(', ')})):not(${HOME_GLASS.join(', ')})`,
+            `animation: gh-return-in ${RETURN_TIMINGS.fade}ms ease backwards`),
         rule('.gh-recents-snap .gh-cap', `transition: left ${SETTLE_WIDEN_MS}ms ${SLIDE_EASE}, width ${SETTLE_WIDEN_MS}ms ${SLIDE_EASE}, opacity ${CAP_STATE_MS}ms, filter ${CAP_STATE_MS}ms`),
         // "View more in your Library" card.
         rule('.gh-cap-lib', '--gh-edge: rgba(255,255,255,.14)'),
@@ -584,12 +594,11 @@ export function openingRules(): string[] {
         rule('.gh-root.gh-bridge, .gh-root.gh-bridge *', 'animation: none; transition: none'),
         rule('.gh-root.gh-bridge *::before, .gh-root.gh-bridge *::after', 'animation: none; transition: none'),
         // With nothing animating, the copy holds the late fades' end values (their own values are the start ones).
-        // Stated as specifically as the rules that animate them, so the freeze wins: the late fades, and Home's way-back fade
-        // (an open soon after B; the copy also drops .gh-back, openBridge).
+        // Stated as specifically as the rules that animate them, so the freeze wins: the late fades. (Home's way-back fade
+        // never applies in the copy: :not(.gh-bridge), and the copy also drops .gh-back, openBridge.)
         rule('.gh-root.gh-bridge[data-gh-opening][data-gh-phase][data-gh-extras] .gh-open-extras', 'opacity: 1; animation: none'),
         rule('.gh-root.gh-bridge[data-gh-opening][data-gh-phase][data-gh-extras~="pills"] .gh-source', 'opacity: 0; animation: none'),
         rule(`.gh-root.gh-bridge[data-gh-opening][data-gh-phase] ${play}::after`, 'opacity: 1; animation: none'),
-        rule('.gh-root.gh-bridge.gh-back .gh-safe', 'animation: none'),
 
         // Scrims: Home already shades its art as the page does; only the feed sheet's dim goes.
         rule(`${MT} .gh-scrim-dim`, `opacity: 0; transition: opacity ${T.morph}ms ease`),

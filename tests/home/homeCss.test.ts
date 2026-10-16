@@ -1,7 +1,7 @@
 import { SETTLE_WIDEN_MS } from '../../src/home/fastCycle';
 import { describe, expect, it } from 'vitest';
 import {
-    statusCss, HOME_PILL,
+    statusCss, HOME_GLASS, HOME_PILL,
     FEED_SHEET, hexAlpha, homeCss, MAX_STACK_SHIFT, sourcePillTop, stackShift, TITLE_BLOCK, titleBlockBottom, titleBlockLayout,
 } from '../../src/home/homeCss';
 import { sourcePillLook } from '../../src/styles/sourcePill';
@@ -690,10 +690,29 @@ describe('HOME_PILL arrow', () => {
 });
 
 describe('the way back (B from a page)', () => {
+    const css = homeCss(CARD_SCALE_HANDHELD);
+    const esc = (t: string) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     it("Home's title, chips, buttons and row fade in over the art, which is there at once (opacity only)", () => {
-        const css = homeCss(CARD_SCALE_HANDHELD);
-        expect(css).toMatch(new RegExp(`\\.gh-root\\.gh-back \\.gh-safe\\s*\\{[^}]*animation: gh-fade-in ${RETURN_TIMINGS.fade}ms ease both`));
         expect(css).not.toMatch(/\.gh-back \.gh-hero/);
+        // From transparent to each part's own opacity (no end value: the tabs and bars that rest hidden stay hidden).
+        expect(css).toMatch(/@keyframes gh-return-in \{ from \{ opacity: 0; \} \}/);
+        expect(css).toMatch(new RegExp(`animation: gh-return-in ${RETURN_TIMINGS.fade}ms ease backwards`));
+    });
+    it('never as one layer: a fading parent cuts the glass inside it off from the art, which then shows unblurred until the fade ends', () => {
+        expect(css).not.toMatch(/\.gh-back \.gh-safe\s*\{/);
+        const glass = HOME_GLASS.join(', ');
+        // The glass fades itself; around it, the largest parts that hold no glass fade, each once.
+        expect(css).toMatch(new RegExp(`\\.gh-root\\.gh-back:not\\(\\.gh-bridge\\) \\.gh-safe :is\\(${esc(glass)}\\)[,\\s]`));
+        expect(css).toMatch(new RegExp(`\\.gh-root\\.gh-back:not\\(\\.gh-bridge\\) :is\\(\\.gh-safe, \\.gh-safe :has\\(${esc(glass)}\\)\\) > :not\\(:has\\(${esc(glass)}\\)\\):not\\(${esc(glass)}\\)`));
+    });
+    it("HOME_GLASS lists every part of Home with a backdrop blur (the open transition's panels and extras, and the status bar, are outside .gh-safe)", () => {
+        const blurred = [...css.matchAll(/([^{}]+)\{[^}]*backdrop-filter: blur/g)].map((m) => m[1].trim());
+        expect(blurred.length).toBeGreaterThan(0);
+        for (const sel of blurred) {
+            if (['.gh-open-shell', '.gh-open-extras', '.gh-status'].some((outside) => sel.includes(outside))) continue;
+            const last = sel.split(',').map((p) => p.trim().split(/[\s>+~]+/).pop()!);
+            for (const compound of last) expect(HOME_GLASS.some((g) => compound.includes(g)), sel).toBe(true);
+        }
     });
 });
 
@@ -731,7 +750,8 @@ describe('delayed fades in the open transition', () => {
         }
     });
     it("the bridge's freeze outranks every animation rule: the late fades and Home's way-back fade (opened soon after B)", () => {
-        expect(css).toMatch(/\.gh-root\.gh-bridge\.gh-back \.gh-safe\s*\{[^}]*animation: none/);
+        // Home's way-back fade never applies in the copy.
+        expect(css).toMatch(/\.gh-root\.gh-back:not\(\.gh-bridge\)/);
         for (const target of ['\\.gh-open-extras', '\\.gh-source', '\\[data-action="play"\\]::after']) {
             expect(css).toMatch(new RegExp(`\\.gh-root\\.gh-bridge\\[data-gh-opening\\]\\[data-gh-phase\\][^{]*${target}\\s*\\{[^}]*animation: none`));
         }
