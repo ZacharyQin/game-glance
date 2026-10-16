@@ -554,6 +554,9 @@ function restyleRules({ header, details, root, play, shared }: ThemeClasses, lay
         // lines, 136 of the 178 the cards take with their padding and border; measured 179 on the Ally with Steam's border); a short description, or none, left
         // them shorter, which the open transition's panels (openTargets, the same height) then shrank to after the hand-over.)
         `.gg-card.gg-hltb { gap: ${d(PAGE_LAYOUT.cards.hltbGap)}; width: ${CARD_FILL_WIDTH}; max-width: ${cardContentMax(cardMaxWidths()[1])}; justify-self: end; }`,
+        // A card that responds to a tap (#24, components/cardActions) gives a little under the finger.
+        `.gg-card-tap { transition: transform 120ms ease; }`,
+        `.gg-card-tap:active { transform: scale(0.98); }`,
         // (9/5: cards.equalFromAspect as a media query ratio.)
         `@media (min-aspect-ratio: 9/5) { .gg-card { max-width: ${cardContentMax(cardMaxWidths(PAGE_LAYOUT.cards.equalFromAspect)[0])}; } }`,
         `.gg-label { font-size: ${d(PAGE_LAYOUT.stats.label)}; letter-spacing: 0.18em; color: rgba(255, 255, 255, 0.62); }`,

@@ -46,6 +46,11 @@ describe('buildThemeCss full-screen layout', () => {
         expect(ruleFor(css, '.ov_Backdrop {')).toContain('display: none');
         expect(ruleFor(css, '.hd_Box {')).toContain('top:');
     });
+    it('a card that responds to a tap (#24) gives under the finger (restyled look; the plain one stays 1.1.1)', () => {
+        const css = buildThemeCss(full, { restyle: true });
+        expect(css).toContain('.gg-card-tap:active { transform: scale(0.98); }');
+        expect(css).toMatch(/\.gg-card-tap\s*\{[^}]*transition:\s*transform/);
+    });
     it('is all-or-nothing: one missing piece keeps the stacked stock layout', () => {
         for (const drop of ['header', 'details', 'root'] as const) {
             const key = { header: 'TopCapsule', details: 'AppDetailsOverviewPanel', root: 'AppDetailsContainer' }[drop];

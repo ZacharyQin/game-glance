@@ -41,6 +41,7 @@ import { InfoCard } from './InfoCard';
 import { FamilyPill, SourcePill } from './SourcePill';
 import { familyPillLabel } from '../data/family';
 import { GameTitle } from './GameTitle';
+import { hltbUrl, openGameInfoTab, openHltbPage } from './cardActions';
 
 /** A canvas length in the restyled page's scale unit (themeCss: --gg-d). */
 const pageUnit = (n: number) => `calc(${n} * var(--gg-d))`;
@@ -185,8 +186,9 @@ function Hero({ overview, details, restyle, clean }: Props & { restyle: boolean;
                 )}
                 {cleanStyle && <CleanInfo game={game} hltb={hltb} locale={locale} size={size} />}
                 <div className="gg-cards">
-                    <InfoCard game={game} locale={locale} description={description} size={size} />
-                    <HltbCard result={hltb} playedMinutes={game.playedMinutes} locale={locale} restyle={restyle} />
+                    {/* A tap opens what each card summarises (#24, cardActions); the controller's order on the page is unchanged. */}
+                    <InfoCard game={game} locale={locale} description={description} size={size} onPress={(card) => openGameInfoTab(card.ownerDocument)} />
+                    <HltbCard result={hltb} playedMinutes={game.playedMinutes} locale={locale} restyle={restyle} onPress={hltbUrl(hltb) ? () => openHltbPage(hltb) : undefined} />
                 </div>
                 <div className="gg-more" aria-hidden="true">⌄</div>
             </div>

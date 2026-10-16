@@ -10,12 +10,14 @@ interface Props {
     description: string | null | undefined;
     /** A Unifideck game's install or download size (its own row's is hidden); absent for other games. */
     size?: SizeStat | null;
+    /** A tap on the card (#24, cardActions): the card responds and gives under the finger. */
+    onPress?(card: HTMLElement): void;
 }
 
-export function InfoCard({ game, locale, description, size = null }: Props) {
+export function InfoCard({ game, locale, description, size = null, onPress }: Props) {
     const desc = descriptionState(description);
     return (
-        <div className="gg-card">
+        <div className={`gg-card${onPress ? ' gg-card-tap' : ''}`} onClick={onPress ? (event) => onPress(event.currentTarget) : undefined}>
             <div className="gg-stats">
                 <div data-stat="played">
                     <div className="gg-label">{tr('played')}</div>
