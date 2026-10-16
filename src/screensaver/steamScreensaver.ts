@@ -82,6 +82,20 @@ export function slideshowClasses(): SlideshowClasses {
     return classes;
 }
 
+/**
+ * Whether Game Glance can draw the screensaver here: Steam's Screensaver service is there (it tells when the screensaver
+ * turns on) and so is the slideshow's container class (the window is found from it). An older Steam client has neither;
+ * a later one may rename them. Quick Access then shows a note instead of the switches. Pure.
+ */
+export function screensaverSupported(hasService: boolean, classes: SlideshowClasses): boolean {
+    return hasService && classes.container !== null;
+}
+
+/** screensaverSupported for this Steam client (looked up once). */
+export function screensaverAvailable(): boolean {
+    return screensaverSupported(screensaverService() !== null, slideshowClasses());
+}
+
 interface Hook { memoizedState?: unknown; next?: Hook | null }
 interface Fiber { memoizedState?: Hook | null; return?: Fiber | null }
 interface ViewHolder { m_viewWindow?: Window; m_browserViewName?: string }

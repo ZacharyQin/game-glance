@@ -10,7 +10,7 @@ import { checkOverride } from '../logic/hltbId';
 import { PLUGIN_NAME } from '../constants';
 import { RECENT_ROW, ROW_SORTS, RowSort, rowSortLabel, sortByLabel, steamHomeCollections } from '../home/collections';
 import { tr } from '../i18n/steamText';
-import { previewScreensaver } from '../screensaver/steamScreensaver';
+import { previewScreensaver, screensaverAvailable } from '../screensaver/steamScreensaver';
 
 /** The Updates section's line under the title: the installed version and what the check found. */
 function updateLine(state: UpdateState): string {
@@ -187,43 +187,49 @@ export function SettingsPanel() {
                 </PanelSectionRow>
             </PanelSection>
             <PanelSection title="Screensaver">
-                <PanelSectionRow>
-                    <ToggleField
-                        label="Game Glance screensaver"
-                        description="Steam's Game Slideshow with the games of your Games row and their custom art, filling the screen. Turn off the logo, status bar and stats for only the art. Off returns Steam's own."
-                        checked={screensaver.enabled}
-                        onChange={(value) => settings.setScreensaver({ enabled: value })}
-                    />
-                </PanelSectionRow>
-                {screensaver.enabled && (
+                {!screensaverAvailable() ? (
+                    <PanelSectionRow>Needs a newer Steam client, one with the screensaver (Settings → Customization → Screensaver).</PanelSectionRow>
+                ) : (
                     <>
                         <PanelSectionRow>
                             <ToggleField
-                                label="Logo"
-                                description="The game's logo at the bottom-left, as on Home (its name when it has none)."
-                                checked={screensaver.logo}
-                                onChange={(value) => settings.setScreensaver({ logo: value })}
+                                label="Game Glance screensaver"
+                                description="Steam's Game Slideshow with the games of your Games row and their custom art, filling the screen. Turn off the logo, status bar and stats for only the art. Off returns Steam's own."
+                                checked={screensaver.enabled}
+                                onChange={(value) => settings.setScreensaver({ enabled: value })}
                             />
                         </PanelSectionRow>
-                        <PanelSectionRow>
-                            <ToggleField
-                                label="Status bar"
-                                description="Clock, battery and connection at the top-right."
-                                checked={screensaver.statusBar}
-                                onChange={(value) => settings.setScreensaver({ statusBar: value })}
-                            />
-                        </PanelSectionRow>
-                        <PanelSectionRow>
-                            <ToggleField
-                                label="Stats"
-                                description="A small card at the bottom-right: the HowLongToBeat time you are working toward and your achievements."
-                                checked={screensaver.stats}
-                                onChange={(value) => settings.setScreensaver({ stats: value })}
-                            />
-                        </PanelSectionRow>
-                        <PanelSectionRow>
-                            <ButtonItem layout="below" onClick={previewScreensaver}>Preview</ButtonItem>
-                        </PanelSectionRow>
+                        {screensaver.enabled && (
+                            <>
+                                <PanelSectionRow>
+                                    <ToggleField
+                                        label="Logo"
+                                        description="The game's logo at the bottom-left, as on Home (its name when it has none)."
+                                        checked={screensaver.logo}
+                                        onChange={(value) => settings.setScreensaver({ logo: value })}
+                                    />
+                                </PanelSectionRow>
+                                <PanelSectionRow>
+                                    <ToggleField
+                                        label="Status bar"
+                                        description="Clock, battery and connection at the top-right."
+                                        checked={screensaver.statusBar}
+                                        onChange={(value) => settings.setScreensaver({ statusBar: value })}
+                                    />
+                                </PanelSectionRow>
+                                <PanelSectionRow>
+                                    <ToggleField
+                                        label="Stats"
+                                        description="A small card at the bottom-right: your play time, the HowLongToBeat time you are working toward and your achievements."
+                                        checked={screensaver.stats}
+                                        onChange={(value) => settings.setScreensaver({ stats: value })}
+                                    />
+                                </PanelSectionRow>
+                                <PanelSectionRow>
+                                    <ButtonItem layout="below" onClick={previewScreensaver}>Preview</ButtonItem>
+                                </PanelSectionRow>
+                            </>
+                        )}
                     </>
                 )}
             </PanelSection>

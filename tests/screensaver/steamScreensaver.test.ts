@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('@decky/ui', () => ({ findModule: () => undefined, findModuleExport: () => undefined }));
 
-import { screensaverWindowFrom } from '../../src/screensaver/steamScreensaver';
+import { screensaverSupported, screensaverWindowFrom } from '../../src/screensaver/steamScreensaver';
 
 /** A container element with a fake React fiber chain; `views` are hook states, in components from the element up. */
 function container(components: unknown[][]): Element {
@@ -25,5 +25,16 @@ describe('screensaverWindowFrom', () => {
         expect(screensaverWindowFrom(container([[1], [{ m_browserViewName: 'Screensaver_uid2' }]]))).toBeNull();
         expect(screensaverWindowFrom({} as Element)).toBeNull();
         expect(screensaverWindowFrom(null)).toBeNull();
+    });
+});
+
+describe('screensaverSupported', () => {
+    it("needs Steam's screensaver service and the slideshow's container class", () => {
+        expect(screensaverSupported(true, { slideshow: 'a', container: 'b' })).toBe(true);
+        expect(screensaverSupported(true, { slideshow: null, container: 'b' })).toBe(true);
+    });
+    it('an older Steam client (no service) or a renamed container: not supported', () => {
+        expect(screensaverSupported(false, { slideshow: 'a', container: 'b' })).toBe(false);
+        expect(screensaverSupported(true, { slideshow: 'a', container: null })).toBe(false);
     });
 });
