@@ -463,6 +463,8 @@ export function buildLaunchCss(classes: ThemeClasses): string {
  * class) it stays hidden and Steam's logo is left alone, so the page never shows two titles.
  */
 function restyleRules({ header, details, root, play, shared }: ThemeClasses, layout: boolean): string[] {
+    // Play focused, as Home's: a white ring and accent glow, grown by the focus scale (by the controller or DOM focus).
+    const pillFocused = ` box-shadow: 0 0 0 ${d(2)} rgba(255, 255, 255, 0.9), 0 ${d(14)} ${d(40)} calc(-1 * ${d(8)}) var(--glance-accent) !important; transform: scale(${PILL_FOCUS.x}, ${PILL_FOCUS.y}) !important; `;
     const topCapsule = cls(header, 'TopCapsule');
     const titleImage = cls(header, 'TitleImageContainer');
     const svgTitle = cls(header, 'SVGTitle');
@@ -508,6 +510,9 @@ function restyleRules({ header, details, root, play, shared }: ThemeClasses, lay
         rule(playButton && `${playButton} [role="button"] + [role="button"] svg`, ` width: ${d(PAGE_LAYOUT.playArrow.glyph)} !important; height: ${d(PAGE_LAYOUT.playArrow.glyph)} !important; `),
         rule(menuButton, ` background: rgba(12, 16, 22, 0.4) !important; backdrop-filter: blur(${d(12)}) !important; `),
         rule(menuButton && `${menuButton}.gpfocus`, ` background: #ffffff !important; `),
+        // (Each focus look here also under DOM focus: after a tap or a click Steam keeps focus but drops gpfocus, and a page
+        // opened that way has its Play focused without it, which the open transition lands on.)
+        rule(menuButton && `${menuButton}:focus`, ` background: #ffffff !important; `),
         rule(menuButton && `${menuButton} svg`, ` width: ${d(PAGE_LAYOUT.circleIcon)} !important; height: ${d(PAGE_LAYOUT.circleIcon)} !important; `),
         // The cloud status is the same circle as the others (Steam's own row background, and the lighter 1.1.1 fill, gave it
         // a lighter tinted disc); its icon keeps the state colour, re-tuned for the dark fill (CLOUD_COLOURS, shared with
@@ -518,18 +523,21 @@ function restyleRules({ header, details, root, play, shared }: ThemeClasses, lay
         rule(cloud && `${cloud} svg`, ` filter: drop-shadow(0 0 ${d(1.5)} rgba(0, 0, 0, 0.7)) !important; `),
         rule(cloud && `${cloud} svg`, ` width: ${d(PAGE_LAYOUT.cloudIcon)} !important; height: ${d(PAGE_LAYOUT.cloudIcon)} !important; `),
         rule(cloud && `${cloud}.gpfocus`, ` background: #ffffff !important; color: ${CLOUD_FOCUS_BAD} !important; `),
+        rule(cloud && `${cloud}:focus`, ` background: #ffffff !important; color: ${CLOUD_FOCUS_BAD} !important; `),
 
         // Play: white words and glyph on the accent pill, as on Home. Focused as Home's Play: the fill stays the accent (no
         // lighter overlay), a white ring and accent glow, and it grows by the focus scale.
         rule(playButton && `${playButton} [role="button"]`, ` color: #ffffff !important; `),
         rule(playButton && `${playButton} [role="button"].gpfocus`, ` background: transparent !important; `),
+        rule(playButton && `${playButton} [role="button"]:focus`, ` background: transparent !important; `),
         // The "Play from" arrow focused: the pill shows its focus (below) and the arrow's segment is tinted, as on Home.
         rule(playButton && `${playButton} [role="button"] + [role="button"].gpfocus`, ` background: rgba(255, 255, 255, 0.28) !important; `),
+        rule(playButton && `${playButton} [role="button"] + [role="button"]:focus`, ` background: rgba(255, 255, 255, 0.28) !important; `),
         // Steam's focus shine on Play (a green gradient on its ::after) would show over the accent pill.
         rule(playButton && `${playButton} [role="button"]::after`, ` display: none !important; `),
         rule(playButton && `${playButton} > div:has(> [role="button"])`, ` transition: transform 250ms, box-shadow 250ms !important; `),
-        rule(playButton && `${playButton} > div:has(> [role="button"].gpfocus)`,
-            ` box-shadow: 0 0 0 ${d(2)} rgba(255, 255, 255, 0.9), 0 ${d(14)} ${d(40)} calc(-1 * ${d(8)}) var(--glance-accent) !important; transform: scale(${PILL_FOCUS.x}, ${PILL_FOCUS.y}) !important; `),
+        rule(playButton && `${playButton} > div:has(> [role="button"].gpfocus)`, pillFocused),
+        rule(playButton && `${playButton} > div:has(> [role="button"]:focus)`, pillFocused),
 
         // Eyebrow ("Last played · Today", accent) and the 64px/800 title, at most two lines. Hidden unless the
         // full-screen layout applies (below): all-or-nothing, like the rest of the layout.
@@ -706,11 +714,11 @@ export function buildSteamEnterOffCss({ transition }: ThemeClasses): string {
     ].filter((r) => r.length > 0).join('\n');
 }
 
-/** What the page's "ready" check reads (styles/pageReady): Steam's hero image (not its blurred placeholder), our title block, Steam's Play row. */
+/** What the page's "ready" check reads (styles/pageReady): Steam's hero image (not its blurred placeholder), our title block, Steam's Play row, and its focus there (gpfocus, or DOM focus alone for a page opened by a tap or a click). */
 export function arrivalSelectors({ header, root }: ThemeClasses): { headerImg: string | null; titleblock: string; play: string | null; focus: string | null } {
     const topCapsule = cls(header, 'TopCapsule');
     const play = cls(root, 'PlaySection');
-    return { headerImg: topCapsule && `${topCapsule} img:not([src*="_blur"])`, titleblock: '.gg-titleblock', play, focus: play && `${play} .gpfocus` };
+    return { headerImg: topCapsule && `${topCapsule} img:not([src*="_blur"])`, titleblock: '.gg-titleblock', play, focus: play && `${play} .gpfocus, ${play} :focus` };
 }
 
 /** Steam's footer (one element over every page, Home's and the game page's alike), or null when its class is unknown. */

@@ -118,6 +118,18 @@ describe('homeCss', () => {
         expect(css).toMatch(/\.gh-status-dot-away\s*\{[^}]*background:\s*#4cb4ff/);
         expect(css).toMatch(/\.gh-status-dot-off\s*\{[^}]*background:\s*rgba\(196,201,209,\.85\)/);
     });
+    it('focus looks follow DOM focus too: after a tap, a click or the wheel Steam drops its focus classes', () => {
+        const css = homeCss(CARD_SCALE_HANDHELD);
+        // The selected card's ring and glow, with the row under DOM focus.
+        expect(css).toMatch(/\.gh-recents:focus \.gh-cap-sel, \.gh-recents:focus \.gh-cap-lib-on\s*\{[^}]*box-shadow:\s*0 0 0 2px rgba\(255,255,255,\.9\)/);
+        // A button, the Play pill's growth, a feed card and a tab's line.
+        expect(css).toMatch(/\.gh-btn:focus\s*\{[^}]*box-shadow:\s*0 0 0 2px rgba\(255,255,255,\.9\)/);
+        expect(css).toMatch(/\.gh-actions > \.gh-btn-play\.gh-btn:focus\s*\{[^}]*transform:\s*scale/);
+        expect(css).toMatch(/\.gh-card:focus\s*\{[^}]*translateY\(-4px\)/);
+        expect(css).toMatch(/\.gh-tab:focus \.gh-tab-line\s*\{[^}]*opacity:\s*1/);
+        // A hover never shows over a focused card.
+        expect(css).toMatch(/\.gh-card\.gh-card-hover:not\(\.gh-card-focus\):not\(:focus\)\s*\{/);
+    });
     it('a mouse lights the card under it: a faint ring, weaker than the selection, never on the selected card', () => {
         const css = homeCss(CARD_SCALE_HANDHELD);
         // Games row: a half-strength white ring, no accent glow, and a little brighter.
@@ -129,7 +141,7 @@ describe('homeCss', () => {
         expect(off).toBeGreaterThan(-1);
         expect(offHover).toBeGreaterThan(off);
         // Feed cards: the same ring and a 2px lift (a focused card lifts 4px).
-        expect(css).toMatch(/\.gh-card\.gh-card-hover:not\(\.gh-card-focus\)\s*\{[^}]*box-shadow:\s*0 0 0 2px rgba\(255,255,255,\.45\)[^}]*transform:\s*translateY\(-2px\)/);
+        expect(css).toMatch(/\.gh-card\.gh-card-hover:not\(\.gh-card-focus\):not\(:focus\)\s*\{[^}]*box-shadow:\s*0 0 0 2px rgba\(255,255,255,\.45\)[^}]*transform:\s*translateY\(-2px\)/);
     });
     it('the recents row takes touch: pointer events on, its own gestures, off under the sheet and while opening', () => {
         const css = homeCss(CARD_SCALE_HANDHELD);
@@ -147,7 +159,7 @@ describe('homeCss', () => {
         // While the card row has focus, the selected (or Library) card gets a white ring outside it and an even accent
         // glow (no y offset), and no bar along its bottom edge. Wide or narrow (a fast L1/R1 run), only the selected card
         // (gh-cap-sel): in Steam's row style the wide card is the first game, selected or not, and gets no ring.
-        expect(css).toMatch(/\.gh-recents-focus \.gh-cap-sel, \.gh-recents-focus \.gh-cap-lib-on\s*\{[^}]*box-shadow:\s*0 0 0 2px rgba\(255,255,255,\.9\), 0 0 [\d.]+px [\d.]+px var\(--glance-accent\)/);
+        expect(css).toMatch(/\.gh-recents-focus \.gh-cap-sel, \.gh-recents-focus \.gh-cap-lib-on, \.gh-recents:focus \.gh-cap-sel, \.gh-recents:focus \.gh-cap-lib-on\s*\{[^}]*box-shadow:\s*0 0 0 2px rgba\(255,255,255,\.9\), 0 0 [\d.]+px [\d.]+px var\(--glance-accent\)/);
         expect(css).not.toMatch(/gh-recents-focus[^{]*\.gh-cap-bar/);
         expect(css).not.toMatch(/\.gh-cap-wide[,\s]*\{[^}]*(box-shadow|--gh-edge)/);
         expect(css).not.toMatch(/\.gh-recents-focus \.gh-cap-wide/);
@@ -346,7 +358,7 @@ describe('homeCss', () => {
         }
         // The same edge colours as before, now as --gh-edge.
         expect(css).toMatch(/\.gh-card \{[^}]*--gh-edge: rgba\(255,255,255,\.1\)/);
-        expect(css).toMatch(/\.gh-card\.gh-card-focus \{[^}]*--gh-edge: rgba\(255,255,255,\.3\)/);
+        expect(css).toMatch(/\.gh-card\.gh-card-focus, \.gh-card:focus \{[^}]*--gh-edge: rgba\(255,255,255,\.3\)/);
         expect(css).toMatch(/\.gh-cap \{[^}]*--gh-edge: rgba\(255,255,255,\.08\)/);
         expect(css).toMatch(/\.gh-cap-sel \{\s*--gh-edge: rgba\(255,255,255,\.35\)/);
         expect(css).toMatch(/\.gh-ghost \{[^}]*--gh-edge: rgba\(255,255,255,\.06\)/);
@@ -485,13 +497,13 @@ describe('homeCss open transition', () => {
         // Nothing of its own over the pill: a button's glass blur here blurred the segment away (device, 8e90058).
         expect(btn?.[1]).toMatch(/backdrop-filter: none/);
         expect(btn?.[1]).toMatch(/border: none/);
-        const focus = all.find(([sel]) => sel === '.gh-actions > .gh-btn-stream.gh-focus');
+        const focus = all.find(([sel]) => sel.split(', ')[0] === '.gh-actions > .gh-btn-stream.gh-focus');
         expect(focus?.[1]).toMatch(/background: transparent[^]*box-shadow: none[^]*transform: none/);
         // Focused, the whole pill shows Home's focus (as the page's pill does for its arrow), and the segment is tinted.
-        const pill = all.find(([sel]) => sel === '.gh-actions > .gh-btn-play:has(+ .gh-btn-stream.gh-focus)');
+        const pill = all.find(([sel]) => sel.split(', ')[0] === '.gh-actions > .gh-btn-play:has(+ .gh-btn-stream.gh-focus)');
         const hp = pillFocusScale(HOME_PILL.width, TITLE_BLOCK.button);
         expect(pill?.[1]).toMatch(new RegExp(`box-shadow: 0 0 0 2px rgba\\(255,255,255,\\.9\\)[^]*transform: scale\\(${hp.x}, ${hp.y}\\)`));
-        const tint = all.find(([sel]) => sel === '.gh-actions > .gh-btn-play:has(+ .gh-btn-stream.gh-focus) > .gh-play-arrow');
+        const tint = all.find(([sel]) => sel.split(', ')[0] === '.gh-actions > .gh-btn-play:has(+ .gh-btn-stream.gh-focus) > .gh-play-arrow');
         expect(tint?.[1]).toMatch(/background: rgba\(255,255,255,\.28\)/);
         // Opening: the segment moves with the pill and grows onto the page's (openMotion --gho-play-arrow), about its right end.
         expect(all.some(([sel, body]) => sel.includes('data-gh-phase="to"') && sel.endsWith('.gh-play-arrow') && body.includes('transform: var(--gho-play-arrow)'))).toBe(true);
@@ -608,7 +620,7 @@ describe('homeCss accent on hidden bars', () => {
         const css = homeCss();
         // Each L1/R1 step changes the accent: these ran ~30 colour transitions a step, all invisible (measured on the Ally).
         expect(css).toMatch(/\.gh-cap:not\(\.gh-cap-focus\) \.gh-cap-bar \{ transition: opacity 250ms !important; \}/);
-        expect(css).toMatch(/\.gh-card:not\(\.gh-card-focus\) \.gh-card-bar \{ transition: opacity 250ms !important; \}/);
+        expect(css).toMatch(/\.gh-card:not\(\.gh-card-focus\):not\(:focus\) \.gh-card-bar \{ transition: opacity 250ms !important; \}/);
         expect(css).toMatch(/\.gh-page:not\(\.gh-page-up\) \.gh-tab-line \{ transition: none !important; \}/);
     });
 });
@@ -627,12 +639,12 @@ describe('homeCss Play pill', () => {
         expect(body).not.toContain('--gh-on-accent');
     });
     it("focused: a white ring and accent glow, scaled by the page's focus scale (the page focuses its Play the same)", () => {
-        const body = /\.gh-btn\.gh-focus \{([^}]*)\}/.exec(homeCss())?.[1] ?? '';
+        const body = /\.gh-btn\.gh-focus, \.gh-btn:focus \{([^}]*)\}/.exec(homeCss())?.[1] ?? '';
         expect(body).toContain('0 0 0 2px rgba(255,255,255,.9)');
         expect(body).toContain(`scale(${PAGE_LAYOUT.focusScale})`);
         // The Play pill grows by what a circle grows (its height's share), so its gap to the circles stays.
         const hp = pillFocusScale(HOME_PILL.width, TITLE_BLOCK.button);
-        expect(/\.gh-actions > \.gh-btn-play\.gh-focus \{([^}]*)\}/.exec(homeCss())?.[1] ?? '').toContain(`scale(${hp.x}, ${hp.y})`);
+        expect(/\.gh-actions > \.gh-btn-play\.gh-focus, \.gh-actions > \.gh-btn-play\.gh-btn:focus \{([^}]*)\}/.exec(homeCss())?.[1] ?? '').toContain(`scale(${hp.x}, ${hp.y})`);
     });
 });
 
@@ -722,7 +734,7 @@ describe("a Unifideck game's cloud button (Unifideck's own look, as on its page)
     it('a white glyph at the circles\' glyph size, its state ring inside it (unless focused), dimmed without cloud support', () => {
         expect(css).toMatch(/\.gh-btn-cloud\.gh-cloud-uni\s*\{[^}]*color: #fff/);
         expect(css).toMatch(new RegExp(`\\.gh-btn-cloud\\.gh-cloud-uni svg\\s*\\{[^}]*width: ${PAGE_LAYOUT.circleIcon}px[^}]*filter: none`));
-        expect(css).toMatch(/\.gh-btn-cloud\.gh-cloud-uni:not\(\.gh-focus\)\s*\{[^}]*box-shadow: 0 0 0 2px var\(--gh-uni-ring, transparent\) inset/);
+        expect(css).toMatch(/\.gh-btn-cloud\.gh-cloud-uni:not\(\.gh-focus\):not\(:focus\)\s*\{[^}]*box-shadow: 0 0 0 2px var\(--gh-uni-ring, transparent\) inset/);
         expect(css).toMatch(/\.gh-btn-cloud\.gh-cloud-uni-dim\s*\{[^}]*opacity: \.5/);
         // Its in-sync check badge at Unifideck's proportion to the cloud (13 of the 24).
         expect(css).toMatch(/\.gh-btn-cloud\.gh-cloud-uni svg\.gh-uni-badge\s*\{[^}]*width: 13px/);

@@ -1,6 +1,6 @@
 import { sourcePillIcon, sourcePillLook } from '../../src/styles/sourcePill';
 import { describe, expect, it } from 'vitest';
-import { buildAccentCss, buildArrivingCss, buildCleanCss, buildSteamEnterOffCss, steamFooterSelector, buildDownloadCss, buildLaunchCss, buildThemeCss, buildUnifideckCss, launchTargets, ThemeClasses } from '../../src/styles/themeCss';
+import { arrivalSelectors, buildAccentCss, buildArrivingCss, buildCleanCss, buildSteamEnterOffCss, steamFooterSelector, buildDownloadCss, buildLaunchCss, buildThemeCss, buildUnifideckCss, launchTargets, ThemeClasses } from '../../src/styles/themeCss';
 import { homeCanvas } from '../../src/home/scale';
 import { cardMaxWidths, PAGE_LAYOUT, PAGE_SCRIM_LAYERS, PAGE_SCRIMS, pageDUnit, pillFocusScale, STEAM_LEGEND_PX } from '../../src/styles/themeCss';
 
@@ -511,6 +511,24 @@ describe('buildThemeCss restyle (Spotlight Home on)', () => {
         const pf = pillFocusScale(PAGE_LAYOUT.playW, PAGE_LAYOUT.icon);
         expect(ring).toContain(`transform: scale(${pf.x}, ${pf.y}) !important`);
         expect(rulesFor(restyled, '.rt_PlayBtn > div:has(> [role="button"])')).toContain('transition: transform 250ms, box-shadow 250ms !important');
+    });
+    it('the page counts as arrived with Play under DOM focus too (opened by a tap or a click: no gpfocus, the hand-over waited out its timeout)', () => {
+        const focus = arrivalSelectors(steam).focus ?? '';
+        expect(focus.split(', ')).toHaveLength(2);
+        expect(focus).toMatch(/ \.gpfocus, /);
+        expect(focus).toMatch(/ :focus$/);
+    });
+    it('focus looks follow DOM focus too: a page opened by a tap or a click has Play focused without Steam\'s gpfocus', () => {
+        // The open transition lands on a focused Play (openMotion): without this the pill shrank and lost its ring at the hand-over.
+        const ring = rulesFor(restyled, '.rt_PlayBtn > div:has(> [role="button"]:focus)');
+        expect(ring).toContain('rgba(255, 255, 255, 0.9)');
+        const pf = pillFocusScale(PAGE_LAYOUT.playW, PAGE_LAYOUT.icon);
+        expect(ring).toContain(`transform: scale(${pf.x}, ${pf.y}) !important`);
+        expect(ring).toContain('var(--glance-accent)');
+        expect(rulesFor(restyled, '.rt_PlayBtn [role="button"]:focus')).toContain('background: transparent !important');
+        expect(rulesFor(restyled, '.rt_PlayBtn [role="button"] + [role="button"]:focus')).toContain('background: rgba(255, 255, 255, 0.28) !important');
+        expect(rulesFor(restyled, '.ps_Menu:focus')).toContain('background: #ffffff !important');
+        expect(rulesFor(restyled, '.ps_Cloud:focus')).toContain('background: #ffffff !important; color: #b3261e !important;');
     });
     it('the "Play from" arrow focused: the pill shows its focus and the arrow\'s segment is tinted, as on Home (Michael: Neva)', () => {
         expect(rulesFor(restyled, '.rt_PlayBtn [role="button"] + [role="button"].gpfocus')).toContain('background: rgba(255, 255, 255, 0.28) !important');

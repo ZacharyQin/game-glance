@@ -1,4 +1,5 @@
 import { DOWNLOAD_FILL_COLOR, DOWNLOAD_FILL_MS } from '../styles/downloadFill';
+import { withDomFocus } from './focusCss';
 import { DEFAULT_ACCENT } from './accent';
 import { SOURCE_PILL, sourcePillIcon, sourcePillLook } from '../styles/sourcePill';
 import { CLOUD_COLOURS, CloudTone } from './cloud';
@@ -30,7 +31,8 @@ function rule(selector: string, body: string): string {
         .map((d) => d.trim())
         .filter(Boolean)
         .map((d) => (d.startsWith('--') ? d : `${d} !important`));
-    return `${selector} { ${decls.join('; ')}; }`;
+    // A focus look also follows DOM focus (focusCss): Steam drops its focus classes after a tap, a click or the wheel.
+    return `${withDomFocus(selector)} { ${decls.join('; ')}; }`;
 }
 
 const GLASS = 'background: rgba(12,16,22,.38); border: 1px solid rgba(255,255,255,.12); backdrop-filter: blur(14px)';
