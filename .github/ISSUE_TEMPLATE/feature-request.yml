@@ -34,5 +34,5 @@ body:
     id: alternatives
     attributes:
       label: Alternatives you have considered
-      validations:
-        required: false
+    validations:
+      required: false
