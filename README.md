@@ -4,7 +4,9 @@ A [Decky Loader](https://decky.xyz) plugin for Steam's Game Mode. It turns each 
 with everything about the game at a glance, and can replace Steam's Home with **Spotlight Home**: your games, one at a
 time, over their own art.
 
-![A game page on a TV: the game's logo, Play row, cards, and the Family Sharing pill](docs/images/tv-page-family.jpg)
+<video src="docs/videos/open-transition.mp4" controls muted loop playsinline width="100%">
+  Opening a game from Spotlight Home: Home turns into the game's page in one motion.
+</video>
 
 ## Features
 
