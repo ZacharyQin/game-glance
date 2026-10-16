@@ -50,6 +50,10 @@ describe('buildThemeCss full-screen layout', () => {
         const css = buildThemeCss(full, { restyle: true });
         expect(css).toContain('.gg-card-tap:active { transform: scale(0.98); }');
         expect(css).toMatch(/\.gg-card-tap\s*\{[^}]*transition:\s*transform/);
+        // Steam's page panel lies over the cards (seen on the Deck: a tap landed on it): the hero is lifted above it
+        // and takes no touches itself, only the tappable cards do, so nothing else of Steam's below is covered.
+        expect(css).toContain('.gg-hero { z-index: 2; pointer-events: none; }');
+        expect(css).toContain('.gg-hero .gg-card-tap { pointer-events: auto; }');
     });
     it('is all-or-nothing: one missing piece keeps the stacked stock layout', () => {
         for (const drop of ['header', 'details', 'root'] as const) {
@@ -679,7 +683,8 @@ describe('buildThemeCss restyle (Spotlight Home on)', () => {
         }
         // (100vh only in the Play row's anchor variable, which the 1.1.1 layout rules read: the default and the TV's, and in
         // the d unit's height limit, the shared scale rule with Home: home/scale.ts)
-        expect(extra(steam).replace(/--gg-play-top: [^;]*;/g, '').replace(/--gg-d: min\([^;]*\);/g, '')).not.toMatch(/z-index|100vh/);
+        // (z-index only on our own hero, lifted over Steam's page panel so the tappable cards get touches, #24)
+        expect(extra(steam).replace(/--gg-play-top: [^;]*;/g, '').replace(/--gg-d: min\([^;]*\);/g, '').replace('.gg-hero { z-index: 2; pointer-events: none; }', '')).not.toMatch(/z-index|100vh/);
     });
 });
 

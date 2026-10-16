@@ -186,9 +186,10 @@ function Hero({ overview, details, restyle, clean }: Props & { restyle: boolean;
                 )}
                 {cleanStyle && <CleanInfo game={game} hltb={hltb} locale={locale} size={size} />}
                 <div className="gg-cards">
-                    {/* A tap opens what each card summarises (#24, cardActions); the controller's order on the page is unchanged. */}
-                    <InfoCard game={game} locale={locale} description={description} size={size} onPress={(card) => openGameInfoTab(card.ownerDocument)} />
-                    <HltbCard result={hltb} playedMinutes={game.playedMinutes} locale={locale} restyle={restyle} onPress={hltbUrl(hltb) ? () => openHltbPage(hltb) : undefined} />
+                    {/* A tap opens what each card summarises (#24, cardActions), in the restyled look (it lifts the cards over
+                        Steam's page panel; the plain look keeps 1.1.1's page). The controller's order on the page is unchanged. */}
+                    <InfoCard game={game} locale={locale} description={description} size={size} onPress={restyle ? (card) => openGameInfoTab(card.ownerDocument) : undefined} />
+                    <HltbCard result={hltb} playedMinutes={game.playedMinutes} locale={locale} restyle={restyle} onPress={restyle && hltbUrl(hltb) ? () => openHltbPage(hltb) : undefined} />
                 </div>
                 <div className="gg-more" aria-hidden="true">⌄</div>
             </div>

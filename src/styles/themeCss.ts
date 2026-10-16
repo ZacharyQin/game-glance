@@ -557,6 +557,10 @@ function restyleRules({ header, details, root, play, shared }: ThemeClasses, lay
         // A card that responds to a tap (#24, components/cardActions) gives a little under the finger.
         `.gg-card-tap { transition: transform 120ms ease; }`,
         `.gg-card-tap:active { transform: scale(0.98); }`,
+        // Steam's page panel lies over the cards (a tap landed on it, on the Deck): the hero is lifted above it and takes
+        // no touches itself, only the tappable cards do, so nothing of Steam's below is covered.
+        `.gg-hero { z-index: 2; pointer-events: none; }`,
+        `.gg-hero .gg-card-tap { pointer-events: auto; }`,
         // (9/5: cards.equalFromAspect as a media query ratio.)
         `@media (min-aspect-ratio: 9/5) { .gg-card { max-width: ${cardContentMax(cardMaxWidths(PAGE_LAYOUT.cards.equalFromAspect)[0])}; } }`,
         `.gg-label { font-size: ${d(PAGE_LAYOUT.stats.label)}; letter-spacing: 0.18em; color: rgba(255, 255, 255, 0.62); }`,
