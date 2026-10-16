@@ -351,8 +351,12 @@ export function homeCss(cardScale: number = CARD_SCALE_HANDHELD): string {
         // Recents row (handoff: left 44, 140 tall; times the card scale, its bottom stays at 688 and it grows upwards
         // from geo.top). Overflow stays visible: earlier capsules scroll off to the left edge.
         // Every size here derives from recentsGeometry; left, width, dim and ghost opacity are inline. The row is one
-        // gamepad focusable (RecentsRow); no pointer events, so a tap or click on a card does nothing.
-        rule('.gh-recents', `position: absolute; left: var(--gh-row, ${SIDE_INSET.handheld - ROW_OFFSET}px); right: 0; top: calc(${geo.top}px - var(--gh-top)); height: ${geo.capsuleH}px; margin: 0; padding: 0; pointer-events: none`),
+        // gamepad focusable (RecentsRow); taps select or open a card, drags step the selection (useRowDrag). It handles
+        // both axes itself (touch-action: none: a vertical swipe raises the sheet), and takes no taps under the sheet or
+        // while a game opens (the root's own pointer-events: none doesn't reach a child that sets auto).
+        rule('.gh-recents', `position: absolute; left: var(--gh-row, ${SIDE_INSET.handheld - ROW_OFFSET}px); right: 0; top: calc(${geo.top}px - var(--gh-top)); height: ${geo.capsuleH}px; margin: 0; padding: 0; pointer-events: auto; touch-action: none; user-select: none`),
+        rule('.gh-page-up .gh-recents', 'pointer-events: none'),
+        rule('.gh-root[data-gh-opening] .gh-recents', 'pointer-events: none'),
         rule('.gh-recents-track', `position: absolute; inset: 0; transition: transform ${SLIDE}`),
         rule('.gh-cap', `position: absolute; top: 0; height: ${geo.capsuleH}px; margin: 0; padding: 0; border-radius: ${k(8)}px; overflow: hidden; background: #111;
             border: none; --gh-edge: rgba(255,255,255,.08); box-shadow: ${capShadow}; outline: none;
@@ -401,7 +405,7 @@ export function homeCss(cardScale: number = CARD_SCALE_HANDHELD): string {
         rule('.gh-lib-label', `font-size: ${k(10.5)}px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; line-height: 1.4; text-wrap: balance; color: #fff`),
         // Loop preview: the first games again, decorative only (not focusable).
         // Opacity is inline per ghost (recentsLayout.ghostOpacity): .4 (.55 on the Library card) fading to .08.
-        rule('.gh-ghost', 'cursor: default; pointer-events: none; --gh-edge: rgba(255,255,255,.06); box-shadow: none; filter: grayscale(.6) brightness(.75)'),
+        rule('.gh-ghost', 'cursor: default; pointer-events: auto; --gh-edge: rgba(255,255,255,.06); box-shadow: none; filter: grayscale(.6) brightness(.75)'),
         rule('.gh-ghost.gh-cap-off', 'filter: grayscale(1) brightness(.65)'),
         rule('.gh-ghost-badge', `position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: ${k(6)}px; background: rgba(5,7,10,.45)`),
         rule('.gh-ghost-icon', `width: ${k(36)}px; height: ${k(36)}px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: ${k(20)}px; font-weight: 700; line-height: 1; background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.35); color: #fff`),

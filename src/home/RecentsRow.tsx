@@ -1,12 +1,13 @@
 import { Focusable } from '@decky/ui';
 import type { GamepadEvent } from '@decky/ui';
-import { memo, Ref, useEffect, useMemo, useState } from 'react';
+import { memo, MouseEvent, Ref, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { browserStores, capsuleUrls, heroUrls, landscapeUrls } from './artwork';
 import { displayInfo } from './artShrink';
 import { ArtBox, cardBox } from './cardArt';
 import { wideArt } from './homeView';
 import { knownCardArt, lastCardArt, resolveCardArt } from './wideCardArt';
 import { clampFocus, isLibraryFocus, MAX_GHOSTS, RecentsGeometry, recentsLayout, RowStyle, steamRowLayout } from './recentsLayout';
+import { cardTap } from './rowDrag';
 import type { HomeGame } from './useHomeData';
 import { tr } from '../i18n/steamText';
 
@@ -88,7 +89,7 @@ export function greyedOut(game: Pick<HomeGame, 'installed' | 'shortcut'>): boole
  * One recents card. Memoized on plain props, so an L1/R1 step re-renders only the cards whose place or state changed;
  * its art urls are read from Steam's stores only when the game or its expanded state changes.
  */
-const GameCapsule = memo(function GameCapsule({ game, left, width, dim, wide, selected, blur, box }: { game: HomeGame; left: number; width: number; dim: boolean; wide: boolean; selected: boolean; blur: boolean; box: ArtBox }) {
+const GameCapsule = memo(function GameCapsule({ game, index, left, width, dim, wide, selected, blur, box, onTap }: { game: HomeGame; index: number; left: number; width: number; dim: boolean; wide: boolean; selected: boolean; blur: boolean; box: ArtBox; onTap(index: number, event: MouseEvent): void }) {
     const appId = game.appId;
     const cover = useMemo(() => urls(() => capsuleUrls(appId, browserStores)), [appId]);
     const list = useMemo(
@@ -97,7 +98,7 @@ const GameCapsule = memo(function GameCapsule({ game, left, width, dim, wide, se
     );
     const art = useCardArt(appId, list, box);
     return (
-        <div className={`gh-cap${wide ? ' gh-cap-wide' : ''}${selected ? ' gh-cap-sel' : ''}${greyedOut(game) ? ' gh-cap-off' : ''}`} style={{ left: `${left}px`, width: `${width}px`, opacity: dim ? 0.35 : 1 }}>
+        <div className={`gh-cap${wide ? ' gh-cap-wide' : ''}${selected ? ' gh-cap-sel' : ''}${greyedOut(game) ? ' gh-cap-off' : ''}`} style={{ left: `${left}px`, width: `${width}px`, opacity: dim ? 0.35 : 1 }} onClick={(event) => onTap(index, event)}>
             <CapsuleArt cover={cover} art={art} blur={blur} />
             {/* A game new to the library, as Steam's Home marks it, and a demo: side by side on the wide card, stacked on a capsule. */}
             {(game.isNew || game.demo) && (
@@ -123,14 +124,16 @@ export interface RecentsRowNav {
     onButtonUp?(evt: GamepadEvent): void;
     /** A: the selected game's page, or the Library on the Library card. */
     onActivate(): void;
+    /** A tap on another card (or a drag, useRowDrag): select it, with controller focus on the row. */
+    onSelect(index: number): void;
 }
 
 /**
  * The recents row: games, then "View more in your Library", then the loop preview of the first games. One focusable for
  * the whole row (the cards slide by transform, so Steam's spatial navigation never moves between them): while it has
  * focus the selected card is highlighted, Left/Right select games and A opens the selected one (`nav`, from
- * SpotlightHome, which owns `selected`: it drives hero, title and actions; the row slides to follow). Taps and clicks
- * still do nothing (pointer events are off in homeCss). Rendered only with games. `geometry` is the card scale's sizes
+ * SpotlightHome, which owns `selected`: it drives hero, title and actions; the row slides to follow). A tap (the
+ * browser's click) on another card selects it, on the selected card opens it (rowDrag.cardTap); a ghost selects its game. Rendered only with games. `geometry` is the card scale's sizes
  * (handheld or docked), the same SpotlightHome gives homeCss.
  */
 export function RecentsRow({ games, selected, geometry, nav, rowStyle = 'spotlight', viewport = 0, expand = true, snap = false }: { games: HomeGame[]; selected: number; geometry: RecentsGeometry; nav: RecentsRowNav; rowStyle?: RowStyle; viewport?: number; expand?: boolean; snap?: boolean }) {
@@ -147,6 +150,16 @@ export function RecentsRow({ games, selected, geometry, nav, rowStyle = 'spotlig
     const library = layout.items[count];
     // The loop preview's portraits, read once per list of games (not on every step).
     const ghostCovers = useMemo(() => games.slice(0, MAX_GHOSTS).map((g) => urls(() => capsuleUrls(g.appId, browserStores))), [games]);
+    // A tap on card `index` (count: the Library card). The latest nav and selection, behind one stable callback, so a
+    // tap never re-renders the memoised cards.
+    const tapTarget = useRef({ nav, at });
+    tapTarget.current = { nav, at };
+    const onTap = useCallback((index: number, event: MouseEvent) => {
+        event.stopPropagation();
+        const { nav: n, at: focused } = tapTarget.current;
+        if (cardTap(index, focused) === 'open') n.onActivate();
+        else n.onSelect(index);
+    }, []);
     return (
         <Focusable
             ref={nav.setRef as Ref<HTMLDivElement>}
@@ -167,6 +180,8 @@ export function RecentsRow({ games, selected, geometry, nav, rowStyle = 'spotlig
                     <GameCapsule
                         key={game.appId}
                         game={game}
+                        index={i}
+                        onTap={onTap}
                         left={layout.items[i].left}
                         width={layout.items[i].width}
                         dim={layout.items[i].dim}
@@ -176,7 +191,7 @@ export function RecentsRow({ games, selected, geometry, nav, rowStyle = 'spotlig
                         blur={capsuleBlur(i, at, steam)}
                     />
                 ))}
-                <div className={`gh-cap gh-cap-lib${onLibrary ? ' gh-cap-lib-on' : ''}`} style={{ left: `${library.left}px`, width: `${library.width}px` }}>
+                <div className={`gh-cap gh-cap-lib${onLibrary ? ' gh-cap-lib-on' : ''}`} style={{ left: `${library.left}px`, width: `${library.width}px` }} onClick={(event) => onTap(count, event)}>
                     <div className="gh-lib-body">
                         <div className="gh-lib-grid">
                             <div className="gh-lib-cell gh-lib-cell-accent" />
@@ -194,6 +209,7 @@ export function RecentsRow({ games, selected, geometry, nav, rowStyle = 'spotlig
                         className={`gh-cap gh-ghost${greyedOut(games[j]) ? ' gh-cap-off' : ''}`}
                         aria-hidden="true"
                         style={{ left: `${ghost.left}px`, width: `${geometry.capsuleW}px`, opacity: ghost.opacity }}
+                        onClick={(event) => onTap(j, event)}
                     >
                         {/* Cover only: a ghost is exactly the portrait's width, so a blur base would be fully hidden. */}
                         <div className="gh-cap-cover" style={backgrounds(ghostCovers[j] ?? [])} />

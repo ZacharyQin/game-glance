@@ -295,6 +295,11 @@ export function SpotlightHome() {
         onButtonDown: onRecentsButtonDown,
         onButtonUp: directions.onButtonUp,
         onActivate: onRecentsActivate,
+        // A tap on another card: controller focus moves to the row with it, so the stick goes on from there.
+        onSelect: (index: number) => {
+            focusGames();
+            select(index);
+        },
     };
     // Which action button holds focus (its index among the row's buttons), remembered for the way back.
     const onActionsFocus = (event: { target: EventTarget }) => {

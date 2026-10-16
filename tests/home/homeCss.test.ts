@@ -118,9 +118,15 @@ describe('homeCss', () => {
         expect(css).toMatch(/\.gh-status-dot-away\s*\{[^}]*background:\s*#4cb4ff/);
         expect(css).toMatch(/\.gh-status-dot-off\s*\{[^}]*background:\s*rgba\(196,201,209,\.85\)/);
     });
-    it('the recents row is display only: no pointer events, so a tap or click on a card does nothing', () => {
+    it('the recents row takes touch: pointer events on, its own gestures, off under the sheet and while opening', () => {
         const css = homeCss(CARD_SCALE_HANDHELD);
-        expect(css).toMatch(/\.gh-recents\s*\{[^}]*pointer-events:\s*none\s*!important/);
+        expect(css).toMatch(/\.gh-recents\s*\{[^}]*pointer-events:\s*auto\s*!important[^}]*touch-action:\s*none\s*!important[^}]*user-select:\s*none\s*!important/);
+        expect(css).toMatch(/\.gh-page-up \.gh-recents\s*\{[^}]*pointer-events:\s*none\s*!important/);
+        // The root's own pointer-events: none (while a game opens) doesn't reach a child that sets auto: the row is
+        // switched off explicitly, so a tap during the open transition does nothing.
+        expect(css).toMatch(/\.gh-root\[data-gh-opening\] \.gh-recents\s*\{[^}]*pointer-events:\s*none\s*!important/);
+        // The loop preview's ghosts take taps too (a ghost selects its game).
+        expect(css).toMatch(/\.gh-ghost\s*\{[^}]*cursor:\s*default[^}]*pointer-events:\s*auto/);
         // While the card row has focus, the selected (or Library) card gets a white ring outside it and an even accent
         // glow (no y offset), and no bar along its bottom edge. Wide or narrow (a fast L1/R1 run), only the selected card
         // (gh-cap-sel): in Steam's row style the wide card is the first game, selected or not, and gets no ring.
@@ -135,7 +141,6 @@ describe('homeCss', () => {
         expect(css).toMatch(/\.gh-cap-marks\s*\{[^}]*position:\s*absolute[^}]*flex-direction:\s*column/);
         expect(css).toMatch(/\.gh-cap-wide \.gh-cap-marks\s*\{[^}]*flex-direction:\s*row/);
         expect(css).toMatch(/\.gh-cap-new\s*\{[^}]*text-transform:\s*uppercase[^}]*background:\s*rgba\(255,255,255,\.92\)/);
-        expect(css).not.toMatch(/\.gh-cap\s*\{[^}]*cursor:\s*pointer/);
     });
     it('homeCss gives ghosts no blur base and no recents-on-library variant', () => {
         const css = homeCss();
