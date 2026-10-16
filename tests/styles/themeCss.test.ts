@@ -496,6 +496,13 @@ describe('buildThemeCss restyle (Spotlight Home on)', () => {
         // Not in the 1.1.1 output.
         expect(buildThemeCss(steam)).not.toContain('#5cf2b4');
     });
+    it("the glass rings are Home's, 1 d unit (1 canvas px there), not 1 px: a 1 px border is drawn on 2 whole device px at the Ally's 2.32 and read brighter than Home's as the open transition handed over", () => {
+        expect(rulesFor(restyled, '.ps_Menu')).toContain('border-width: calc(1 * var(--gg-d)) !important;');
+        expect(rulesFor(restyled, '.gg-card')).toContain('border-width: calc(1 * var(--gg-d));');
+        expect(buildCleanCss(full)).toMatch(/\.gg-clean-info \{[^}]*border: calc\(1 \* var\(--gg-d\)\) solid rgba\(255, 255, 255, 0\.12\)/);
+        // The cloud keeps its 1 px: placed at a fractional position, it is drawn soft like Home's already (Michael: no change there).
+        expect(rulesFor(restyled, '.ps_Cloud')).toContain('border: 1px solid rgba(255, 255, 255, 0.18) !important;');
+    });
     it('Play: white words and glyph on the accent pill, as on Home (Steam drew the glyph dark and the words white)', () => {
         expect(rulesFor(restyled, '.rt_PlayBtn [role="button"]')).toContain('color: #ffffff !important');
         expect(rulesFor(restyled, '.rt_PlayBtn [role="button"] > div')).toContain('color: #ffffff !important');
@@ -578,7 +585,7 @@ describe('buildThemeCss restyle (Spotlight Home on)', () => {
         expect(cardMaxWidths()).toEqual([infoW, hltbW]);
         expect(rulesFor(restyled, '.gg-cards')).not.toContain('max-width');
         // The cards are content-box: the cap is the outer width less the padding (2 x padX) and the 1 px borders.
-        const content = (outer: number) => `max-width: calc(calc(${outer - 2 * padX} * var(--gg-d)) - 2 * 1px)`;
+        const content = (outer: number) => `max-width: calc(${outer - 2 * padX - 2} * var(--gg-d))`;
         expect(rulesFor(restyled, '.gg-card')).toContain(content(infoW));
         const hltbRules = rulesFor(restyled, '.gg-card.gg-hltb');
         expect(hltbRules).toContain(content(hltbW));
@@ -589,7 +596,7 @@ describe('buildThemeCss restyle (Spotlight Home on)', () => {
         // Aligned to the row's right end at its full (capped) width, not shrunk to its content. Content-box like the cap:
         // a plain 100% added the padding and borders, spilling 2 x padX + 2 px left over the info card (issue #53, the Deck).
         expect(hltbRules).toContain('justify-self: end');
-        expect(hltbRules).toContain(`width: calc(100% - calc(${2 * padX} * var(--gg-d)) - 2 * 1px)`);
+        expect(hltbRules).toContain(`width: calc(100% - calc(${2 * padX + 2} * var(--gg-d)))`);
         expect(hltbRules).not.toContain('width: 100%;');
         expect(rulesFor(restyled, '.gg-card')).toContain('padding: calc(20 * var(--gg-d)) calc(24 * var(--gg-d))');
         expect(rulesFor(restyled, '.gg-card')).toContain('border-radius: calc(16 * var(--gg-d))');
@@ -704,7 +711,7 @@ describe('buildThemeCss restyle (Spotlight Home on)', () => {
         for (const [, selector, body] of steamRules) {
             const props = body.split(';').map((d) => d.split(':')[0].trim()).filter(Boolean);
             for (const prop of props) {
-                expect([selector, prop]).toEqual([selector, expect.stringMatching(/^(--gg-accent|--gg-play-top|--gg-row-h|--gg-ok|--gg-warn|--gg-bad|--gg-off|transition|color|background|border|filter|box-shadow|visibility|padding-left|padding-right|padding-top|padding-bottom|font-size|font-weight|width|height|margin-right|top|min-width|flex|padding|backdrop-filter|display|object-position|transform|transform-style)$/)]);
+                expect([selector, prop]).toEqual([selector, expect.stringMatching(/^(--gg-accent|--gg-play-top|--gg-row-h|--gg-ok|--gg-warn|--gg-bad|--gg-off|transition|color|background|border|border-width|filter|box-shadow|visibility|padding-left|padding-right|padding-top|padding-bottom|font-size|font-weight|width|height|margin-right|top|min-width|flex|padding|backdrop-filter|display|object-position|transform|transform-style)$/)]);
             }
         }
         // (100vh only in the Play row's anchor variable, which the 1.1.1 layout rules read: the default and the TV's, and in

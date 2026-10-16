@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { Box, cardBorder, ExtraColumn, Measure, pageTargets, PageLook, PageStat, StatKey } from '../../src/home/openTargets';
-import { PAGE_LAYOUT } from '../../src/styles/themeCss';
+import { PAGE_LAYOUT, pageDUnit } from '../../src/styles/themeCss';
 
 interface Fixture {
     screen: { width: number; height: number };
@@ -174,9 +174,15 @@ describe('pageTargets stats', () => {
 });
 
 describe('pageTargets at a fractional pixel ratio', () => {
-    // The Ally handheld (2.32 device px per CSS px), measured on the device: Ori's page in the Spotlight look. Its cards'
-    // 1 px border is drawn 2 device px wide (0.862 CSS px), which moves everything inside them and their height.
+    // The Ally handheld (2.32 device px per CSS px), measured on the device: Ori's page in the Spotlight look, then with a
+    // 1 px ring (drawn 2 device px, 0.862 CSS px). The ring is now 1 d unit (0.575 CSS px), drawn 1 device px (0.431):
+    // everything inside the cards sits 0.431 px further up and left, and each card is 0.862 px narrower and shorter.
     const screen = { width: 828.0172, height: 466.3793, dpr: 2.32 };
+    const d = pageDUnit(screen.width, screen.height);
+    // Measured: rings of 2 / 2.32 inside widths that allowed 2 px for them. Now: 1 / 2.32 inside widths allowing 2 d units.
+    const was = 2 / 2.32;
+    const now = 1 / 2.32;
+    const narrower = 2 * (1 - was) - 2 * (d - now);
     const measure: Measure = (text) => text.length * 6;
     const stats: PageStat[] = [
         { key: 'played', label: 'Play Time', value: '2.3 h' },
@@ -185,20 +191,27 @@ describe('pageTargets at a fractional pixel ratio', () => {
     ];
     const columns: ExtraColumn[] = [{ key: 'mainExtras', label: '+ Extras', value: '15.7 h' }, { key: 'completionist', label: '100%', value: '18.3 h' }];
     const t = pageTargets('spotlight', screen, stats, measure, { w: 50, h: 20 }, { columns, bar: true });
-    const at = (actual: { x: number; y: number }, x: number, y: number, what: string) => {
-        expect(Math.abs(actual.x - x), `${what}.x: ${actual.x} vs ${x}`).toBeLessThan(0.05);
-        expect(Math.abs(actual.y - y), `${what}.y: ${actual.y} vs ${y}`).toBeLessThan(0.05);
+    // The info card keeps its left edge, HowLongToBeat its right one (it sits at the row's end).
+    const cards: Box[] = [
+        { x: 32.2, y: 299.623, w: 310.224 + narrower, h: 102.916 - 2 * (was - now) },
+        { x: 525.84 - narrower, y: 299.623, w: 269.98 + narrower, h: 102.916 - 2 * (was - now) },
+    ];
+    /** A text measured in card `i` at (x, y), where it is now: moved with its card, and inside the thinner ring. */
+    const at = (actual: { x: number; y: number }, i: number, x: number, y: number, what: string) => {
+        const ex = x + (i === 1 ? -narrower : 0) - (was - now);
+        const ey = y - (was - now);
+        expect(Math.abs(actual.x - ex), `${what}.x: ${actual.x} vs ${ex}`).toBeLessThan(0.05);
+        expect(Math.abs(actual.y - ey), `${what}.y: ${actual.y} vs ${ey}`).toBeLessThan(0.05);
     };
-    it('puts the texts inside the cards where the page does (inside their device-px border)', () => {
-        at(t.stats.played!.label, 46.86, 311.98, 'Play Time label');
-        at(t.stats.played!.value, 46.86, 323.76, 'Play Time value');
-        at(t.extras!.desc, 46.86, 351.35, 'description');
-        at(t.extras!.hltbTitle, 540.5, 311.98, 'HowLongToBeat title');
-        at(t.stats.hltb!.label, 540.5, 327.21, 'Main label');
-        at(t.stats.hltb!.value, 540.5, 338.99, 'Main value');
+    it('puts the texts inside the cards where the page does (inside their device-px ring)', () => {
+        at(t.stats.played!.label, 0, 46.86, 311.98, 'Play Time label');
+        at(t.stats.played!.value, 0, 46.86, 323.76, 'Play Time value');
+        at(t.extras!.desc, 0, 46.86, 351.35, 'description');
+        at(t.extras!.hltbTitle, 1, 540.5, 311.98, 'HowLongToBeat title');
+        at(t.stats.hltb!.label, 1, 540.5, 327.21, 'Main label');
+        at(t.stats.hltb!.value, 1, 540.5, 338.99, 'Main value');
     });
-    it('gives the panels the cards\' edges as drawn, on whole device px (a crisp border, as the page\'s)', () => {
-        const cards: Box[] = [{ x: 32.2, y: 299.623, w: 310.224, h: 102.916 }, { x: 525.84, y: 299.623, w: 269.98, h: 102.916 }];
+    it("gives the panels the cards' edges as drawn, on whole device px (a crisp ring, as the page's)", () => {
         t.shells.forEach((shell, i) => {
             const card = cards[i];
             const edges = [[shell.x, card.x], [shell.y, card.y], [shell.x + shell.w, card.x + card.w], [shell.y + shell.h, card.y + card.h]];
@@ -207,12 +220,14 @@ describe('pageTargets at a fractional pixel ratio', () => {
                 expect(Math.abs(mine - page), `shell ${i} edge ${mine} vs ${page}`).toBeLessThanOrEqual(0.5 / screen.dpr + 1e-6);
             }
         });
+        expect(t.border).toBeCloseTo(now, 6);
     });
-    it('the border the cards draw: whole device px, at least one', () => {
-        expect(cardBorder(2.32)).toBeCloseTo(2 / 2.32, 6);
-        expect(cardBorder(1)).toBe(1);
-        expect(cardBorder(1.5)).toBeCloseTo(1 / 1.5, 6);
-        expect(cardBorder(0.75)).toBeCloseTo(1 / 0.75, 6);
-        expect(cardBorder(undefined)).toBe(1);
+    it('the ring the cards draw: 1 d unit on whole device px, at least one; the d unit itself when the ratio is not known', () => {
+        expect(cardBorder(2.32, 0.575)).toBeCloseTo(1 / 2.32, 6);
+        expect(cardBorder(1, 0.889)).toBe(1);
+        expect(cardBorder(1, 1.333)).toBe(1);
+        expect(cardBorder(2, 1.333)).toBe(1);
+        expect(cardBorder(3, 1.34)).toBeCloseTo(4 / 3, 6);
+        expect(cardBorder(undefined, 0.575)).toBe(0.575);
     });
 });

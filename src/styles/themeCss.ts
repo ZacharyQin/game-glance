@@ -139,10 +139,10 @@ export function cardMaxWidths(aspect = 0): [number, number] {
     return [aspect >= equalFromAspect ? hltbW : infoW, hltbW];
 }
 
-/** A card's max-width for its outer width `outer` (handoff px): the cards are content-box, so less the padding and the 1 px borders. */
-const cardContentMax = (outer: number) => `calc(${d(outer - 2 * PAGE_LAYOUT.cards.padX)} - 2 * 1px)`;
+/** A card's max-width for its outer width `outer` (handoff px): the cards are content-box, so less the padding and the rings (1 d unit). */
+const cardContentMax = (outer: number) => d(outer - 2 * PAGE_LAYOUT.cards.padX - 2);
 /** A card's width filling its grid column, content-box as above: a plain 100% overflowed the column by the padding and borders. */
-const CARD_FILL_WIDTH = `calc(100% - ${d(2 * PAGE_LAYOUT.cards.padX)} - 2 * 1px)`;
+const CARD_FILL_WIDTH = `calc(100% - ${d(2 * PAGE_LAYOUT.cards.padX + 2)})`;
 
 /** The page's d unit (CSS px per handoff px) for a Big Picture window of `width` x `height` CSS px, as --gg-d: Home's scale. */
 export function pageDUnit(width: number, height: number): number {
@@ -407,7 +407,7 @@ export function buildCleanCss({ header, details, root }: ThemeClasses): string {
         `.gg-cards { display: none !important; }`,
         // The info card at the right end of the row, vertically centred on the Play pill; the glass of the other cards.
         `.gg-clean-info { position: absolute; right: 0; top: 50%; transform: translateY(-50%); display: flex; align-items: flex-start; gap: ${d(PAGE_LAYOUT.cleanInfo.colGap)};
-            padding: ${d(PAGE_LAYOUT.cleanInfo.padY)} ${d(PAGE_LAYOUT.cleanInfo.padX)}; border-radius: ${d(16)}; border: 1px solid rgba(255, 255, 255, 0.12); background: rgba(12, 16, 22, 0.38);
+            padding: ${d(PAGE_LAYOUT.cleanInfo.padY)} ${d(PAGE_LAYOUT.cleanInfo.padX)}; border-radius: ${d(16)}; border: ${d(1)} solid rgba(255, 255, 255, 0.12); background: rgba(12, 16, 22, 0.38);
             backdrop-filter: blur(${d(16)}); color: #fff; }`,
         `.gg-clean-info > div { display: flex; flex-direction: column; gap: ${d(PAGE_LAYOUT.stats.rowGap)}; }`,
         `.gg-clean-info .gg-value { font-size: ${d(PAGE_LAYOUT.cleanInfo.value)}; line-height: 1.2; }`,
@@ -508,7 +508,10 @@ function restyleRules({ header, details, root, play, shared }: ThemeClasses, lay
         rule(playButton && `${playButton} [role="button"] svg`, ` width: ${d(PAGE_LAYOUT.pill.icon)} !important; height: ${d(PAGE_LAYOUT.pill.icon)} !important; margin-right: ${d(PAGE_LAYOUT.pill.iconGap)} !important; `),
         rule(playButton && `${playButton} [role="button"] + [role="button"]`, ` flex: 0 0 ${d(PAGE_LAYOUT.playArrow.w)} !important; width: ${d(PAGE_LAYOUT.playArrow.w)} !important; padding: 0 !important; `),
         rule(playButton && `${playButton} [role="button"] + [role="button"] svg`, ` width: ${d(PAGE_LAYOUT.playArrow.glyph)} !important; height: ${d(PAGE_LAYOUT.playArrow.glyph)} !important; `),
-        rule(menuButton, ` background: rgba(12, 16, 22, 0.4) !important; backdrop-filter: blur(${d(12)}) !important; `),
+        // Its ring is Home's: 1 d unit (1 canvas px on Home), never 1 px, which is drawn on whole device px (2 at the Ally's
+        // 2.32) and read brighter than Home's as the open transition handed over (Michael on the Ally). Not the cloud: placed
+        // at a fractional position, its 1 px is drawn soft like Home's already.
+        rule(menuButton, ` background: rgba(12, 16, 22, 0.4) !important; border-width: ${d(1)} !important; backdrop-filter: blur(${d(12)}) !important; `),
         rule(menuButton && `${menuButton}.gpfocus`, ` background: #ffffff !important; `),
         // (Each focus look here also under DOM focus: after a tap or a click Steam keeps focus but drops gpfocus, and a page
         // opened that way has its Play focused without it, which the open transition lands on.)
@@ -552,11 +555,12 @@ function restyleRules({ header, details, root, play, shared }: ThemeClasses, lay
         `.gg-logo { display: block; width: auto; height: auto; max-width: ${d(LOGO_BOX.width)}; max-height: ${d(LOGO_BOX.height)}; object-fit: contain; object-position: left bottom;
             filter: drop-shadow(0 ${d(4)} ${d(24)} rgba(0, 0, 0, 0.45)); }`,
 
-        // Cards: grid 1.1fr / 1fr, gap 18; padding 20x24, radius 16, the handoff's glass; its type sizes. Each card at most
+        // Cards: grid 1.1fr / 1fr, gap 18; padding 20x24, radius 16, the handoff's glass (its ring 1 d unit, as Home's: see the
+        // menu circles); its type sizes. Each card at most
         // its own width (cardMaxWidths): with room to spare the info card stays left, HowLongToBeat at the right edge.
         `.gg-cards { display: grid; grid-template-columns: minmax(0, ${PAGE_LAYOUT.cards.split[0]}fr) minmax(0, ${PAGE_LAYOUT.cards.split[1]}fr); gap: ${d(PAGE_LAYOUT.cards.gridGap)}; }`,
         `.gg-card { display: flex; flex-direction: column; gap: ${d(PAGE_LAYOUT.cards.colGap)}; padding: ${d(PAGE_LAYOUT.cards.padY)} ${d(PAGE_LAYOUT.cards.padX)}; border-radius: ${d(16)};
-            background: rgba(12, 16, 22, 0.38); border-color: rgba(255, 255, 255, 0.12); backdrop-filter: blur(${d(16)});
+            background: rgba(12, 16, 22, 0.38); border-color: rgba(255, 255, 255, 0.12); border-width: ${d(1)}; backdrop-filter: blur(${d(16)});
             min-height: ${d(PAGE_LAYOUT.playTop.tvCards - 2 * PAGE_LAYOUT.cards.padY - 2)}; max-width: ${cardContentMax(cardMaxWidths()[0])}; }`,
         // (One height for every game: three description lines' worth, as The Witcher's (its content: stats, gap and three
         // lines, 136 of the 178 the cards take with their padding and border; measured 179 on the Ally with Steam's border); a short description, or none, left
