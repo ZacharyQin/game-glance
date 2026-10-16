@@ -17,10 +17,10 @@ export const GLIDE_MS = 400;
 /** Below this speed (px/ms) a glide has come to rest. */
 const GLIDE_STOP = 0.05;
 /**
- * A flick's bounce at a row's end: it peaks about this long after hitting the end and is handed back at 3 x this, the row's own
- * settle transition taking the last of the way home while the run ends (so the card widens right after the bounce).
+ * A flick's bounce at a row's end: it peaks about this long after hitting the end and is handed back just past the peak
+ * (1.5 x this), the row's own settle transition easing it home while the run ends and the card widens.
  */
-export const BOUNCE_MS = 55;
+export const BOUNCE_MS = 45;
 
 /** The axis a drag moves along, once it has passed `slop`; null before. A tie goes to the row (x). */
 export function axisLock(dx: number, dy: number, slop = DRAG_SLOP): Axis | null {
@@ -104,7 +104,7 @@ export function edgeBounce(from: number, velocity: number, t: number, limit: num
     const time = Math.max(0, t);
     const raw = (from + velocity * time) * Math.exp(-time / BOUNCE_MS);
     const offset = Math.sign(raw) === Math.sign(velocity) ? rubberBand(raw, limit) : raw;
-    return { offset: offset === 0 ? 0 : offset, done: time >= BOUNCE_MS * 3 };
+    return { offset: offset === 0 ? 0 : offset, done: time >= BOUNCE_MS * 1.5 };
 }
 
 /**
