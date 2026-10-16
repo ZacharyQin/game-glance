@@ -358,6 +358,7 @@ export function homeCss(cardScale: number = CARD_SCALE_HANDHELD): string {
         rule('.gh-page-up .gh-recents', 'pointer-events: none'),
         rule('.gh-root[data-gh-opening] .gh-recents', 'pointer-events: none'),
         rule('.gh-recents-track', `position: absolute; inset: 0; transition: transform ${SLIDE}`),
+        rule('.gh-recents-drag .gh-recents-track', 'transition: none'),
         rule('.gh-cap', `position: absolute; top: 0; height: ${geo.capsuleH}px; margin: 0; padding: 0; border-radius: ${k(8)}px; overflow: hidden; background: #111;
             border: none; --gh-edge: rgba(255,255,255,.08); box-shadow: ${capShadow}; outline: none;
             transition: left ${SLIDE}, width ${SLIDE}, opacity ${CAP_STATE_MS}ms, filter ${CAP_STATE_MS}ms`),

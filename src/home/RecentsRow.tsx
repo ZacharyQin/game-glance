@@ -8,6 +8,7 @@ import { wideArt } from './homeView';
 import { knownCardArt, lastCardArt, resolveCardArt } from './wideCardArt';
 import { clampFocus, isLibraryFocus, MAX_GHOSTS, RecentsGeometry, recentsLayout, RowStyle, steamRowLayout } from './recentsLayout';
 import { cardTap } from './rowDrag';
+import { useRowDrag } from './useRowDrag';
 import type { HomeGame } from './useHomeData';
 import { tr } from '../i18n/steamText';
 
@@ -126,6 +127,12 @@ export interface RecentsRowNav {
     onActivate(): void;
     /** A tap on another card (or a drag, useRowDrag): select it, with controller focus on the row. */
     onSelect(index: number): void;
+    /** Screen px per logical px: Home's canvas as drawn, for a finger's distances. */
+    scale(): number;
+    /** A drag (with its flick) is running: a fast run, like a held stick (home/fastCycle). */
+    onRun(running: boolean): void;
+    /** A vertical swipe on the row ended, `dy` logical px (negative: up). */
+    onVerticalSwipe?(dy: number): void;
 }
 
 /**
@@ -160,10 +167,16 @@ export function RecentsRow({ games, selected, geometry, nav, rowStyle = 'spotlig
         if (cardTap(index, focused) === 'open') n.onActivate();
         else n.onSelect(index);
     }, []);
+    // A finger on the row: drags step the selection, the track following the finger from where it was when the drag
+    // began (in Steam's style the layout only scrolls once the selection passes the middle).
+    const drag = useRowDrag({ index: at, count, step: geometry.step, scale: () => nav.scale(), onSelect: (i) => nav.onSelect(i), onRun: (r) => nav.onRun(r), onVerticalSwipe: (dy) => nav.onVerticalSwipe?.(dy) });
+    const dragStart = useRef(layout.scrollX);
+    if (!drag.dragging) dragStart.current = layout.scrollX;
+    const trackX = drag.dragging ? dragStart.current + drag.dx : layout.scrollX;
     return (
         <Focusable
             ref={nav.setRef as Ref<HTMLDivElement>}
-            className="gh-recents"
+            className={`gh-recents${drag.dragging ? ' gh-recents-drag' : ''}`}
             focusClassName="gh-recents-focus"
             noFocusRing
             preferredFocus={nav.preferred}
@@ -172,10 +185,11 @@ export function RecentsRow({ games, selected, geometry, nav, rowStyle = 'spotlig
             onButtonDown={nav.onButtonDown}
             onButtonUp={nav.onButtonUp}
             onActivate={nav.onActivate}
+            {...drag.handlers}
             role="listbox"
             aria-label={tr('recentGames')}
         >
-            <div className={`gh-recents-track${snap ? ' gh-recents-snap' : ''}`} style={{ transform: `translateX(${layout.scrollX}px)` }}>
+            <div className={`gh-recents-track${snap ? ' gh-recents-snap' : ''}`} style={{ transform: `translateX(${trackX}px)` }}>
                 {games.map((game, i) => (
                     <GameCapsule
                         key={game.appId}

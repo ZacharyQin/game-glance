@@ -125,6 +125,8 @@ describe('homeCss', () => {
         // The root's own pointer-events: none (while a game opens) doesn't reach a child that sets auto: the row is
         // switched off explicitly, so a tap during the open transition does nothing.
         expect(css).toMatch(/\.gh-root\[data-gh-opening\] \.gh-recents\s*\{[^}]*pointer-events:\s*none\s*!important/);
+        // While a finger drags the row the track follows it directly: no slide transition (useRowDrag).
+        expect(css).toMatch(/\.gh-recents-drag \.gh-recents-track\s*\{[^}]*transition:\s*none\s*!important/);
         // The loop preview's ghosts take taps too (a ghost selects its game).
         expect(css).toMatch(/\.gh-ghost\s*\{[^}]*cursor:\s*default[^}]*pointer-events:\s*auto/);
         // While the card row has focus, the selected (or Library) card gets a white ring outside it and an even accent

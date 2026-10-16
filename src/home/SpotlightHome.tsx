@@ -151,7 +151,9 @@ export function SpotlightHome() {
     // A held L1/R1, d-pad or stick that is repeating (useBumperSelect): the run lasts until it is let go.
     const [bumperRepeating, setBumperRepeating] = useState(false);
     const [directionRepeating, setDirectionRepeating] = useState(false);
-    const cycle = useFastCycle(focusIndex, bumperRepeating || directionRepeating);
+    // A finger dragging the game cards (useRowDrag), and its flick: a run as well.
+    const [dragRunning, setDragRunning] = useState(false);
+    const cycle = useFastCycle(focusIndex, bumperRepeating || directionRepeating || dragRunning);
     const shownAt = heroIndex(data.games.length, cycle.shown);
     const shownGame = shownAt === null ? null : data.games[shownAt] ?? null;
     const heldAccent = useRef(data.accent);
@@ -300,6 +302,12 @@ export function SpotlightHome() {
             focusGames();
             select(index);
         },
+        // Screen px per logical px, as Home's canvas is drawn right now (also during Steam's mount animation).
+        scale: () => {
+            const drawn = rootRef.current?.querySelector('.gh-canvas')?.getBoundingClientRect().width ?? 0;
+            return drawn > 0 && canvas.logicalWidth > 0 ? drawn / canvas.logicalWidth : canvas.scale;
+        },
+        onRun: setDragRunning,
     };
     // Which action button holds focus (its index among the row's buttons), remembered for the way back.
     const onActionsFocus = (event: { target: EventTarget }) => {
