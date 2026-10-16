@@ -65,7 +65,8 @@ An optional new Home screen, off by default (Quick Access → Game Glance → Sp
   menu for the game.
 - **Touch.** On a handheld's touchscreen, tap a game to select it and tap it again to open it; tap the Library card,
   or a game in the "back to start" preview, the same way. Swipe the row to move through the games (it follows your
-  finger and a flick glides on, slowing down), swipe up anywhere on Home for the tabs and down to come back, swipe a
+  finger, a flick glides on, slowing down, and bounces off the ends; flick on from the Library card to go back to the
+  first game), swipe up anywhere on Home for the tabs and down to come back, swipe a
   tab's row sideways, and tap a tab or a card. The controller carries on from wherever your finger left off.
 - **Opening a game.** Home turns into the game's page: the art stays put while the title, Play and the buttons move to
   their places on the page and the chips grow into its cards.

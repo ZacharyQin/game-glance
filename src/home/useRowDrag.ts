@@ -1,5 +1,5 @@
 import { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent, useEffect, useRef, useState } from 'react';
-import { Axis, axisLock, dragView, glide, releaseVelocity, Sample } from './rowDrag';
+import { Axis, axisLock, dragView, edgeBounce, flickWraps, glide, GLIDE_MS, releaseVelocity, Sample } from './rowDrag';
 
 export interface RowDragOptions {
     /** The selected card, and the last one (the games row: the Library card). */
@@ -14,6 +14,8 @@ export interface RowDragOptions {
     onRun(running: boolean): void;
     /** False stops a flick between steps (a game opening, the row gone): no selection moves under the transition. */
     canStep?(): boolean;
+    /** A flick on outward from the last card wraps to the first (the games row, as Right does there). */
+    wraps?: boolean;
 }
 
 interface Gesture {
@@ -34,7 +36,8 @@ type Handler = (event: ReactPointerEvent<HTMLElement>) => void;
  * A row under a finger (rowDrag): a sideways drag steps the selection one card per `step` px; the row's `offset` is the
  * finger's movement beyond the selected card's place (rubber-banded past the ends), so the layout carries the row and a
  * release only settles that remainder. On release a flick glides on at the finger's speed, slowing down smoothly frame by
- * frame (rowDrag.glide) through the same view, and comes to rest on a card (or at the row's end).
+ * frame (rowDrag.glide) through the same view, and comes to rest on a card, or runs into the row's end, past it a little
+ * and back (rowDrag.edgeBounce). With `wraps`, flicking on from the last card goes back to the first (rowDrag.flickWraps).
  * A sideways drag never ends in a click (a short quick slide can pass Chromium's tap slop): it is swallowed. A vertical
  * swipe is left to bubble up (SpotlightHome raises or lowers the feed sheet). One finger only (the primary pointer);
  * Steam taking the touch (pointercancel) ends the run.
@@ -103,6 +106,13 @@ export function useRowDrag(options: RowDragOptions): {
         if (g.axis !== 'x') return;
         const velocity = releaseVelocity(g.samples);
         const view = event.currentTarget.ownerDocument?.defaultView ?? window;
+        if (opts.current.wraps && g.start === g.last && flickWraps(g.last, opts.current.count, velocity) && opts.current.canStep?.() !== false) {
+            // Flicked on from the end: back to the first game, the row sliding there through its own transition.
+            opts.current.onSelect(0);
+            setState({ dragging: false, offset: 0 });
+            opts.current.onRun(false);
+            return;
+        }
         if (glide(velocity, 0).done || typeof view.requestAnimationFrame !== 'function') {
             setState({ dragging: false, offset: 0 });
             opts.current.onRun(false);
@@ -112,8 +122,17 @@ export function useRowDrag(options: RowDragOptions): {
         const released = logical(event.clientX - g.x0);
         const t0 = view.performance.now();
         let at = g.last;
+        // Run into the row's end: when, how fast, and how far off the end card.
+        let bounce: { t: number; velocity: number; from: number } | null = null;
         const frame = (now: number) => {
             if (opts.current.canStep?.() === false) return stopFlick();
+            if (bounce) {
+                const b = edgeBounce(bounce.from, bounce.velocity, now - bounce.t, g.step * 0.5);
+                if (b.done) return stopFlick();
+                setState({ dragging: true, offset: b.offset });
+                if (gliding.current) gliding.current.id = view.requestAnimationFrame(frame);
+                return;
+            }
             const { dx, done } = glide(velocity, now - t0);
             const { count } = opts.current;
             const shown = dragView(released + dx, g.start, count, g.step);
@@ -121,9 +140,10 @@ export function useRowDrag(options: RowDragOptions): {
                 at = shown.index;
                 opts.current.onSelect(at);
             }
-            // At rest, or run into the row's end (the rubber band is for a finger): settle on the card.
+            if (done) return stopFlick();
+            // Run into the row's end (the rubber band is for a finger): on past it a little at the speed left, and back.
             const atEnd = (shown.index >= count && velocity < 0) || (shown.index <= 0 && velocity > 0);
-            if (done || atEnd) return stopFlick();
+            if (atEnd) bounce = { t: now, velocity: velocity * Math.exp(-(now - t0) / GLIDE_MS), from: shown.offset };
             setState({ dragging: true, offset: shown.offset });
             if (gliding.current) gliding.current.id = view.requestAnimationFrame(frame);
         };

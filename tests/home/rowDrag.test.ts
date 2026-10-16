@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CARD_SCALE_DOCKED, recentsGeometry } from '../../src/home/recentsLayout';
-import { axisLock, cardTap, dragSteps, dragTarget, FLICK_MIN, glide, GLIDE_MS, releaseVelocity, rubberBand, Sample, sheetSwipe, dragView } from '../../src/home/rowDrag';
+import { axisLock, BOUNCE_MS, cardTap, dragSteps, dragTarget, edgeBounce, FLICK_MIN, flickWraps, glide, GLIDE_MS, releaseVelocity, rubberBand, Sample, sheetSwipe, dragView } from '../../src/home/rowDrag';
 
 describe('rowDrag', () => {
     it('axisLock waits for the slop, then picks the larger axis (a tie goes to the row)', () => {
@@ -99,5 +99,36 @@ describe('rowDrag', () => {
         expect(cardTap(3, 3)).toBe('open');
         expect(cardTap(2, 3)).toBe('select');
         expect(cardTap(10, 10)).toBe('open');
+    });
+    it('flickWraps sends a flick on outward from the last card (the Library card) back to the first game', () => {
+        // At the end, flicking on (finger moving left, a negative speed): wrap.
+        expect(flickWraps(10, 10, -2)).toBe(true);
+        expect(flickWraps(10, 10, -FLICK_MIN)).toBe(true);
+        // Too slow to flick, flicking back, or not at the end: no wrap.
+        expect(flickWraps(10, 10, -FLICK_MIN * 0.6)).toBe(false);
+        expect(flickWraps(10, 10, 2)).toBe(false);
+        expect(flickWraps(9, 10, -2)).toBe(false);
+        // The first card: no wrap backwards (only the end wraps).
+        expect(flickWraps(0, 10, 2)).toBe(false);
+        // Nothing to wrap to (the Library card only).
+        expect(flickWraps(0, 0, -2)).toBe(false);
+    });
+    it('edgeBounce carries a flick that runs into an end past it a little and springs back to rest', () => {
+        // Into the first card (a positive speed): the row runs on past it, outward (positive), and comes back.
+        const limit = 84;
+        expect(edgeBounce(0, 1.5, 0, limit)).toEqual({ offset: 0, done: false });
+        const peak = Math.max(...Array.from({ length: 60 }, (_, i) => edgeBounce(0, 1.5, i * 10, limit).offset));
+        expect(peak).toBeGreaterThan(20);
+        expect(peak).toBeLessThan(limit);
+        // It has come back by the end, and is done.
+        const end = edgeBounce(0, 1.5, BOUNCE_MS * 8, limit);
+        expect(end.done).toBe(true);
+        expect(Math.abs(end.offset)).toBeLessThan(0.5);
+        // From short of the card (the index already on it, the row still on its way): it continues smoothly from there.
+        expect(edgeBounce(-60, 1.5, 0, limit).offset).toBe(-60);
+        expect(edgeBounce(-60, 1.5, 20, limit).offset).toBeGreaterThan(-60);
+        // Into the end (a negative speed): the same, the other way; and a very fast flick never passes the limit.
+        expect(edgeBounce(0, -1.5, BOUNCE_MS, limit).offset).toBeLessThan(0);
+        expect(Math.min(...Array.from({ length: 60 }, (_, i) => edgeBounce(0, -50, i * 10, limit).offset))).toBeGreaterThan(-limit);
     });
 });

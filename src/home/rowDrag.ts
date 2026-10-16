@@ -16,6 +16,8 @@ export const FLICK_MIN = 0.5;
 export const GLIDE_MS = 400;
 /** Below this speed (px/ms) a glide has come to rest. */
 const GLIDE_STOP = 0.05;
+/** A flick's bounce at a row's end: how quickly it runs out past the end and springs back (about 6 x this in all). */
+export const BOUNCE_MS = 110;
 
 /** The axis a drag moves along, once it has passed `slop`; null before. A tie goes to the row (x). */
 export function axisLock(dx: number, dy: number, slop = DRAG_SLOP): Axis | null {
@@ -89,6 +91,25 @@ export function dragView(dx: number, start: number, count: number, step: number)
     const outward = (index >= count && rest < 0) || (index <= 0 && rest > 0);
     const offset = outward ? rubberBand(rest, step * 0.5) : rest;
     return { index, offset: offset === 0 ? 0 : offset };
+}
+
+/**
+ * A flick that runs into a row's end `t` ms ago, at `velocity`, with the row `from` px off the end card: it carries on
+ * past the end a little (rubber-banded, never `limit`) and springs back to rest on it, the run held until it is `done`.
+ */
+export function edgeBounce(from: number, velocity: number, t: number, limit: number): { offset: number; done: boolean } {
+    const time = Math.max(0, t);
+    const raw = (from + velocity * time) * Math.exp(-time / BOUNCE_MS);
+    const offset = Math.sign(raw) === Math.sign(velocity) ? rubberBand(raw, limit) : raw;
+    return { offset: offset === 0 ? 0 : offset, done: time >= BOUNCE_MS * 6 };
+}
+
+/**
+ * A flick from the last card (the Library card) on outward, past the end (finger moving left): the row wraps back to
+ * the first game, as Right does there. Only the end wraps; a drag never does.
+ */
+export function flickWraps(index: number, count: number, velocity: number): boolean {
+    return count > 0 && index >= count && velocity <= -FLICK_MIN;
 }
 
 /** A finished swipe of (dx, dy) on Home: a vertical one of SWIPE_SHEET or more raises the sheet (up) or lowers it (down). */

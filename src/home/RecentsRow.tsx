@@ -169,7 +169,7 @@ export function RecentsRow({ games, selected, geometry, nav, rowStyle = 'spotlig
     }, []);
     // A finger on the row: drags step the selection (the layout carries the row) and the track adds the finger's
     // remainder beyond the selected card, so a release only settles that (useRowDrag).
-    const drag = useRowDrag({ index: at, count, step: geometry.step, scale: () => nav.scale(), onSelect: (i) => nav.onSelect(i), onRun: (r) => nav.onRun(r), canStep: () => nav.canStep?.() !== false });
+    const drag = useRowDrag({ index: at, count, step: geometry.step, scale: () => nav.scale(), onSelect: (i) => nav.onSelect(i), onRun: (r) => nav.onRun(r), canStep: () => nav.canStep?.() !== false, wraps: true });
     const trackX = layout.scrollX + (drag.dragging ? drag.offset : 0);
     return (
         <Focusable
