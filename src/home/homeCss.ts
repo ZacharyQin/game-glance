@@ -25,12 +25,20 @@ function soft(selector: string, body: string): string {
     return `${selector} { ${body}; }`;
 }
 
+/**
+ * Properties Home animates that are never `!important`: Chromium runs no animation of an !important property on its
+ * compositor (kAffectsImportantProperty, probed on the Ally), so the open transition's motion ran on the main thread,
+ * repainting every frame, and stalled. Nothing outside Game Glance sets them on Home's elements (probed: 441 elements),
+ * and dropping !important from all of them alike keeps every rule's place against the others.
+ */
+const ANIMATED = /^(transform|opacity)\s*:/;
+
 function rule(selector: string, body: string): string {
     const decls = body
         .split(';')
         .map((d) => d.trim())
         .filter(Boolean)
-        .map((d) => (d.startsWith('--') ? d : `${d} !important`));
+        .map((d) => (d.startsWith('--') || ANIMATED.test(d) ? d : `${d} !important`));
     // A focus look also follows DOM focus (focusCss): Steam drops its focus classes after a tap, a click or the wheel.
     return `${withDomFocus(selector)} { ${decls.join('; ')}; }`;
 }

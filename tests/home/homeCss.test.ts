@@ -118,6 +118,15 @@ describe('homeCss', () => {
         expect(css).toMatch(/\.gh-status-dot-away\s*\{[^}]*background:\s*#4cb4ff/);
         expect(css).toMatch(/\.gh-status-dot-off\s*\{[^}]*background:\s*rgba\(196,201,209,\.85\)/);
     });
+    it('never marks transform or opacity !important: Chromium will not run an animation of an !important property on its compositor', () => {
+        // (compositeFailed 262144, kAffectsImportantProperty, probed on the Ally: the open transition's motion then ran on the
+        // main thread and repainted every frame, the GPU near its limit, and stalled and jumped to its end on the screen.)
+        const css = [homeCss(CARD_SCALE_HANDHELD), homeCss(CARD_SCALE_DOCKED)].join('\n');
+        expect(css).not.toMatch(/(?<![-\w])transform:[^;}]*!important/);
+        expect(css).not.toMatch(/(?<![-\w])opacity:[^;}]*!important/);
+        // The rest stays !important (Steam's own styles must not win), the transitions too.
+        expect(css).toMatch(/\.gh-recents-track \{[^}]*position: absolute !important[^}]*transition: transform [^;]*!important/);
+    });
     it('focus looks follow DOM focus too: after a tap, a click or the wheel Steam drops its focus classes', () => {
         const css = homeCss(CARD_SCALE_HANDHELD);
         // The selected card's ring and glow, with the row under DOM focus.
@@ -413,7 +422,7 @@ describe('family pill on Home', () => {
     it('sits just left of the store pill (inside it, so it follows it), drawn like it', () => {
         const css = homeCss();
         const rule = css.match(/\.gh-family\s*\{[^}]*\}/)?.[0] ?? '';
-        expect(rule).toMatch(/position: absolute !important; right: calc\(100% \+ 10px\) !important; top: 50% !important; transform: translateY\(-50%\) !important/);
+        expect(rule).toMatch(/position: absolute !important; right: calc\(100% \+ 10px\) !important; top: 50% !important; transform: translateY\(-50%\);/);
         expect(rule).toContain(sourcePillLook((n) => `${n}px`).split(';')[0]);
         expect(css).toMatch(/\.gh-family-icon\s*\{/);
     });
