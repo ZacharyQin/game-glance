@@ -120,6 +120,9 @@ describe('rowDrag', () => {
         const peak = Math.max(...Array.from({ length: 60 }, (_, i) => edgeBounce(0, 1.5, i * 10, limit).offset));
         expect(peak).toBeGreaterThan(20);
         expect(peak).toBeLessThan(limit);
+        // It is quick: past its peak and handed back within 250 ms, so the card widens right after the bounce.
+        expect(edgeBounce(0, 1.5, 250, limit).done).toBe(true);
+        expect(edgeBounce(0, 1.5, 150, limit).done).toBe(false);
         // It has come back by the end, and is done.
         const end = edgeBounce(0, 1.5, BOUNCE_MS * 8, limit);
         expect(end.done).toBe(true);
