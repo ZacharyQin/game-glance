@@ -53,8 +53,10 @@ An optional new Home screen, off by default (Quick Access → Game Glance → Sp
   accent colour follows each game's art. The chips are filled in ahead of time for every game in the row, so they are
   there the moment you land on a game.
 - **The games row.** Your recent games (up to 20, as many as Steam's own Home), or one of your collections (see Games
-  row below). Games new to your library join the recent games, marked NEW. The selected game opens into a wide card;
-  the row ends in a Library card.
+  row below). Games new to your library join the recent games, marked NEW, and demos show as on Steam's Home. As on
+  Steam's Home, the last played game is the wide card and the selection moves to the middle of the screen, the games
+  before it faded on the left (or, with Games row style Spotlight, the selected game opens into a wide card at the left).
+  Games not installed on this device are grey until selected. The row ends in a Library card.
 - **Controls.** Left and Right pick a game, A opens its page, up reaches Play and the buttons. **L1 and R1** pick the
   previous or next game from anywhere above the tabs and put focus on Play (hold to keep going), so a game starts in two presses. Held,
   the d-pad and stick go at the same steady pace as L1 and R1. While you press quickly through the games only the
@@ -105,6 +107,7 @@ Quick Access (…) → Game Glance:
 | Status bar | On | The clock, battery, connection and online status at the top right. |
 | Game logo | Off | The game's logo in place of its name, on Home and the game page. A game without a logo keeps its name. Each logo is cropped to its artwork and sized so that wide and compact logos look about equally big. |
 | Games row | Recent Games | What Home's row shows: your recent games, or one of your Steam collections (Favorites, Locally Installed Games and your own). With a collection, **Sort By** offers Last Played, Alphabetical or Date Added to Library, and the line under the title starts with the collection's name. |
+| Games row style | Steam | How the row moves. Steam: the last played game is the wide card and the selection moves to the middle of the screen, as on Steam's Home. Spotlight: the selected game widens and the row slides it to the left edge (Game Glance's row before 3.3.0). |
 | Show wishlist deals | Off | Wishlist games on sale in the Recommended tab (see Privacy). |
 | Pre-load new games automatically | On | Fetches times and descriptions for new installs, every 30 minutes. |
 | Game Glance screensaver | On | Steam's screensaver (Game Slideshow) with your Games row and its art (see Screensaver). Off returns Steam's own. |

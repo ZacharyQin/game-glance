@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { capsuleBlur } from '../../src/home/RecentsRow';
+import { capsuleBlur, greyedOut } from '../../src/home/RecentsRow';
 
 describe('capsuleBlur', () => {
     it('only the selected card and its neighbours draw the blurred base (a narrow card\'s portrait covers it)', () => {
@@ -8,5 +8,13 @@ describe('capsuleBlur', () => {
     });
     it('on the Library card (selected = count) only the last game keeps it', () => {
         expect([0, 1, 2].map((i) => capsuleBlur(i, 3))).toEqual([false, false, true]);
+    });
+});
+
+describe('greyedOut', () => {
+    it('greys a game not installed here, never an installed one or a non-Steam shortcut', () => {
+        expect(greyedOut({ installed: false })).toBe(true);
+        expect(greyedOut({ installed: true })).toBe(false);
+        expect(greyedOut({ installed: false, shortcut: true })).toBe(false);
     });
 });

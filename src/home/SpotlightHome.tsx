@@ -131,7 +131,7 @@ export function SpotlightHome() {
     // the first game and then jumps. `restoring` also keeps the Play pill from claiming focus while it runs.
     const [restore] = useState(takeRestore);
     // Home is clean: the What's new, Friends and Recommended tabs are always there (Down reaches them) but stay out of sight until focus is in them.
-    const { homeStatusBar, gameLogo } = useSettings();
+    const { homeStatusBar, gameLogo, homeRowStyle } = useSettings();
     const [resolved, setResolved] = useState(restore === null);
     const [restoring, setRestoring] = useState(restore !== null);
     // Back from a page (B): Home is just there (motion.RETURN_TIMINGS): Steam's page fades are off for a moment and its UI fades in.
@@ -242,7 +242,8 @@ export function SpotlightHome() {
         }
     };
     // The expanded (selected) card: the open transition's source and the menu's anchor (narrow during a fast run); the row itself if not found.
-    const selectedCard = () => (recentsRef.current?.querySelector<HTMLElement>('.gh-cap-wide') ?? recentsRef.current?.querySelector<HTMLElement>('.gh-cap-sel') ?? recentsRef.current);
+    // The selected card first: in Steam's row style the wide card is always the first game, whichever is selected.
+    const selectedCard = () => (recentsRef.current?.querySelector<HTMLElement>('.gh-cap-sel') ?? recentsRef.current?.querySelector<HTMLElement>('.gh-cap-wide') ?? recentsRef.current);
     // After the next frames in Big Picture's window (a run just ended: the wide card and the hero first have to be up).
     const afterFrames = (run: () => void) => {
         const view = rootRef.current?.ownerDocument?.defaultView;
@@ -348,6 +349,9 @@ export function SpotlightHome() {
     // How much further the raised view rises so its top margin equals its bottom margin (raised.solveRaiseDelta).
     const raiseDelta = solveRaiseDelta(logicalHeight, legend, scale);
     const geometry = useMemo(() => recentsGeometry(scale), [scale]);
+    // Steam's row style centres the selection on the screen: the row starts at the row inset, so its visible width with
+    // the same inset on the right puts the middle at the screen's.
+    const rowViewport = canvas.logicalWidth - 2 * rowInset(side, tv);
     const css = useMemo(() => homeCss(scale), [scale]);
     const game = data.focused;
     // A game from the family library: "Family Sharing · Lender" beside the store pill (data/family).
@@ -431,7 +435,7 @@ export function SpotlightHome() {
                                         {family && <FamilyPill label={family} className="gh-family" iconClassName="gh-family-icon" />}
                                     </SourcePill>
                                 )}
-                                <RecentsRow games={data.games} selected={focusIndex} geometry={geometry} nav={recentsNav} expand={!cycle.narrow} snap={cycle.holding} />
+                                <RecentsRow games={data.games} selected={focusIndex} geometry={geometry} nav={recentsNav} rowStyle={homeRowStyle} viewport={rowViewport} expand={!cycle.narrow} snap={cycle.holding} />
                                 <FeedSheet
                                         data={data}
                                         raised={sheetUp}

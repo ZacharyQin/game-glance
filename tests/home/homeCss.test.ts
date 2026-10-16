@@ -122,16 +122,19 @@ describe('homeCss', () => {
         const css = homeCss(CARD_SCALE_HANDHELD);
         expect(css).toMatch(/\.gh-recents\s*\{[^}]*pointer-events:\s*none\s*!important/);
         // While the card row has focus, the selected (or Library) card gets a white ring outside it and an even accent
-        // glow (no y offset), and no bar along its bottom edge.
-        expect(css).toMatch(/\.gh-recents-focus \.gh-cap-wide, \.gh-recents-focus \.gh-cap-lib-on\s*\{[^}]*box-shadow:\s*0 0 0 2px rgba\(255,255,255,\.9\), 0 0 [\d.]+px [\d.]+px var\(--glance-accent\)/);
+        // glow (no y offset), and no bar along its bottom edge. Wide or narrow (a fast L1/R1 run), only the selected card
+        // (gh-cap-sel): in Steam's row style the wide card is the first game, selected or not, and gets no ring.
+        expect(css).toMatch(/\.gh-recents-focus \.gh-cap-sel, \.gh-recents-focus \.gh-cap-lib-on\s*\{[^}]*box-shadow:\s*0 0 0 2px rgba\(255,255,255,\.9\), 0 0 [\d.]+px [\d.]+px var\(--glance-accent\)/);
         expect(css).not.toMatch(/gh-recents-focus[^{]*\.gh-cap-bar/);
-        // During a fast L1/R1 run the selected card stays narrow (gh-cap-sel) and gets the same ring and glow.
-        expect(css).toMatch(/\.gh-recents-focus \.gh-cap-sel\s*\{[^}]*box-shadow:\s*0 0 0 2px rgba\(255,255,255,\.9\), 0 0 [\d.]+px [\d.]+px var\(--glance-accent\)/);
+        expect(css).not.toMatch(/\.gh-cap-wide[,\s]*\{[^}]*(box-shadow|--gh-edge)/);
+        expect(css).not.toMatch(/\.gh-recents-focus \.gh-cap-wide/);
         expect(css).toMatch(/\.gh-cap-sel\s*\{\s*--gh-edge: rgba\(255,255,255,\.35\)/);
         // When the run ends the card widens quickly (SETTLE_WIDEN_MS), its neighbours moving with it.
         expect(css).toMatch(new RegExp(`\\.gh-recents-snap \\.gh-cap\\s*\\{[^}]*transition: left ${SETTLE_WIDEN_MS}ms cubic-bezier\\([^)]*\\), width ${SETTLE_WIDEN_MS}ms`));
         // A game new to the library: a small light "New" pill at the card's top left.
-        expect(css).toMatch(/\.gh-cap-new\s*\{[^}]*position:\s*absolute[^}]*text-transform:\s*uppercase[^}]*background:\s*rgba\(255,255,255,\.92\)/);
+        expect(css).toMatch(/\.gh-cap-marks\s*\{[^}]*position:\s*absolute[^}]*flex-direction:\s*column/);
+        expect(css).toMatch(/\.gh-cap-wide \.gh-cap-marks\s*\{[^}]*flex-direction:\s*row/);
+        expect(css).toMatch(/\.gh-cap-new\s*\{[^}]*text-transform:\s*uppercase[^}]*background:\s*rgba\(255,255,255,\.92\)/);
         expect(css).not.toMatch(/\.gh-cap\s*\{[^}]*cursor:\s*pointer/);
     });
     it('homeCss gives ghosts no blur base and no recents-on-library variant', () => {
@@ -313,7 +316,7 @@ describe('homeCss', () => {
         expect(css).toMatch(/\.gh-card \{[^}]*--gh-edge: rgba\(255,255,255,\.1\)/);
         expect(css).toMatch(/\.gh-card\.gh-card-focus \{[^}]*--gh-edge: rgba\(255,255,255,\.3\)/);
         expect(css).toMatch(/\.gh-cap \{[^}]*--gh-edge: rgba\(255,255,255,\.08\)/);
-        expect(css).toMatch(/\.gh-cap-wide \{\s*--gh-edge: rgba\(255,255,255,\.35\)/);
+        expect(css).toMatch(/\.gh-cap-sel \{\s*--gh-edge: rgba\(255,255,255,\.35\)/);
         expect(css).toMatch(/\.gh-ghost \{[^}]*--gh-edge: rgba\(255,255,255,\.06\)/);
         expect(css).not.toMatch(/\.gh-(card|cap)[^{]*\{[^}]*border-color/);
         // The shade reaches 1px past the art.

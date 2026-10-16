@@ -4,6 +4,8 @@ import type { HltbGame } from './hltb';
 
 export const GAME_APP_TYPE = 1;
 export const SHORTCUT_APP_TYPE = 1073741824;
+/** Steam's demos (EAppType Demo; probed on the Ally 2026-10-16: Steam's recent games list holds them). */
+export const DEMO_APP_TYPE = 8;
 
 export interface LibraryApp {
     appid: number;

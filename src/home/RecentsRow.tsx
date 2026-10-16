@@ -6,7 +6,7 @@ import { displayInfo } from './artShrink';
 import { ArtBox, cardBox } from './cardArt';
 import { wideArt } from './homeView';
 import { knownCardArt, lastCardArt, resolveCardArt } from './wideCardArt';
-import { clampFocus, isLibraryFocus, MAX_GHOSTS, RecentsGeometry, recentsLayout } from './recentsLayout';
+import { clampFocus, isLibraryFocus, MAX_GHOSTS, RecentsGeometry, recentsLayout, RowStyle, steamRowLayout } from './recentsLayout';
 import type { HomeGame } from './useHomeData';
 import { tr } from '../i18n/steamText';
 
@@ -72,8 +72,16 @@ function CapsuleArt({ cover, art, blur }: { cover: string[]; art: string | null;
  * card, and each blurred layer is re-composited (20 recents, 35 px blur docked). The neighbours keep theirs so the
  * card that is growing or shrinking during a step never shows a bare edge.
  */
-export function capsuleBlur(i: number, selected: number): boolean {
-    return Math.abs(i - selected) <= 1;
+export function capsuleBlur(i: number, selected: number, firstWide = false): boolean {
+    return Math.abs(i - selected) <= 1 || (firstWide && i === 0);
+}
+
+/**
+ * Whether a card is drawn greyed out: a game not installed on this device (as Steam's library shows them). Non-Steam
+ * shortcuts never are (Steam's `installed` does not describe them). The selected card shows its colours (homeCss).
+ */
+export function greyedOut(game: Pick<HomeGame, 'installed' | 'shortcut'>): boolean {
+    return !game.installed && game.shortcut !== true;
 }
 
 /**
@@ -89,10 +97,15 @@ const GameCapsule = memo(function GameCapsule({ game, left, width, dim, wide, se
     );
     const art = useCardArt(appId, list, box);
     return (
-        <div className={`gh-cap${wide ? ' gh-cap-wide' : selected ? ' gh-cap-sel' : ''}`} style={{ left: `${left}px`, width: `${width}px`, opacity: dim ? 0.35 : 1 }}>
+        <div className={`gh-cap${wide ? ' gh-cap-wide' : ''}${selected ? ' gh-cap-sel' : ''}${greyedOut(game) ? ' gh-cap-off' : ''}`} style={{ left: `${left}px`, width: `${width}px`, opacity: dim ? 0.35 : 1 }}>
             <CapsuleArt cover={cover} art={art} blur={blur} />
-            {/* A game new to the library (the "New to library" setting), as Steam's Home marks it. */}
-            {game.isNew && <div className="gh-cap-new">{tr('newMark')}</div>}
+            {/* A game new to the library, as Steam's Home marks it, and a demo: side by side on the wide card, stacked on a capsule. */}
+            {(game.isNew || game.demo) && (
+                <div className="gh-cap-marks">
+                    {game.isNew && <div className="gh-cap-new">{tr('newMark')}</div>}
+                    {game.demo && <div className="gh-cap-new">{tr('demoMark')}</div>}
+                </div>
+            )}
             <div className="gh-cap-bar" />
         </div>
     );
@@ -120,10 +133,13 @@ export interface RecentsRowNav {
  * still do nothing (pointer events are off in homeCss). Rendered only with games. `geometry` is the card scale's sizes
  * (handheld or docked), the same SpotlightHome gives homeCss.
  */
-export function RecentsRow({ games, selected, geometry, nav, expand = true, snap = false }: { games: HomeGame[]; selected: number; geometry: RecentsGeometry; nav: RecentsRowNav; expand?: boolean; snap?: boolean }) {
+export function RecentsRow({ games, selected, geometry, nav, rowStyle = 'spotlight', viewport = 0, expand = true, snap = false }: { games: HomeGame[]; selected: number; geometry: RecentsGeometry; nav: RecentsRowNav; rowStyle?: RowStyle; viewport?: number; expand?: boolean; snap?: boolean }) {
     const count = games.length;
     const at = clampFocus(count, selected);
-    const layout = recentsLayout(count, at, geometry, expand);
+    // Steam's style: the first game is the wide card and the selection moves to the middle (`viewport`); a fast run
+    // changes nothing there (no card widens). Spotlight: the selected game widens at the left edge.
+    const steam = rowStyle === 'steam';
+    const layout = steam ? steamRowLayout(count, at, geometry, viewport) : recentsLayout(count, at, geometry, expand);
     // The wide card in device px: its art is loaded for that size (home/artShrink).
     const perCanvas = displayInfo().perCanvas;
     const box = useMemo(() => cardBox(geometry, perCanvas), [geometry, perCanvas]);
@@ -154,10 +170,10 @@ export function RecentsRow({ games, selected, geometry, nav, expand = true, snap
                         left={layout.items[i].left}
                         width={layout.items[i].width}
                         dim={layout.items[i].dim}
-                        wide={expand && !onLibrary && i === at}
+                        wide={steam ? i === 0 : expand && !onLibrary && i === at}
                         selected={!onLibrary && i === at}
                         box={box}
-                        blur={capsuleBlur(i, at)}
+                        blur={capsuleBlur(i, at, steam)}
                     />
                 ))}
                 <div className={`gh-cap gh-cap-lib${onLibrary ? ' gh-cap-lib-on' : ''}`} style={{ left: `${library.left}px`, width: `${library.width}px` }}>
@@ -175,7 +191,7 @@ export function RecentsRow({ games, selected, geometry, nav, expand = true, snap
                 {layout.ghosts.map((ghost, j) => (
                     <div
                         key={`ghost-${games[j].appId}`}
-                        className="gh-cap gh-ghost"
+                        className={`gh-cap gh-ghost${greyedOut(games[j]) ? ' gh-cap-off' : ''}`}
                         aria-hidden="true"
                         style={{ left: `${ghost.left}px`, width: `${geometry.capsuleW}px`, opacity: ghost.opacity }}
                     >
