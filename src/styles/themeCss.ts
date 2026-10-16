@@ -569,6 +569,12 @@ function restyleRules({ header, details, root, play, shared }: ThemeClasses, lay
         // no touches itself, only the tappable cards do, so nothing of Steam's below is covered.
         `.gg-hero { z-index: 2; pointer-events: none; }`,
         `.gg-hero .gg-card-tap { pointer-events: auto; }`,
+        // The glass blurs the art behind it. Steam lays the page out as a preserve-3d scene with the hero art in it, and a
+        // backdrop-filter inside a flat container sees only that container: the cards (in the hero) and the round buttons
+        // (three flat levels under the play section) showed the art sharp through their tint, only the cloud (a direct child
+        // of the scene) blurred it (probed on the Ally). Every container down to them keeps the scene going.
+        `.gg-hero, .gg-cards { transform-style: preserve-3d; }`,
+        rule(playSection && menuButton && [`${playSection}:has(${menuButton})`, `${playSection} :has(${menuButton})`], ' transform-style: preserve-3d !important; '),
         // (9/5: cards.equalFromAspect as a media query ratio.)
         `@media (min-aspect-ratio: 9/5) { .gg-card { max-width: ${cardContentMax(cardMaxWidths(PAGE_LAYOUT.cards.equalFromAspect)[0])}; } }`,
         `.gg-label { font-size: ${d(PAGE_LAYOUT.stats.label)}; letter-spacing: 0.18em; color: rgba(255, 255, 255, 0.62); }`,

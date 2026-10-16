@@ -512,6 +512,14 @@ describe('buildThemeCss restyle (Spotlight Home on)', () => {
         expect(ring).toContain(`transform: scale(${pf.x}, ${pf.y}) !important`);
         expect(rulesFor(restyled, '.rt_PlayBtn > div:has(> [role="button"])')).toContain('transition: transform 250ms, box-shadow 250ms !important');
     });
+    it('the glass blurs the art: the round buttons and the cards join Steam\'s 3D scene, the hero art\'s (a flat container cut their blur off)', () => {
+        // Steam lays the page out in a preserve-3d scene with the hero art in it; a backdrop-filter inside a flat container
+        // sees only that container (probed on the Ally: controller and settings showed the art sharp, the cloud, a direct
+        // child of the scene, blurred it). So every container from the play section down to the round buttons, and the
+        // hero and its cards, keep the scene going.
+        expect(rulesFor(restyled, '.rt_Play:has(.ps_Menu), .rt_Play :has(.ps_Menu)')).toContain('transform-style: preserve-3d !important');
+        expect(rulesFor(restyled, '.gg-hero, .gg-cards')).toContain('transform-style: preserve-3d');
+    });
     it('the page counts as arrived with Play under DOM focus too (opened by a tap or a click: no gpfocus, the hand-over waited out its timeout)', () => {
         const focus = arrivalSelectors(steam).focus ?? '';
         expect(focus.split(', ')).toHaveLength(2);
@@ -696,7 +704,7 @@ describe('buildThemeCss restyle (Spotlight Home on)', () => {
         for (const [, selector, body] of steamRules) {
             const props = body.split(';').map((d) => d.split(':')[0].trim()).filter(Boolean);
             for (const prop of props) {
-                expect([selector, prop]).toEqual([selector, expect.stringMatching(/^(--gg-accent|--gg-play-top|--gg-row-h|--gg-ok|--gg-warn|--gg-bad|--gg-off|transition|color|background|border|filter|box-shadow|visibility|padding-left|padding-right|padding-top|padding-bottom|font-size|font-weight|width|height|margin-right|top|min-width|flex|padding|backdrop-filter|display|object-position|transform)$/)]);
+                expect([selector, prop]).toEqual([selector, expect.stringMatching(/^(--gg-accent|--gg-play-top|--gg-row-h|--gg-ok|--gg-warn|--gg-bad|--gg-off|transition|color|background|border|filter|box-shadow|visibility|padding-left|padding-right|padding-top|padding-bottom|font-size|font-weight|width|height|margin-right|top|min-width|flex|padding|backdrop-filter|display|object-position|transform|transform-style)$/)]);
             }
         }
         // (100vh only in the Play row's anchor variable, which the 1.1.1 layout rules read: the default and the TV's, and in
