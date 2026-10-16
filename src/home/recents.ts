@@ -1,4 +1,4 @@
-import { GAME_APP_TYPE, SHORTCUT_APP_TYPE } from '../data/installedGames';
+import { DEMO_APP_TYPE, GAME_APP_TYPE, SHORTCUT_APP_TYPE } from '../data/installedGames';
 import { tr } from '../i18n/steamText';
 
 export interface RawApp {
@@ -24,7 +24,8 @@ export interface RecentGame {
     addedAt: number;
 }
 
-const isGameOrShortcut = (a: RawApp) => a.app_type === GAME_APP_TYPE || a.app_type === SHORTCUT_APP_TYPE;
+/** What Home's games row shows: games, demos (as Steam's own Home does) and non-Steam shortcuts; never tools or soundtracks. */
+export const isRowApp = (a: RawApp) => a.app_type === GAME_APP_TYPE || a.app_type === DEMO_APP_TYPE || a.app_type === SHORTCUT_APP_TYPE;
 
 /** When `a` was added to the library: Steam's purchase time, else its recent activity time; 0 when neither is known. */
 export function addedTime(a: RawApp): number {
@@ -40,10 +41,10 @@ export function addedTime(a: RawApp): number {
  */
 export const RECENTS_LIMIT = 20;
 
-/** Recently played games and non-Steam shortcuts, newest first. */
+/** Recently played games, demos and non-Steam shortcuts, newest first. */
 export function pickRecents(apps: RawApp[], limit = RECENTS_LIMIT): RecentGame[] {
     return apps
-        .filter((a) => isGameOrShortcut(a) && (a.rt_last_time_played ?? 0) > 0)
+        .filter((a) => isRowApp(a) && (a.rt_last_time_played ?? 0) > 0)
         .sort((a, b) => (b.rt_last_time_played ?? 0) - (a.rt_last_time_played ?? 0))
         .slice(0, limit)
         .map((a) => ({
@@ -91,7 +92,7 @@ export function mergeRecentSources<T extends RawApp>(recentAll: T[], all: T[], i
 
 /**
  * Home's recents: the played games (mergeRecentSources, pickRecents) and, with `includeNew` (the "New to library"
- * setting), the never-played games and shortcuts Steam itself lists in its recent games (`recent`, never the rest of
+ * setting), the never-played games, demos and shortcuts Steam itself lists in its recent games (`recent`, never the rest of
  * the library) that have an added time. All newest first by their activity (last played, or added for a new game),
  * at most `limit`, each game once.
  */
@@ -107,7 +108,7 @@ export function pickHomeRecents<T extends RawApp>({ recent, all, isHidden, inclu
     const seen = new Set(played.map((g) => g.appId));
     const fresh: RecentGame[] = [];
     for (const a of recent) {
-        if (!a || seen.has(a.appid) || !isGameOrShortcut(a) || (a.rt_last_time_played ?? 0) > 0 || hiddenApp(a, isHidden, false)) continue;
+        if (!a || seen.has(a.appid) || !isRowApp(a) || (a.rt_last_time_played ?? 0) > 0 || hiddenApp(a, isHidden, false)) continue;
         const addedAt = addedTime(a);
         if (addedAt <= 0) continue;
         seen.add(a.appid);

@@ -356,12 +356,11 @@ export function homeCss(cardScale: number = CARD_SCALE_HANDHELD): string {
         rule('.gh-recents-track', `position: absolute; inset: 0; transition: transform ${SLIDE}`),
         rule('.gh-cap', `position: absolute; top: 0; height: ${geo.capsuleH}px; margin: 0; padding: 0; border-radius: ${k(8)}px; overflow: hidden; background: #111;
             border: none; --gh-edge: rgba(255,255,255,.08); box-shadow: ${capShadow}; outline: none;
-            transition: left ${SLIDE}, width ${SLIDE}, opacity ${CAP_STATE_MS}ms`),
+            transition: left ${SLIDE}, width ${SLIDE}, opacity ${CAP_STATE_MS}ms, filter ${CAP_STATE_MS}ms`),
         // The 1px edge is drawn OVER the art (::after, inset ring) instead of a border beside it: with a border the art
         // ended inside it at a fractional device pixel, leaving a bright 1-device-px row of un-shaded art at the bottom.
         rule('.gh-cap::after', `content: ''; position: absolute; inset: 0; margin: 0; padding: 0; border-radius: inherit; pointer-events: none;
             box-shadow: inset 0 0 0 1px var(--gh-edge); transition: box-shadow ${CAP_STATE_MS}ms`),
-        rule('.gh-cap-wide', '--gh-edge: rgba(255,255,255,.35)'),
         rule('.gh-cap.gh-cap-focus', `box-shadow: ${capGlow}; --gh-edge: rgba(255,255,255,.35)`),
         rule('.gh-cap-blur', `position: absolute; inset: -${k(30)}px; background-size: cover; background-position: center; filter: blur(${k(22)}px) brightness(.75)`),
         // Wide art is mounted only on the expanded capsule, after (over) the portrait, and fades in. The portrait is
@@ -372,20 +371,25 @@ export function homeCss(cardScale: number = CARD_SCALE_HANDHELD): string {
         rule('.gh-cap.gh-cap-focus .gh-cap-bar', 'opacity: 1'),
         // A bar nobody sees takes a new accent at once (each L1/R1 step changes it: ~30 invisible colour transitions a step).
         rule('.gh-cap:not(.gh-cap-focus) .gh-cap-bar', 'transition: opacity 250ms'),
-        // "New" badge on a game new to the library: a small light pill at the top left, over the art.
-        rule('.gh-cap-new', `position: absolute; left: ${k(8)}px; top: ${k(8)}px; margin: 0; padding: ${k(3)}px ${k(7)}px; border-radius: 999px;
+        // "New" (a game new to the library) and "Demo" marks: small light pills at the top left, over the art; side by side
+        // on the wide card, one under the other on a capsule.
+        rule('.gh-cap-marks', `position: absolute; left: ${k(8)}px; top: ${k(8)}px; margin: 0; padding: 0; display: flex; flex-direction: column; align-items: flex-start; gap: ${k(4)}px; pointer-events: none`),
+        rule('.gh-cap-wide .gh-cap-marks', 'flex-direction: row'),
+        rule('.gh-cap-new', `position: relative; margin: 0; padding: ${k(3)}px ${k(7)}px; border-radius: 999px;
             font-size: ${k(8.5)}px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; line-height: 1.2; white-space: nowrap;
             color: #0b0d10; background: rgba(255,255,255,.92); box-shadow: 0 ${k(2)}px ${k(8)}px rgba(0,0,0,.35); pointer-events: none`),
         // While the card row has focus the selected card (or the Library card) is the focused one: a 2px white ring just
         // outside it and an accent glow even on every side (no downward offset, no bar along its bottom edge: on the Ally
-        // those read as the card being cut at the bottom). Unfocused it keeps its resting look.
-        rule('.gh-recents-focus .gh-cap-wide, .gh-recents-focus .gh-cap-lib-on', `box-shadow: 0 0 0 2px rgba(255,255,255,.9), 0 0 ${k(28)}px ${k(2)}px var(--glance-accent); --gh-edge: rgba(255,255,255,.35)`),
-        // A fast L1/R1 run (home/fastCycle): the selected card stays narrow and is ringed the same way.
+        // those read as the card being cut at the bottom). Unfocused it keeps its resting look. Only the selected card: in
+        // Steam's row style the wide card is the first game, selected or not.
+        rule('.gh-recents-focus .gh-cap-sel, .gh-recents-focus .gh-cap-lib-on', `box-shadow: 0 0 0 2px rgba(255,255,255,.9), 0 0 ${k(28)}px ${k(2)}px var(--glance-accent); --gh-edge: rgba(255,255,255,.35)`),
+        // The selected card's brighter edge, wide or narrow (a fast L1/R1 run, home/fastCycle, keeps it narrow).
         rule('.gh-cap-sel', '--gh-edge: rgba(255,255,255,.35)'),
+        // A game not installed here (RecentsRow.greyedOut) is grey until selected, as Steam's library shows them.
+        rule('.gh-cap-off:not(.gh-cap-sel)', 'filter: grayscale(1) brightness(.7)'),
         // The way back (B from a page): the art is there at once; Home's title, chips, buttons and row fade in over it.
         rule('.gh-root.gh-back .gh-safe', `animation: gh-fade-in ${RETURN_TIMINGS.fade}ms ease both`),
-        rule('.gh-recents-snap .gh-cap', `transition: left ${SETTLE_WIDEN_MS}ms ${SLIDE_EASE}, width ${SETTLE_WIDEN_MS}ms ${SLIDE_EASE}, opacity ${CAP_STATE_MS}ms`),
-        rule('.gh-recents-focus .gh-cap-sel', `box-shadow: 0 0 0 2px rgba(255,255,255,.9), 0 0 ${k(28)}px ${k(2)}px var(--glance-accent); --gh-edge: rgba(255,255,255,.35)`),
+        rule('.gh-recents-snap .gh-cap', `transition: left ${SETTLE_WIDEN_MS}ms ${SLIDE_EASE}, width ${SETTLE_WIDEN_MS}ms ${SLIDE_EASE}, opacity ${CAP_STATE_MS}ms, filter ${CAP_STATE_MS}ms`),
         // "View more in your Library" card.
         rule('.gh-cap-lib', '--gh-edge: rgba(255,255,255,.14)'),
         rule('.gh-cap-lib.gh-cap-lib-on', '--gh-edge: rgba(255,255,255,.35)'),
@@ -398,6 +402,7 @@ export function homeCss(cardScale: number = CARD_SCALE_HANDHELD): string {
         // Loop preview: the first games again, decorative only (not focusable).
         // Opacity is inline per ghost (recentsLayout.ghostOpacity): .4 (.55 on the Library card) fading to .08.
         rule('.gh-ghost', 'cursor: default; pointer-events: none; --gh-edge: rgba(255,255,255,.06); box-shadow: none; filter: grayscale(.6) brightness(.75)'),
+        rule('.gh-ghost.gh-cap-off', 'filter: grayscale(1) brightness(.65)'),
         rule('.gh-ghost-badge', `position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: ${k(6)}px; background: rgba(5,7,10,.45)`),
         rule('.gh-ghost-icon', `width: ${k(36)}px; height: ${k(36)}px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: ${k(20)}px; font-weight: 700; line-height: 1; background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.35); color: #fff`),
         rule('.gh-ghost-label', `font-size: ${k(9.5)}px; font-weight: 800; letter-spacing: .18em; line-height: 1.2; text-align: center; color: #fff`),

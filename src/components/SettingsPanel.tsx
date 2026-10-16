@@ -9,6 +9,7 @@ import { installUpdate, UpdateState, useUpdate } from '../data/update';
 import { checkOverride } from '../logic/hltbId';
 import { PLUGIN_NAME } from '../constants';
 import { RECENT_ROW, ROW_SORTS, RowSort, rowSortLabel, sortByLabel, steamHomeCollections } from '../home/collections';
+import { RowStyle } from '../home/recentsLayout';
 import { tr } from '../i18n/steamText';
 import { previewScreensaver, screensaverAvailable } from '../screensaver/steamScreensaver';
 
@@ -64,7 +65,7 @@ function UpdatesSection() {
 }
 
 export function SettingsPanel() {
-    const { enabled, autoPreload, spotlightHome, wishlistDeals, cleanPage, homeStatusBar, statusAvatar, gameLogo, homeRow, homeRowSort, screensaver } = useSettings();
+    const { enabled, autoPreload, spotlightHome, wishlistDeals, cleanPage, homeStatusBar, statusAvatar, gameLogo, homeRow, homeRowSort, homeRowStyle, screensaver } = useSettings();
     // Read when the panel opens, so a collection made since shows up.
     const collections = useMemo(steamHomeCollections, []);
     const rowChosen = collections.some((c) => c.id === homeRow) ? homeRow : RECENT_ROW;
@@ -177,6 +178,16 @@ export function SettingsPanel() {
                         />
                     </PanelSectionRow>
                 )}
+                <PanelSectionRow>
+                    <DropdownItem
+                        label="Games row style"
+                        description="Steam: Wide last played and centre focus. Spotlight: Left focus, wide on select."
+                        menuLabel="Games row style"
+                        rgOptions={[{ data: 'steam', label: 'Steam' }, { data: 'spotlight', label: 'Spotlight' }]}
+                        selectedOption={homeRowStyle}
+                        onChange={(option) => settings.setHomeRowStyle(option.data as RowStyle)}
+                    />
+                </PanelSectionRow>
                 <PanelSectionRow>
                     <ToggleField
                         label="Show wishlist deals"

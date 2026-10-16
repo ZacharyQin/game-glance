@@ -4,7 +4,7 @@ import { LOG_PREFIX } from '../constants';
 import { attempt } from '../data/attempt';
 import { cache, overrides, TTL } from '../data/cache';
 import { hltbCacheKey, HltbResult, lookupHltb } from '../data/hltb';
-import { GAME_APP_TYPE, SHORTCUT_APP_TYPE } from '../data/installedGames';
+import { DEMO_APP_TYPE, GAME_APP_TYPE, SHORTCUT_APP_TYPE } from '../data/installedGames';
 import { useSettings } from '../data/settings';
 import { getSourceLabel } from '../data/source';
 import { mergePlaytime } from '../data/unifideckPlaytime';
@@ -44,6 +44,10 @@ import { HERO_PRELOAD_RADIUS } from './motion';
 
 export interface HomeGame extends RecentGame {
     installed: boolean;
+    /** A non-Steam shortcut (Steam's `installed` says nothing about those: they are never greyed out). */
+    shortcut?: boolean;
+    /** A demo (Steam's app type Demo): marked DEMO on its card. */
+    demo?: boolean;
     /** Steam's 64-bit game id (set for non-Steam shortcuts); RunGame needs it for them. */
     gameId: string | undefined;
 }
@@ -173,13 +177,13 @@ function readRecentGames(): HomeGame[] {
     }, []);
 }
 
-/** Steam's `installed` and `m_gameid` for each picked game, from the app objects it came from. */
+/** Steam's `installed` and `m_gameid` for each picked game (and whether it is a shortcut or a demo), from the app objects it came from. */
 function withLaunchInfo(picked: RecentGame[], apps: AnyApp[]): HomeGame[] {
     const byId = new Map(apps.map((a) => [a.appid, a]));
     return picked.map((g) => {
         const app = byId.get(g.appId);
         const gameId = app?.m_gameid;
-        return { ...g, installed: app?.installed === true, gameId: typeof gameId === 'string' ? gameId : undefined };
+        return { ...g, installed: app?.installed === true, shortcut: app?.app_type === SHORTCUT_APP_TYPE, demo: app?.app_type === DEMO_APP_TYPE, gameId: typeof gameId === 'string' ? gameId : undefined };
     });
 }
 

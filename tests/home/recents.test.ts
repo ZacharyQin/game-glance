@@ -18,6 +18,15 @@ describe('pickRecents', () => {
         expect(ids).not.toContain(3007);
     });
 
+    it('keeps demos (Steam\'s recent games list holds them, as Steam\'s Home shows them); drops tools', () => {
+        const apps = [
+            { appid: 1, display_name: 'Game', app_type: 1, rt_last_time_played: 300 },
+            { appid: 2, display_name: 'Demo', app_type: 8, rt_last_time_played: 200 },
+            { appid: 3, display_name: 'Proton', app_type: 4, rt_last_time_played: 400 },
+        ];
+        expect(pickRecents(apps).map((g) => g.appId)).toEqual([1, 2]);
+    });
+
     it('maps fields', () => {
         expect(pickRecents(fixture)[0]).toEqual({ appId: 3001, name: 'Game A', lastPlayed: 1791000000, playedMinutes: 50, isNew: false, addedAt: 0 });
     });
