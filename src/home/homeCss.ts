@@ -228,6 +228,8 @@ export function homeCss(cardScale: number = CARD_SCALE_HANDHELD): string {
             transition: none;
             position: absolute; inset: 0; overflow: hidden; overflow: clip; z-index: 0; background: var(--gh-ink); color: #fff;
             font-family: inherit; text-align: left; line-height: normal; letter-spacing: normal; text-transform: none`),
+        // A finger on Home is Home's own (home/useRowDrag, the sheet swipes): no browser panning or pull gestures.
+        rule('.gh-root', 'touch-action: none'),
         rule('.gh-root *', 'box-sizing: border-box'),
 
         // Hero art: full-bleed on the real screen (not the scaled canvas). Each new art fades in over the last.
@@ -414,7 +416,9 @@ export function homeCss(cardScale: number = CARD_SCALE_HANDHELD): string {
         rule('.gh-btn-library', 'width: 280px; flex: 0 0 280px; background: var(--glance-accent); border-color: var(--glance-accent); color: var(--gh-on-accent)'),
 
         // Feed sheet: tab strip (handoff: top 700 from the screen top plus the stack shift, ending 18 above the legend reserve at rest).
-        rule('.gh-tabs', `position: absolute; left: var(--gh-row, ${SIDE_INSET.handheld - ROW_OFFSET}px); right: var(--gh-row, ${SIDE_INSET.handheld - ROW_OFFSET}px); top: calc(${FEED_SHEET.tabsTop}px - var(--gh-top)); display: flex; justify-content: flex-start; gap: 30px; margin: 0; padding: 0`),
+        rule('.gh-tabs', `position: absolute; left: var(--gh-row, ${SIDE_INSET.handheld - ROW_OFFSET}px); right: var(--gh-row, ${SIDE_INSET.handheld - ROW_OFFSET}px); top: calc(${FEED_SHEET.tabsTop}px - var(--gh-top)); display: flex; justify-content: flex-start; gap: 30px; margin: 0; padding: 0; pointer-events: none`),
+        // Out of sight under the games row at rest: taps there are the row's; with the sheet up a tap picks a tab.
+        rule('.gh-page-up .gh-tabs', 'pointer-events: auto'),
         rule('.gh-tab', `position: relative; margin: 0; padding: 8px 2px 10px; font-size: 13px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase;
             line-height: 1.2; white-space: nowrap; color: rgba(255,255,255,.6); background: transparent; outline: none; cursor: pointer; transition: color 200ms`),
         rule('.gh-tab.gh-tab-on', 'color: #fff'),
@@ -440,6 +444,7 @@ export function homeCss(cardScale: number = CARD_SCALE_HANDHELD): string {
             font-size: 11px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; line-height: 1.2; color: rgba(255,255,255,.62)`),
         rule('.gh-page-up .gh-feed', 'opacity: 1; pointer-events: auto'),
         rule('.gh-feed-track', `position: absolute; inset: 0; margin: 0; padding: 0; transition: transform ${FEED_SCROLL}`),
+        rule('.gh-feed-track.gh-feed-drag', 'transition: none'),
         rule('.gh-feed-empty', 'position: absolute; left: 0; top: 0; height: 260px; display: flex; align-items: center; font-size: 16px; font-weight: 700; letter-spacing: .02em; color: rgba(255,255,255,.62)'),
         rule('.gh-card', `--gh-ring: rgba(255,255,255,.25);
             position: absolute; top: 0; height: var(--gh-card-h, 260px); margin: 0; padding: 0; border-radius: var(--gh-r-card); overflow: hidden; color: #fff;

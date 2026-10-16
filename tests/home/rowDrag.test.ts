@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CARD_SCALE_DOCKED, recentsGeometry } from '../../src/home/recentsLayout';
-import { axisLock, cardTap, dragSteps, dragTarget, flickRun, releaseVelocity, rubberBand, Sample } from '../../src/home/rowDrag';
+import { axisLock, cardTap, dragSteps, dragTarget, flickRun, releaseVelocity, rubberBand, Sample, sheetSwipe } from '../../src/home/rowDrag';
 
 describe('rowDrag', () => {
     it('axisLock waits for the slop, then picks the larger axis (a tie goes to the row)', () => {
@@ -53,6 +53,16 @@ describe('rowDrag', () => {
         expect(rubberBand(40, 40)).toBeCloseTo(20, 6);
         expect(rubberBand(1e9, 40)).toBeLessThan(40);
         expect(rubberBand(-40, 40)).toBeCloseTo(-20, 6);
+    });
+    it('sheetSwipe raises the sheet on a long enough swipe up, lowers it on one down, and ignores sideways or short ones', () => {
+        expect(sheetSwipe(4, -70, false)).toBe('raise');
+        expect(sheetSwipe(4, -50, false)).toBeNull();
+        expect(sheetSwipe(-3, 65, true)).toBe('lower');
+        // Already where the swipe would take it: nothing.
+        expect(sheetSwipe(0, -80, true)).toBeNull();
+        expect(sheetSwipe(0, 80, false)).toBeNull();
+        // A sideways drag (the row's) that also moved down a lot is not a sheet swipe.
+        expect(sheetSwipe(-200, 70, true)).toBeNull();
     });
     it('cardTap opens the selected card (or the selected Library card) and selects any other', () => {
         expect(cardTap(3, 3)).toBe('open');

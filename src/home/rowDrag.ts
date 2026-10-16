@@ -76,6 +76,13 @@ export function rubberBand(overscroll: number, limit: number): number {
     return Math.sign(overscroll) * limit * (1 - 1 / (1 + Math.abs(overscroll) / limit));
 }
 
+/** A finished swipe of (dx, dy) on Home: a vertical one of SWIPE_SHEET or more raises the sheet (up) or lowers it (down). */
+export function sheetSwipe(dx: number, dy: number, sheetUp: boolean): 'raise' | 'lower' | null {
+    if (axisLock(dx, dy) !== 'y' || Math.abs(dy) < SWIPE_SHEET) return null;
+    if (dy < 0) return sheetUp ? null : 'raise';
+    return sheetUp ? 'lower' : null;
+}
+
 /** A tap on card `index` with `focused` selected: the selected card opens, any other is selected. */
 export function cardTap(index: number, focused: number): 'select' | 'open' {
     return index === focused ? 'open' : 'select';

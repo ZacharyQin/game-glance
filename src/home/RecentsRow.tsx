@@ -131,8 +131,6 @@ export interface RecentsRowNav {
     scale(): number;
     /** A drag (with its flick) is running: a fast run, like a held stick (home/fastCycle). */
     onRun(running: boolean): void;
-    /** A vertical swipe on the row ended, `dy` logical px (negative: up). */
-    onVerticalSwipe?(dy: number): void;
 }
 
 /**
@@ -169,7 +167,7 @@ export function RecentsRow({ games, selected, geometry, nav, rowStyle = 'spotlig
     }, []);
     // A finger on the row: drags step the selection, the track following the finger from where it was when the drag
     // began (in Steam's style the layout only scrolls once the selection passes the middle).
-    const drag = useRowDrag({ index: at, count, step: geometry.step, scale: () => nav.scale(), onSelect: (i) => nav.onSelect(i), onRun: (r) => nav.onRun(r), onVerticalSwipe: (dy) => nav.onVerticalSwipe?.(dy) });
+    const drag = useRowDrag({ index: at, count, step: geometry.step, scale: () => nav.scale(), onSelect: (i) => nav.onSelect(i), onRun: (r) => nav.onRun(r) });
     const dragStart = useRef(layout.scrollX);
     if (!drag.dragging) dragStart.current = layout.scrollX;
     const trackX = drag.dragging ? dragStart.current + drag.dx : layout.scrollX;

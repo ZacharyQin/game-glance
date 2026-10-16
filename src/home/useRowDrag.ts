@@ -12,8 +12,6 @@ export interface RowDragOptions {
     onSelect(next: number): void;
     /** A drag (and its flick) is a run, like a held stick: the hero holds until it ends (home/fastCycle). */
     onRun(running: boolean): void;
-    /** A vertical swipe ended, `dy` logical px (negative: up). */
-    onVerticalSwipe?(dy: number): void;
 }
 
 interface Gesture {
@@ -30,8 +28,8 @@ type Handler = (event: ReactPointerEvent<HTMLElement>) => void;
 
 /**
  * A row under a finger (rowDrag): a sideways drag steps the selection one card per `step` px, the row following the
- * finger (`dx`, rubber-banded past the ends); on release a flick runs on a few cards, slowing down; a vertical swipe is
- * reported once it ends. One finger only (the primary pointer); Steam taking the touch (pointercancel) ends the run.
+ * finger (`dx`, rubber-banded past the ends); on release a flick runs on a few cards, slowing down. A vertical swipe is
+ * left to bubble up (SpotlightHome raises or lowers the feed sheet). One finger only (the primary pointer); Steam taking the touch (pointercancel) ends the run.
  */
 export function useRowDrag(options: RowDragOptions): { dx: number; dragging: boolean; handlers: { onPointerDown: Handler; onPointerMove: Handler; onPointerUp: Handler; onPointerCancel: Handler } } {
     const opts = useRef(options);
@@ -86,10 +84,6 @@ export function useRowDrag(options: RowDragOptions): { dx: number; dragging: boo
         const g = gesture.current;
         if (!g || event.pointerId !== g.id) return;
         gesture.current = null;
-        if (g.axis === 'y') {
-            opts.current.onVerticalSwipe?.(logical(event.clientY - g.y0));
-            return;
-        }
         if (g.axis !== 'x') return;
         setState({ dragging: false, dx: 0 });
         const velocity = releaseVelocity(g.samples);

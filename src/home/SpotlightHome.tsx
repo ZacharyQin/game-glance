@@ -1,5 +1,5 @@
 import type { GamepadEvent } from '@decky/ui';
-import { CSSProperties, RefObject, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { CSSProperties, PointerEvent as ReactPointerEvent, RefObject, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { ActionRow, LibraryActionRow, openGameActions } from './ActionRow';
 import { FeedSheet } from './FeedSheet';
 import { feedSpace, feedViewportInset } from './feedLayout';
@@ -9,6 +9,7 @@ import { focusElement, focusElementSettled, openGame, openLibrary } from './home
 import { LOG_PREFIX } from '../constants';
 import { useSettings } from '../data/settings';
 import { recentsButton, selectionForButton, type Zone } from './focusZones';
+import { sheetSwipe } from './rowDrag';
 import { HeroBackground } from './HeroBackground';
 import { neighbourIds } from './heroLayers';
 import { HERO_PRELOAD_DELAY_MS, HERO_PRELOAD_RADIUS, RETURN_TIMINGS } from './motion';
@@ -302,12 +303,33 @@ export function SpotlightHome() {
             focusGames();
             select(index);
         },
-        // Screen px per logical px, as Home's canvas is drawn right now (also during Steam's mount animation).
-        scale: () => {
-            const drawn = rootRef.current?.querySelector('.gh-canvas')?.getBoundingClientRect().width ?? 0;
-            return drawn > 0 && canvas.logicalWidth > 0 ? drawn / canvas.logicalWidth : canvas.scale;
-        },
+        scale: () => canvasScale(),
         onRun: setDragRunning,
+    };
+    // Screen px per logical px, as Home's canvas is drawn right now (also during Steam's mount animation): a finger's
+    // distances in logical px.
+    const canvasScale = () => {
+        const drawn = rootRef.current?.querySelector('.gh-canvas')?.getBoundingClientRect().width ?? 0;
+        return drawn > 0 && canvas.logicalWidth > 0 ? drawn / canvas.logicalWidth : canvas.scale;
+    };
+    // A vertical swipe anywhere on Home (rowDrag.sheetSwipe): up raises the feed sheet (focus to its current tab, as
+    // Down does), down lowers it (focus back on the game cards, as B does). Sideways drags are the rows' own.
+    const swipeStart = useRef<{ id: number; x: number; y: number } | null>(null);
+    const onRootPointerDown = (event: ReactPointerEvent) => {
+        if (event.isPrimary) swipeStart.current = { id: event.pointerId, x: event.clientX, y: event.clientY };
+    };
+    const onRootPointerUp = (event: ReactPointerEvent) => {
+        const start = swipeStart.current;
+        if (!start || start.id !== event.pointerId) return;
+        swipeStart.current = null;
+        const scale = canvasScale() || 1;
+        const swipe = sheetSwipe((event.clientX - start.x) / scale, (event.clientY - start.y) / scale, sheetUp);
+        const root = rootRef.current;
+        if (swipe === 'raise') focusElement(root?.querySelector<HTMLElement>('.gh-tab-on') ?? root?.querySelector<HTMLElement>('.gh-tab'), 'the feed tab');
+        else if (swipe === 'lower') focusGames();
+    };
+    const onRootPointerCancel = () => {
+        swipeStart.current = null;
     };
     // Which action button holds focus (its index among the row's buttons), remembered for the way back.
     const onActionsFocus = (event: { target: EventTarget }) => {
@@ -399,7 +421,7 @@ export function SpotlightHome() {
     }, [contentUp, restoring]);
 
     return (
-        <div ref={rootRef} className={`gh-root${back ? ' gh-back' : ''}`} style={{ '--glance-accent': accent, '--glance-accent-text': legibleAccent(accent), '--gh-dim': sheetUp ? DIM_SHEET : DIM_REST, '--gh-side': `${side}px`, '--gh-row': `${rowInset(side, tv)}px`, '--gh-pill': `${pillInset(tv)}px`, '--gh-bottom': `${legend}px`, '--gh-shift': `${stackShift(logicalHeight, legend, false)}px`, '--gh-raise': `${FEED_SHEET.raise + raiseDelta}px` } as CSSProperties}>
+        <div ref={rootRef} className={`gh-root${back ? ' gh-back' : ''}`} onPointerDown={onRootPointerDown} onPointerUp={onRootPointerUp} onPointerCancel={onRootPointerCancel} style={{ '--glance-accent': accent, '--glance-accent-text': legibleAccent(accent), '--gh-dim': sheetUp ? DIM_SHEET : DIM_REST, '--gh-side': `${side}px`, '--gh-row': `${rowInset(side, tv)}px`, '--gh-pill': `${pillInset(tv)}px`, '--gh-bottom': `${legend}px`, '--gh-shift': `${stackShift(logicalHeight, legend, false)}px`, '--gh-raise': `${FEED_SHEET.raise + raiseDelta}px` } as CSSProperties}>
             <style>{css}</style>
             {enterOff && <style>{enterOff}</style>}
             {/* No game until the restore is applied (Home back on B): the first game's art would flash before the selected one's. */}
@@ -456,6 +478,7 @@ export function SpotlightHome() {
                                         space={feedSpace(logicalHeight, legend, raiseDelta)}
                                         onZone={setZone}
                                         onBackToGames={focusGames}
+                                        scale={canvasScale}
                                         restore={restore}
                                         onRestored={() => setRestoring(false)}
                                     />

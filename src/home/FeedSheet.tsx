@@ -11,6 +11,7 @@ import { focusElement } from './homeNav';
 import { clampTab, HomeMemory, noteHome, RESTORE_WAIT_MS, restoreStep } from './homeMemory';
 import { useCardAccents } from './useHomeData';
 import { playNavSound, shoulderSound } from './navSound';
+import { useRowDrag } from './useRowDrag';
 import { tr } from '../i18n/steamText';
 
 const PREFERRED_CHILD = PREFERRED as NavEntryPositionPreferences;
@@ -62,7 +63,7 @@ function cancel(zone: 'tabs' | 'feed', step: () => void) {
  * L1/R1 anywhere in the tabs or feed switch the tab, as on Steam's own tabbed pages (focusZones.tabForButton);
  * on the game cards and the action row L1/R1 select the game instead, so the off-screen feed never changes from there.
  */
-export function FeedSheet({ data, raised, viewport, space, onZone, onBackToGames, restore = null, onRestored }: {
+export function FeedSheet({ data, raised, viewport, space, onZone, onBackToGames, scale = () => 1, restore = null, onRestored }: {
     data: FeedData;
     raised: boolean;
     viewport: number;
@@ -70,6 +71,8 @@ export function FeedSheet({ data, raised, viewport, space, onZone, onBackToGames
     space: number;
     onZone(zone: 'tabs' | 'feed'): void;
     onBackToGames(): void;
+    /** Screen px per logical px (Home's canvas as drawn), for a finger dragging a row. */
+    scale?(): number;
     /** Where Home was when the user left it (homeMemory), applied once: the tab, the card, and focus in the tabs or feed. */
     restore?: HomeMemory | null;
     /** The restore is done (or given up), so Home stops holding its first focus back. */
@@ -106,6 +109,19 @@ export function FeedSheet({ data, raised, viewport, space, onZone, onBackToGames
     const sel: [number, number] = [0, 1].map((r) => Math.min(Math.max(0, at[r]), Math.max(0, rows[r].length - 1))) as [number, number];
     const selRow: 0 | 1 = row === 1 && rows[1].length > 0 ? 1 : 0;
     const scrolls = [0, 1].map((r) => feedScroll(sel[r], rows[r].map((i) => i.width), FEED_GAP, viewport));
+    // A finger on a row (useRowDrag): a sideways drag steps through its cards by moving focus to them, as Left/Right
+    // do; the track follows the finger from where it was when the drag began. A tap keeps opening the card (FeedCard).
+    const rowDrag = (r: 0 | 1) => ({
+        index: sel[r],
+        count: Math.max(0, rows[r].length - 1),
+        step: (rows[r][sel[r]]?.width ?? 0) + FEED_GAP,
+        scale,
+        onSelect: (i: number) => focusElement(cardRefs.current[flat(r, i)], `feed card ${i}`),
+        onRun: () => {},
+    });
+    const drags = [useRowDrag(rowDrag(0)), useRowDrag(rowDrag(1))];
+    const dragStart = useRef<[number, number]>([0, 0]);
+    for (const r of [0, 1] as const) if (!drags[r].dragging) dragStart.current[r] = scrolls[r];
     const lefts = rows.map((list) => {
         const out: number[] = [];
         list.reduce((x, item) => {
@@ -246,12 +262,13 @@ export function FeedSheet({ data, raised, viewport, space, onZone, onBackToGames
                             )}
                             <div className="gh-feed-row" style={{ top: `${r === 0 ? 0 : geometry.row2Top}px`, height: `${r === 0 ? geometry.row1 : geometry.row2}px` }}>
                                 <Focusable
-                                    className="gh-feed-track"
+                                    className={`gh-feed-track${drags[r].dragging ? ' gh-feed-drag' : ''}`}
                                     flow-children="row"
                                     navEntryPreferPosition={entry}
                                     onCancel={backFromFeed}
                                     onButtonDown={shoulder('feed')}
-                                    style={{ transform: `translateX(${-scrolls[r]}px)` }}
+                                    {...drags[r].handlers}
+                                    style={{ transform: `translateX(${drags[r].dragging ? -dragStart.current[r] + drags[r].dx : -scrolls[r]}px)` }}
                                 >
                                     {rows[r].map((item, i) => (
                                         <FeedCard

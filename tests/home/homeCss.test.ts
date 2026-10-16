@@ -284,6 +284,16 @@ describe('homeCss', () => {
             expect(css).toMatch(/\.gh-page\.gh-page-up\s*\{[^}]*transform:\s*translateY\(calc\(-1 \* var\(--gh-raise, 440px\) - var\(--gh-shift\)\)\)/);
             expect(css).toMatch(/\.gh-tabs\s*\{[^}]*top:\s*calc\(700px - var\(--gh-top\)\)/);
         });
+        it('Home handles a finger itself: no browser panning, and a dragged feed row follows the finger', () => {
+            const css = homeCss();
+            expect(css).toMatch(/\.gh-root\s*\{[^}]*touch-action:\s*none\s*!important/);
+            expect(css).toMatch(/\.gh-feed-track\.gh-feed-drag\s*\{[^}]*transition:\s*none\s*!important/);
+        });
+        it('the tabs take taps only with the sheet up: at rest they are out of sight under the games row', () => {
+            const css = homeCss();
+            expect(css).toMatch(/\.gh-tabs\s*\{[^}]*pointer-events:\s*none\s*!important/);
+            expect(css).toMatch(/\.gh-page-up \.gh-tabs\s*\{[^}]*pointer-events:\s*auto\s*!important/);
+        });
         it('with the largest shift the title block still clears the top bar and the raised cards clear the legend', () => {
             for (const h of [800, 810, 810.75]) {
                 const shift = stackShift(h);
