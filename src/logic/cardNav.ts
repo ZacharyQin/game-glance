@@ -42,3 +42,13 @@ export function landingFor<T>(to: CardZone, memory: { row: T | null; card: T | n
     const kept = to === 'play' ? memory.row : to === 'cards' ? memory.card : null;
     return kept !== null && alive(kept) ? kept : first(to);
 }
+
+/**
+ * `target` as an element, by what it is (an element node that can take focus), never by `instanceof`: Game Glance runs in
+ * Steam's shared context, and the page's elements belong to the Big Picture window, whose HTMLElement is another one.
+ * (instanceof was always false there, so Up from the cards never knew the button Down had left from.) Pure.
+ */
+export function asElement(target: unknown): HTMLElement | null {
+    const el = target as { nodeType?: unknown; focus?: unknown } | null;
+    return el && typeof el === 'object' && el.nodeType === 1 && typeof el.focus === 'function' ? (target as HTMLElement) : null;
+}

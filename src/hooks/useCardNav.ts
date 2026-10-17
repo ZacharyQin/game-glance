@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { LOG_PREFIX } from '../constants';
 import { focusElement } from '../home/homeNav';
-import { CARD_NAV, cardNavTarget, cardZoneOf, CardZone, landingFor } from '../logic/cardNav';
+import { asElement, CARD_NAV, cardNavTarget, cardZoneOf, CardZone, landingFor } from '../logic/cardNav';
 import { takeSteamFocus } from '../home/steamFocus';
 import { playRow } from '../styles/theme';
 
@@ -52,7 +52,8 @@ export function useCardNav(doc: Document | null, active: boolean) {
                 e.preventDefault();
                 e.stopPropagation();
                 // Down leaving the Play row: Up comes back to that button.
-                if (from === 'play' && e.target instanceof HTMLElement) memory.row = e.target;
+                const source = asElement(e.target);
+                if (from === 'play' && source) memory.row = source;
                 focusElement(el, `the page's ${to}`);
                 // And Steam's focus tree takes it every time, so its rows remember where focus is (focusElement hands it
                 // over only when the highlight did not follow).

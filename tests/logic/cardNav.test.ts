@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CARD_NAV, cardNavTarget, cardZoneOf, DPAD_DOWN, DPAD_UP, landingFor } from '../../src/logic/cardNav';
+import { asElement, CARD_NAV, cardNavTarget, cardZoneOf, DPAD_DOWN, DPAD_UP, landingFor } from '../../src/logic/cardNav';
 
 describe('cardNavTarget', () => {
     it("Down from the Play row reaches the cards, below it on screen (Steam's tree has them before it: Up did)", () => {
@@ -49,5 +49,15 @@ describe('landingFor', () => {
         expect(landingFor('cards', { row: null, card: 'hltb' }, first, live)).toBe('hltb');
         expect(landingFor('cards', { row: null, card: 'gone-hltb' }, first, live)).toBe('first-cards');
         expect(landingFor('tabs', { row: 'controller', card: 'hltb' }, first, live)).toBe('first-tabs');
+    });
+});
+
+describe('asElement', () => {
+    it("takes an element from another window too (Steam's page is not Game Glance's window: instanceof failed there)", () => {
+        const foreign = { nodeType: 1, focus: () => undefined, closest: () => null };
+        expect(asElement(foreign)).toBe(foreign);
+        expect(asElement(null)).toBeNull();
+        expect(asElement({ nodeType: 3 })).toBeNull();
+        expect(asElement('x')).toBeNull();
     });
 });
