@@ -488,6 +488,7 @@ const LAUNCH_FADE_MS = 200;
 export const SETTLE = {
     hltbTitle: 'x-hltb-title',
     caption: 'x-caption',
+    muted: 'x-muted',
     desc: 'x-desc',
     label: (key: string) => `x-label-${key}`,
     value: (key: string) => `x-value-${key}`,
@@ -512,6 +513,7 @@ export function twinTargets({ root }: ThemeClasses, look: 'spotlight' | 'clean' 
     }
     out[SETTLE.hltbTitle] = '.gg-hltb > .gg-label';
     out[SETTLE.caption] = '.gg-hltb .gg-caption';
+    out[SETTLE.muted] = '.gg-hltb .gg-muted';
     out[SETTLE.desc] = '.gg-hero .gg-desc';
     for (const k of ['hltb', 'mainExtras', 'completionist']) {
         out[SETTLE.label(k)] = `.gg-hltb [data-stat="${k}"] .gg-label`;
@@ -793,9 +795,9 @@ export function buildArrivingCss(
     // Spotlight: the description and the HowLongToBeat card's rest, unless Home drew them as it opened (`extra.desc`,
     // `extra.hltb`: home/OpenExtras), when the page's are there at once under Home's copy.
     const desc = extra.desc ? [] : ['.gg-desc'];
-    const hltb = extra.hltb ? [] : ['.gg-hltb > .gg-label', '.gg-hltb [data-stat="hltb"] > .gg-label', '.gg-hltb [data-stat="mainExtras"]', '.gg-hltb [data-stat="completionist"]', '.gg-caption', '.gg-hltb .gg-bar'];
+    const hltb = extra.hltb ? [] : ['.gg-hltb > .gg-label', '.gg-hltb [data-stat="hltb"] > .gg-label', '.gg-hltb [data-stat="mainExtras"]', '.gg-hltb [data-stat="completionist"]', '.gg-caption', '.gg-hltb .gg-bar', '.gg-muted'];
     const parts = look === 'spotlight'
-        ? [...desc, ...hltb, '.gg-muted', ...shared]
+        ? [...desc, ...hltb, ...shared]
         : [...shared, cleanBarsArriving(extra.bars)];
     const all = present(['.gg-titleblock', '.gg-hero', cls(root, 'PlaySection')]);
     const list = mode === 'all' ? all : parts;

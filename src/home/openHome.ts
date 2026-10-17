@@ -305,7 +305,8 @@ export function pageStatsFromChips(chips: ChipText[], look: PageLook, size?: { l
     const ach = byKey.get('achievements');
     if (ach) add('achievements', ach.label, ach.value, ach.bar);
     const hltb = byKey.get('hltb');
-    if (hltb) add('hltb', look === 'spotlight' ? 'Main' : hltb.label, hltb.value, hltb.bar);
+    // Spotlight's card has no Main column without a time (no match: Home's chip says '—'), so the chip has no target there.
+    if (hltb && (look !== 'spotlight' || /\d/.test(hltb.value))) add('hltb', look === 'spotlight' ? 'Main' : hltb.label, hltb.value, hltb.bar);
     return out;
 }
 
@@ -337,7 +338,8 @@ export function readChipTexts(root: Element): ChipText[] {
 export function extrasParts(description: string | null | undefined, hltb: HltbResult | undefined, source?: string | null, playedMissing = false, size = false): string {
     const parts: string[] = [];
     if (description && description.trim()) parts.push('desc');
-    if (hltb?.status === 'found' && hltb.times.main !== null) parts.push('hltb');
+    // The card's inside: its times, or (no match) its "No Matches Found" lines, which otherwise arrived after the hand-over.
+    if ((hltb?.status === 'found' && hltb.times.main !== null) || hltb?.status === 'notFound') parts.push('hltb');
     if (source) parts.push('pills');
     if (playedMissing) parts.push('played');
     if (size) parts.push('size');

@@ -1,5 +1,5 @@
 import { HltbResult } from '../data/hltb';
-import { HLTB_COLUMNS, HLTB_TITLE, hltbFoundView } from '../logic/hltbCardView';
+import { HLTB_COLUMNS, HLTB_TITLE, hltbFoundView, hltbNotFoundView } from '../logic/hltbCardView';
 import { tr } from '../i18n/steamText';
 import { CardShell } from './CardShell';
 
@@ -32,17 +32,12 @@ export function HltbCard({ result, playedMinutes, locale, restyle = false, onPre
         );
     }
     if (result.status === 'notFound') {
+        const none = hltbNotFoundView(result.overrideId);
         return (
             <CardShell className="gg-card gg-hltb" onPress={onPress}>
                 {header}
-                <div className="gg-muted">
-                    {result.overrideId !== undefined ? `#${result.overrideId} · ${tr('noMatches')}` : tr('noMatches')}
-                </div>
-                <div className="gg-caption">
-                    {result.overrideId !== undefined
-                        ? 'Check or remove the override in Quick Access → Game Glance'
-                        : 'Set the right game in Quick Access → Game Glance'}
-                </div>
+                <div className="gg-muted">{none.muted}</div>
+                <div className="gg-caption">{none.caption}</div>
             </CardShell>
         );
     }

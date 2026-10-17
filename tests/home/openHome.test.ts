@@ -166,7 +166,9 @@ describe('extrasParts', () => {
         expect(extrasParts('A ship in the dark.', found(9))).toBe('desc hltb');
         expect(extrasParts(null, found(9))).toBe('hltb');
         expect(extrasParts('  ', undefined)).toBe('');
-        expect(extrasParts('Text', { status: 'notFound' })).toBe('desc');
+        // No match: Home draws the card's "No Matches Found" too, so it does not arrive after the hand-over (ES-DE on the Deck).
+        expect(extrasParts('Text', { status: 'notFound' })).toBe('desc hltb');
+        expect(extrasParts(null, { status: 'unavailable' })).toBe('');
     });
     it('no Main time: no card (the page\'s "—" there would have nothing of Home\'s under it)', () => {
         expect(extrasParts(null, found(null))).toBe('');
@@ -228,6 +230,11 @@ describe('pageStatsFromChips', () => {
         expect(pageStatsFromChips(chips, 'clean').map((s) => [s.key, s.label, s.value, s.bar])).toEqual([
             ['played', 'Play Time', '1.9 h', false], ['achievements', 'Achievements', '0 / 49', true], ['hltb', 'HLTB main', '9.1 h', true],
         ]);
+    });
+    it("Spotlight: HowLongToBeat without a time ('—', no match) is no column of the page's card, so it has no target (it landed alone in the card)", () => {
+        const none = [chips[0], { key: 'hltb', label: 'HLTB main', value: '—', bar: false }];
+        expect(pageStatsFromChips(none, 'spotlight').map((s) => s.key)).toEqual(['played']);
+        expect(pageStatsFromChips(none, 'clean').map((s) => s.key)).toEqual(['played', 'hltb']);
     });
     it("a new game's Added chip: the page still shows Play time (0 h), and nothing else of Home's is invented", () => {
         const stats = pageStatsFromChips([{ key: 'added', label: 'Added', value: 'Today', bar: false }, chips[2]], 'clean');

@@ -957,6 +957,9 @@ describe('the page arriving after the open transition', () => {
         const hltb = buildArrivingCss(full, 'spotlight', 'parts', false, { hltb: true });
         expect(hltb).toContain('.gg-desc');
         for (const sel of hltbParts) expect(hltb, sel).not.toContain(sel);
+        // The no-match line too (Home draws it as well): it arrives only when Home did not draw the card.
+        expect(hltb).not.toContain('.gg-muted');
+        expect(desc).toContain('.gg-muted');
         // The other new parts still arrive.
         for (const sel of ['.gg-family', '[data-stat="size"]']) expect(buildArrivingCss(full, 'spotlight', 'parts', false, { desc: true, hltb: true }), sel).toContain(sel);
     });
