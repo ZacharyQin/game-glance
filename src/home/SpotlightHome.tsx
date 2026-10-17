@@ -1,5 +1,5 @@
 import type { GamepadEvent } from '@decky/ui';
-import { CSSProperties, RefObject, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { CSSProperties, PointerEvent as ReactPointerEvent, RefObject, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { ActionRow, LibraryActionRow, openGameActions } from './ActionRow';
 import { FeedSheet } from './FeedSheet';
 import { feedSpace, feedViewportInset } from './feedLayout';
@@ -9,6 +9,10 @@ import { focusElement, focusElementSettled, openGame, openLibrary } from './home
 import { LOG_PREFIX } from '../constants';
 import { useSettings } from '../data/settings';
 import { recentsButton, selectionForButton, type Zone } from './focusZones';
+import { sheetSwipe } from './rowDrag';
+import { rowWheelTarget } from './mouse';
+import { useWheelStep } from './useMouse';
+import { installMouseMode } from './mouseMode';
 import { HeroBackground } from './HeroBackground';
 import { neighbourIds } from './heroLayers';
 import { HERO_PRELOAD_DELAY_MS, HERO_PRELOAD_RADIUS, RETURN_TIMINGS } from './motion';
@@ -38,6 +42,7 @@ import { useHomeData } from './useHomeData';
 import { collectionEyebrow } from './collections';
 import { preloadLogos } from './logoArt';
 import { tr } from '../i18n/steamText';
+import { FaTrash } from 'react-icons/fa';
 
 /** Hero dim: none at rest (the art is shaded as on the game page, homeCss .gh-scrim-page), .45 while the feed sheet is up. */
 const DIM_REST = 0;
@@ -151,7 +156,9 @@ export function SpotlightHome() {
     // A held L1/R1, d-pad or stick that is repeating (useBumperSelect): the run lasts until it is let go.
     const [bumperRepeating, setBumperRepeating] = useState(false);
     const [directionRepeating, setDirectionRepeating] = useState(false);
-    const cycle = useFastCycle(focusIndex, bumperRepeating || directionRepeating);
+    // A finger dragging the game cards (useRowDrag), and its flick: a run as well.
+    const [dragRunning, setDragRunning] = useState(false);
+    const cycle = useFastCycle(focusIndex, bumperRepeating || directionRepeating || dragRunning);
     const shownAt = heroIndex(data.games.length, cycle.shown);
     const shownGame = shownAt === null ? null : data.games[shownAt] ?? null;
     const heldAccent = useRef(data.accent);
@@ -187,6 +194,11 @@ export function SpotlightHome() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [resolved, gameIds, data.recentsSettled]);
     const rootRef = useRef<HTMLDivElement>(null);
+    // Hover looks follow a mouse (mouseMode), on Steam's document, which the game page shares.
+    useEffect(() => {
+        const doc = rootRef.current?.ownerDocument;
+        return doc ? installMouseMode(doc) : undefined;
+    }, []);
     const cloud = useCloud(onLibrary ? null : data.focused?.appId ?? null);
     // The action button that last had focus. A button can leave while focused (the cloud circle when the next game
     // has none, the circles on the Library card): focus then moves to the row's last button instead of being lost.
@@ -295,7 +307,59 @@ export function SpotlightHome() {
         onButtonDown: onRecentsButtonDown,
         onButtonUp: directions.onButtonUp,
         onActivate: onRecentsActivate,
+        // A tap on another card: controller focus moves to the row with it, so the stick goes on from there.
+        // (setRecentIndex, not select: select hands focus to the pill on the Library card, which is for L1/R1; a touch
+        // leaves focus on the row, where the finger was.)
+        onSelect: (index: number) => {
+            focusGames();
+            setRecentIndex(index);
+        },
+        canStep: () => !rootRef.current?.hasAttribute('data-gh-opening'),
+        scale: () => canvasScale(),
+        onRun: setDragRunning,
     };
+    // Screen px per logical px, as Home's canvas is drawn right now (also during Steam's mount animation): a finger's
+    // distances in logical px.
+    const canvasScale = () => {
+        const drawn = rootRef.current?.querySelector('.gh-canvas')?.getBoundingClientRect().width ?? 0;
+        return drawn > 0 && canvas.logicalWidth > 0 ? drawn / canvas.logicalWidth : canvas.scale;
+    };
+    // A vertical swipe anywhere on Home (rowDrag.sheetSwipe): up raises the feed sheet (focus to its current tab, as
+    // Down does), down lowers it (focus back on the game cards, as B does). Sideways drags are the rows' own.
+    const swipeStart = useRef<{ id: number; x: number; y: number } | null>(null);
+    /** Raises the feed sheet as Down does: focus to its current tab (the swipe up, the mouse's sheet toggle). */
+    const raiseSheet = () => {
+        const root = rootRef.current;
+        focusElement(root?.querySelector<HTMLElement>('.gh-tab-on') ?? root?.querySelector<HTMLElement>('.gh-tab'), 'the feed tab');
+    };
+    const onRootPointerDown = (event: ReactPointerEvent) => {
+        if (event.isPrimary) swipeStart.current = { id: event.pointerId, x: event.clientX, y: event.clientY };
+    };
+    const onRootPointerUp = (event: ReactPointerEvent) => {
+        const start = swipeStart.current;
+        if (!start || start.id !== event.pointerId) return;
+        swipeStart.current = null;
+        const scale = canvasScale() || 1;
+        const swipe = sheetSwipe((event.clientX - start.x) / scale, (event.clientY - start.y) / scale, sheetUp);
+        if (swipe === 'raise') raiseSheet();
+        else if (swipe === 'lower') focusGames();
+    };
+    const onRootPointerCancel = () => {
+        swipeStart.current = null;
+    };
+    // The mouse wheel anywhere on Home with the sheet down steps through the games, one notch a card (home/mouse), with
+    // controller focus on the row, as a tap; it stops at the ends. A quick spin is a fast run as quick taps of
+    // Left/Right are (home/fastCycle). With the sheet up the feed rows take the wheel (FeedSheet).
+    const wheelAt = useRef(focusIndex);
+    wheelAt.current = focusIndex;
+    const onRootWheel = useWheelStep((steps) => {
+        if (sheetUp || rootRef.current?.hasAttribute('data-gh-opening')) return;
+        const next = rowWheelTarget(wheelAt.current, steps, data.games.length);
+        if (next === wheelAt.current) return;
+        wheelAt.current = next;
+        focusGames();
+        setRecentIndex(next);
+    });
     // Which action button holds focus (its index among the row's buttons), remembered for the way back.
     const onActionsFocus = (event: { target: EventTarget }) => {
         setZone('actions');
@@ -386,7 +450,7 @@ export function SpotlightHome() {
     }, [contentUp, restoring]);
 
     return (
-        <div ref={rootRef} className={`gh-root${back ? ' gh-back' : ''}`} style={{ '--glance-accent': accent, '--glance-accent-text': legibleAccent(accent), '--gh-dim': sheetUp ? DIM_SHEET : DIM_REST, '--gh-side': `${side}px`, '--gh-row': `${rowInset(side, tv)}px`, '--gh-pill': `${pillInset(tv)}px`, '--gh-bottom': `${legend}px`, '--gh-shift': `${stackShift(logicalHeight, legend, false)}px`, '--gh-raise': `${FEED_SHEET.raise + raiseDelta}px` } as CSSProperties}>
+        <div ref={rootRef} className={`gh-root${back ? ' gh-back' : ''}`} onPointerDown={onRootPointerDown} onPointerUp={onRootPointerUp} onPointerCancel={onRootPointerCancel} onWheel={onRootWheel} style={{ '--glance-accent': accent, '--glance-accent-text': legibleAccent(accent), '--gh-dim': sheetUp ? DIM_SHEET : DIM_REST, '--gh-side': `${side}px`, '--gh-row': `${rowInset(side, tv)}px`, '--gh-pill': `${pillInset(tv)}px`, '--gh-bottom': `${legend}px`, '--gh-shift': `${stackShift(logicalHeight, legend, false)}px`, '--gh-raise': `${FEED_SHEET.raise + raiseDelta}px` } as CSSProperties}>
             <style>{css}</style>
             {enterOff && <style>{enterOff}</style>}
             {/* No game until the restore is applied (Home back on B): the first game's art would flash before the selected one's. */}
@@ -405,10 +469,20 @@ export function SpotlightHome() {
                 {/* Open transition: the glass panels the chips grow into, one per page card (hidden until opening). */}
                 <div className="gh-open-shell" data-i="0" />
                 <div className="gh-open-shell" data-i="1" />
+                {/* An installed Unifideck game's page has Uninstall as a fourth circle (its trash glyph): drawn there as it opens. */}
+                {!onLibrary && uniInstalled === true && <div className="gh-open-circle"><FaTrash /></div>}
                 {/* Between Steam's top bar (52) and button legend (46); Home draws neither. */}
                 <div className="gh-safe">
                     {/* The page container: moved down by the stack shift (homeCss.stackShift); raised while focus is in the tabs or feed. */}
                     <div className={`gh-page${sheetUp ? ' gh-page-up' : ''}`}>
+                        {/* The mouse's sheet toggle (homeCss: shown in mouse mode only; not Focusable, so the controller never lands on it). */}
+                        {contentUp && game ? (
+                            <div className="gh-sheet-toggle" role="button" aria-label={sheetUp ? 'Back to the games' : 'Show the feed'} onClick={() => (sheetUp ? focusGames() : raiseSheet())}>
+                                <svg viewBox="0 0 28 12" aria-hidden="true">
+                                    <path d="M2 2 L14 10 L26 2" />
+                                </svg>
+                            </div>
+                        ) : null}
                         {!contentUp ? null : game ? (
                             <>
                                 <section className="gh-title-block" ref={actionsRef} onFocus={onActionsFocus} onBlur={onActionsBlur}>
@@ -443,6 +517,7 @@ export function SpotlightHome() {
                                         space={feedSpace(logicalHeight, legend, raiseDelta)}
                                         onZone={setZone}
                                         onBackToGames={focusGames}
+                                        scale={canvasScale}
                                         restore={restore}
                                         onRestored={() => setRestoring(false)}
                                     />

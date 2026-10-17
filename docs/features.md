@@ -34,6 +34,9 @@ This is the full description of what Game Glance does. The [README](../README.md
 - **Works offline.** Times and descriptions are kept on the device. Quick Access can pre-load them for every installed
   game, and new installs are picked up automatically.
 
+In Spotlight Home's look, tap the info card for Steam's Game Info tab, or the HowLongToBeat card for the game's page on
+howlongtobeat.com. With the controller, Down from the Play row selects the cards and A opens them.
+
 With Spotlight Home on (or the Clean look), the page takes Spotlight Home's look: the game's title or logo with "Last
 played" under it, just above a larger Play row in the game's colour, and the status bar at the top. With both off, the
 page keeps its classic look.
@@ -60,6 +63,17 @@ An optional new Home screen, off by default (Quick Access → Game Glance → Sp
   presses. Held, the d-pad and stick go at the same steady pace as L1 and R1. While you press quickly through the games
   only the highlight moves; the art and colour catch up once you stop. The gear button, or View/Select, opens Steam's own
   menu for the game.
+- **Touch.** On a handheld's touchscreen, tap a game to select it and tap it again to open it; tap the Library card,
+  or a game in the "back to start" preview, the same way. Swipe the row to move through the games (it follows your
+  finger, a flick glides on, slowing down, and bounces off the ends; flick on from the Library card to go back to the
+  first game), swipe up anywhere on Home for the tabs and down to come back, swipe a
+  tab's row sideways, and tap a tab or a card. The controller carries on from wherever your finger left off.
+- **Mouse.** Click and drag as with a finger; the wheel moves through the games one card a notch (with the tabs up,
+  through the row under the cursor) and stops at the ends; anything clickable under the cursor gets a faint ring, on Home and
+  the game page (the games, buttons and tabs; a feed card and the game page's cards also lift a little). Only a mouse
+  that moves turns it on; a touch or the controller turns it off. While it is on, the buttons' controller focus look
+  stays hidden (a clicked button no longer looks pressed when you come back to the page); the selected game keeps its look. A chevron above the games row, shown only in mouse mode, raises the tabs; with
+  them up it sits in the middle of the tabs row, pointing up, and brings the games back.
 - **Opening a game.** Home turns into the game's page: the art stays put while the title, Play and the buttons move to
   their places on the page and the chips grow into its cards.
 - **Steam Cloud.** For games with cloud saves, Steam's and Unifideck's, a cloud button shows the sync state and opens

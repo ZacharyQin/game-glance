@@ -118,11 +118,17 @@ export function pickHomeRecents<T extends RawApp>({ recent, all, isHidden, inclu
     return [...played, ...fresh].sort((a, b) => at(b) - at(a)).slice(0, limit);
 }
 
-/** "Today", "Yesterday", "N days ago", then a date. Timestamps are Unix seconds. */
+/**
+ * "Today", "Yesterday", "N days ago", then a date with its month named, in the language's own order ("Aug 24", "24 Aug",
+ * "24. Aug."), and the year when it is not this one. Never all numbers: Steam has one English, so 10/12 read as October
+ * in the US order to people for whom it is 12 December (#57). Timestamps are Unix seconds.
+ */
 export function formatLastPlayed(lastPlayed: number, now: number, locale: string): string {
     const days = Math.floor((now - lastPlayed) / DAY_SECONDS);
     if (days < 1) return tr('today');
     if (days === 1) return tr('yesterday');
     if (days <= AGO_DAYS_MAX) return tr('daysAgo', [days]);
-    return new Date(lastPlayed * 1000).toLocaleDateString(locale);
+    const when = new Date(lastPlayed * 1000);
+    const thisYear = when.getFullYear() === new Date(now * 1000).getFullYear();
+    return new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric', ...(thisYear ? {} : { year: 'numeric' as const }) }).format(when);
 }
