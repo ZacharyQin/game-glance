@@ -1,6 +1,6 @@
 import { appDetailsClasses, appDetailsHeaderClasses, findClassModule, playSectionClasses } from '@decky/ui';
 import { LOG_PREFIX } from '../constants';
-import { arrivalSelectors, buildAccentCss, steamFooterSelector, buildArrivingCss, buildSteamEnterOffCss, buildCleanCss, buildDownloadCss, buildLaunchCss, buildRingCss, buildThemeCss, buildUnifideckCss, ClassMap, launchTargets, ringBoost, ThemeClasses, ThemeOptions } from './themeCss';
+import { arrivalSelectors, buildAccentCss, steamFooterSelector, buildArrivingCss, buildSteamEnterOffCss, buildCleanCss, buildDownloadCss, buildLaunchCss, buildRingCss, buildThemeCss, buildUnifideckCss, ClassMap, launchTargets, playRowSelector, ringBoost, ThemeClasses, ThemeOptions } from './themeCss';
 import { viewportSize } from '../home/openHome';
 import type { ReadySelectors } from './pageReady';
 
@@ -91,4 +91,9 @@ export function steamEnterOffCss(): string {
 /** Steam's footer (themeCss.steamFooterSelector), which the open transition's bridge copies. */
 export function steamFooter(): string | null {
     return steamFooterSelector(themeClasses());
+}
+
+/** Steam's Play row on the game page (themeCss.playRowSelector), for logic/cardNav; null without its classes. */
+export function playRow(): string | null {
+    return playRowSelector(themeClasses());
 }

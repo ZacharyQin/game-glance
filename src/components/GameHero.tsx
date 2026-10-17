@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
+import { ReactNode, useEffect, useRef, useState } from 'react';
+import { Focusable } from '@decky/ui';
 import { LOG_PREFIX } from '../constants';
 import { withKnownAchievements } from '../home/detailsMemo';
 import { cache } from '../data/cache';
@@ -32,6 +33,7 @@ import { knownDescription, peekHltb, rememberDescription, rememberHltb } from '.
 import { accentMemo, knownAccent } from '../home/accentMemo';
 import { accentCss, arrivingCss, cleanCss, downloadCss, launchCss, launchSelectors, ringCss, themeCss, unifideckCss } from '../styles/theme';
 import { installMouseMode } from '../home/mouseMode';
+import { useCardNav } from '../hooks/useCardNav';
 import { CleanInfo } from './CleanInfo';
 import { ErrorBoundary } from './ErrorBoundary';
 import { GameStatusBar } from './GameStatusBar';
@@ -129,6 +131,8 @@ function Hero({ overview, details, restyle, clean }: Props & { restyle: boolean;
     useEffect(() => setPageDoc(heroRef.current?.ownerDocument ?? null), [game.appId]);
     // Hover looks follow a mouse (home/mouseMode), here as on Home.
     useEffect(() => (pageDoc ? installMouseMode(pageDoc) : undefined), [pageDoc]);
+    // The controller between the Play row, the cards and Steam's tabs, in the screen's order (#24).
+    useCardNav(pageDoc, restyle && !clean);
     // B and the D-pad go to Steam's gamepad focus, which can land on a hidden tab of Steam's own page on a Unifideck page (logic/gamepadFocus).
     useUnifideckGamepadFocus(pageDoc, game.isShortcut);
     const nativeSizeLabel = useUnifideckSizeLabel(pageDoc, game.appId, uniInstalled, restyle && game.isShortcut);
@@ -190,12 +194,13 @@ function Hero({ overview, details, restyle, clean }: Props & { restyle: boolean;
                     </SourcePill>
                 )}
                 {cleanStyle && <CleanInfo game={game} hltb={hltb} locale={locale} size={size} />}
-                <div className="gg-cards">
-                    {/* A tap opens what each card summarises (#24, cardActions), in the restyled look (it lifts the cards over
-                        Steam's page panel; the plain look keeps 1.1.1's page). The controller's order on the page is unchanged. */}
+                <CardsRow selectable={restyle}>
+                    {/* A tap, a click or the controller's A opens what each card summarises (#24, cardActions), in the
+                        restyled look (it lifts the cards over Steam's page panel; the plain look keeps 1.1.1's page). The
+                        controller reaches them from the Play row (hooks/useCardNav), Left/Right between them. */}
                     <InfoCard game={game} locale={locale} description={description} size={size} onPress={restyle ? (card) => openGameInfoTab(card.ownerDocument) : undefined} />
                     <HltbCard result={hltb} playedMinutes={game.playedMinutes} locale={locale} restyle={restyle} onPress={restyle && hltbUrl(hltb) ? () => openHltbPage(hltb) : undefined} />
-                </div>
+                </CardsRow>
                 <div className="gg-more" aria-hidden="true">⌄</div>
             </div>
         </>
@@ -212,5 +217,15 @@ export function GameHero(props: Props) {
         <ErrorBoundary>
             <Hero {...props} restyle={restyleDetails} clean={cleanDetails} />
         </ErrorBoundary>
+    );
+}
+
+/** The cards' row: in the restyled look a Focusable row (Left/Right between the cards the controller can select). */
+function CardsRow({ selectable, children }: { selectable: boolean; children: ReactNode }) {
+    if (!selectable) return <div className="gg-cards">{children}</div>;
+    return (
+        <Focusable className="gg-cards" flow-children="row">
+            {children}
+        </Focusable>
     );
 }

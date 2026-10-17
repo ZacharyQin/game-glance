@@ -1,7 +1,7 @@
-import type { MouseEvent } from 'react';
 import { HltbResult } from '../data/hltb';
 import { HLTB_COLUMNS, HLTB_TITLE, hltbFoundView } from '../logic/hltbCardView';
 import { tr } from '../i18n/steamText';
+import { CardShell } from './CardShell';
 
 interface Props {
     result: HltbResult | undefined;
@@ -14,12 +14,11 @@ interface Props {
 }
 
 export function HltbCard({ result, playedMinutes, locale, restyle = false, onPress }: Props) {
-    const tap = onPress ? { className: 'gg-card gg-hltb gg-card-tap', onClick: (event: MouseEvent<HTMLDivElement>) => onPress(event.currentTarget) } : { className: 'gg-card gg-hltb' };
     const header = <div className="gg-label">{HLTB_TITLE}</div>;
 
     if (result === undefined) {
         return (
-            <div {...tap}>
+            <CardShell className="gg-card gg-hltb" onPress={onPress}>
                 {header}
                 <div className="gg-stats">
                     {HLTB_COLUMNS.map((c) => (
@@ -29,12 +28,12 @@ export function HltbCard({ result, playedMinutes, locale, restyle = false, onPre
                         </div>
                     ))}
                 </div>
-            </div>
+            </CardShell>
         );
     }
     if (result.status === 'notFound') {
         return (
-            <div {...tap}>
+            <CardShell className="gg-card gg-hltb" onPress={onPress}>
                 {header}
                 <div className="gg-muted">
                     {result.overrideId !== undefined ? `#${result.overrideId} · ${tr('noMatches')}` : tr('noMatches')}
@@ -44,21 +43,21 @@ export function HltbCard({ result, playedMinutes, locale, restyle = false, onPre
                         ? 'Check or remove the override in Quick Access → Game Glance'
                         : 'Set the right game in Quick Access → Game Glance'}
                 </div>
-            </div>
+            </CardShell>
         );
     }
     if (result.status === 'unavailable') {
         return (
-            <div {...tap}>
+            <CardShell className="gg-card gg-hltb" onPress={onPress}>
                 {header}
                 <div className="gg-muted">{tr('unavailable')}</div>
-            </div>
+            </CardShell>
         );
     }
 
     const view = hltbFoundView(result.times, playedMinutes, locale, restyle);
     return (
-        <div {...tap}>
+        <CardShell className="gg-card gg-hltb" onPress={onPress}>
             {header}
             <div className="gg-stats">
                 {view.columns.map((c) => (
@@ -70,6 +69,6 @@ export function HltbCard({ result, playedMinutes, locale, restyle = false, onPre
             </div>
             {view.bar !== null && <div className="gg-bar"><div style={{ width: `${view.bar}%` }} /></div>}
             {view.caption !== null && <div className="gg-caption">{view.caption}</div>}
-        </div>
+        </CardShell>
     );
 }

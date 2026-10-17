@@ -2,7 +2,7 @@ import { sourcePillIcon, sourcePillLook } from '../../src/styles/sourcePill';
 import { describe, expect, it } from 'vitest';
 import { arrivalSelectors, buildAccentCss, buildArrivingCss, buildCleanCss, buildSteamEnterOffCss, steamFooterSelector, buildDownloadCss, buildLaunchCss, buildRingCss, buildThemeCss, buildUnifideckCss, launchTargets, ThemeClasses } from '../../src/styles/themeCss';
 import { homeCanvas } from '../../src/home/scale';
-import { cardMaxWidths, PAGE_LAYOUT, PAGE_SCRIM_LAYERS, PAGE_SCRIMS, pageDUnit, pillFocusScale, ringBoost, STEAM_LEGEND_PX } from '../../src/styles/themeCss';
+import { cardMaxWidths, PAGE_LAYOUT, PAGE_SCRIM_LAYERS, PAGE_SCRIMS, pageDUnit, pillFocusScale, playRowSelector, ringBoost, STEAM_LEGEND_PX } from '../../src/styles/themeCss';
 
 const full: ThemeClasses = {
     header: { TopCapsule: 'hd_Top', BoxSizer: 'hd_Box' },
@@ -543,6 +543,17 @@ describe('buildThemeCss restyle (Spotlight Home on)', () => {
         // Not in the 1.1.1 output, and never without mouse mode.
         expect(buildThemeCss(steam)).not.toContain(':hover');
         for (const sel of restyled.match(/[^{}]*:hover[^{]*\{/g) ?? []) expect(sel).toContain('html[data-gg-mouse]');
+    });
+    it("a card the controller selected looks like Home's focused feed card (accent ring and glow, a lift), not in mouse mode", () => {
+        const gate = ':where(html:not([data-gg-mouse]))';
+        const look = rulesFor(restyled, `${gate} .gg-card-nav.gg-card-focus, ${gate} .gg-card-nav:focus`);
+        expect(look).toContain('box-shadow: 0 0 0 calc(1 * var(--gg-d)) var(--glance-accent), 0 calc(16 * var(--gg-d)) calc(40 * var(--gg-d)) calc(-1 * calc(12 * var(--gg-d))) var(--glance-accent) !important;');
+        expect(look).toContain('transform: translateY(calc(-4 * var(--gg-d)))');
+        expect(buildThemeCss(steam)).not.toContain('gg-card-focus');
+    });
+    it("playRowSelector: Steam's Play row (the pill and its arrow, the circles, the cloud); null without its classes", () => {
+        expect(playRowSelector(full)).toBe('.rt_PlayBtn, .ps_Menu, .ps_Cloud');
+        expect(playRowSelector({ ...full, root: {}, play: {} })).toBeNull();
     });
     it("the cloud's icon is centred in its circle, as on Home: Steam's icon box is as tall as the icon", () => {
         // (Its box kept the 1.1.1 theme's 16 u height under a 26 d unit icon, which hung out of its bottom: 1.65 px low docked.)

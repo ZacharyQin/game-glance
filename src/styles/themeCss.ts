@@ -448,6 +448,12 @@ export function buildCleanCss({ header, details, root }: ThemeClasses): string {
 /** How long the page takes to fade away under Steam's launch overlay (and back if the launch is cancelled). */
 const LAUNCH_FADE_MS = 200;
 
+/** Steam's Play row on the game page (the Play pill with its arrow, the circles, the cloud): logic/cardNav's `play`; null without its classes. */
+export function playRowSelector({ root, play }: ThemeClasses): string | null {
+    const list = [cls(root, 'ActionButtonAndStatusPanel'), cls(play, 'MenuButton'), cls(play, 'CloudStatusRow')];
+    return list.some((s) => s === null) ? null : list.join(', ');
+}
+
 /**
  * What hides while Steam's launch overlay is up: `overlay`, the overlay's selector (null: unknown, nothing hides), and
  * `hide`, everything on the page with text on it (our title and cards, Steam's logo and title, its Play row and tabs).
@@ -613,6 +619,9 @@ function restyleRules({ header, details, root, play, shared }: ThemeClasses, lay
         // Under a mouse, a card lifts with the hover ring, as Home's feed cards do; a press still gives.
         `${HOVER} .gg-card-tap:hover { box-shadow: ${hoverRing(d(2))} !important; transform: translateY(${d(-2)}); }`,
         `${HOVER} .gg-card-tap:hover:active { transform: translateY(${d(-2)}) scale(0.98); }`,
+        // Selected with the controller (logic/cardNav, components/GameHero): Home's focused feed card, an accent ring and
+        // glow and a lift, in d units; off in mouse mode, as every focus look (the hover look is the mouse's).
+        `${NOT_MOUSE} .gg-card-nav.gg-card-focus, ${NOT_MOUSE} .gg-card-nav:focus { box-shadow: 0 0 0 ${d(1)} var(--glance-accent), 0 ${d(16)} ${d(40)} calc(-1 * ${d(12)}) var(--glance-accent) !important; transform: translateY(${d(-4)}); outline: none; }`,
         // Steam's page panel lies over the cards (a tap landed on it, on the Deck): the hero is lifted above it and takes
         // no touches itself, only the tappable cards do, so nothing of Steam's below is covered.
         `.gg-hero { z-index: 2; pointer-events: none; }`,

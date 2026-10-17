@@ -3,6 +3,7 @@ import { formatAchievements, formatHours, minutesToHours } from '../logic/format
 import { descriptionState } from '../logic/infoCard';
 import type { SizeStat } from '../logic/sizeStat';
 import { tr } from '../i18n/steamText';
+import { CardShell } from './CardShell';
 
 interface Props {
     game: GameInfo;
@@ -17,7 +18,7 @@ interface Props {
 export function InfoCard({ game, locale, description, size = null, onPress }: Props) {
     const desc = descriptionState(description);
     return (
-        <div className={`gg-card${onPress ? ' gg-card-tap' : ''}`} onClick={onPress ? (event) => onPress(event.currentTarget) : undefined}>
+        <CardShell className="gg-card" onPress={onPress}>
             <div className="gg-stats">
                 <div data-stat="played">
                     <div className="gg-label">{tr('played')}</div>
@@ -39,6 +40,6 @@ export function InfoCard({ game, locale, description, size = null, onPress }: Pr
             </div>
             {desc.kind === 'loading' && <p className="gg-desc"><span className="gg-skeleton" /></p>}
             {desc.kind === 'text' && <p className="gg-desc">{desc.text}</p>}
-        </div>
+        </CardShell>
     );
 }
