@@ -509,6 +509,10 @@ describe('buildThemeCss restyle (Spotlight Home on)', () => {
         expect(buildCleanCss(full)).toMatch(/\.gg-clean-info \{[^}]*border: calc\(1 \* var\(--gg-d\)\) solid rgba\(255, 255, 255, calc\(0\.12 \* var\(--gg-ring, 1\)\)\)/);
         expect(buildRingCss(1.15)).toBe(':root { --gg-ring: 1.15; }');
     });
+    it("the cloud's icon is centred in its circle, as on Home: Steam's icon box is as tall as the icon", () => {
+        // (Its box kept the 1.1.1 theme's 16 u height under a 26 d unit icon, which hung out of its bottom: 1.65 px low docked.)
+        expect(rulesFor(restyled, '.ps_CloudIcon')).toContain(`height: calc(${PAGE_LAYOUT.cloudIcon} * var(--gg-d)) !important;`);
+    });
     it("ringBoost: Home's ring as drawn on screen over the page's, both on whole device px", () => {
         // The Ally handheld (2.32, 828x466: d 0.575): Home's 1 canvas px is 2 device px scaled to 1.15; the page's 1 d unit is 1.
         const d = pageDUnit(828.0172, 466.3793);

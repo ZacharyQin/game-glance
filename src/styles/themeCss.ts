@@ -496,6 +496,7 @@ function restyleRules({ header, details, root, play, shared }: ThemeClasses, lay
     const playButton = cls(root, 'ActionButtonAndStatusPanel');
     const menuButton = cls(play, 'MenuButton');
     const cloud = cls(play, 'CloudStatusRow');
+    const cloudIcon = cls(play, 'CloudStatusIcon');
 
     const rules: string[] = [
         // Steam's thin download bar under the Play pill is never shown (the pill itself fills, buildDownloadCss), so it
@@ -548,6 +549,9 @@ function restyleRules({ header, details, root, play, shared }: ThemeClasses, lay
             --gg-ok: ${CLOUD_COLOURS.ok}; --gg-warn: ${CLOUD_COLOURS.busy}; --gg-bad: ${CLOUD_COLOURS.bad}; --gg-off: ${CLOUD_COLOURS.off}; `),
         rule(cloud && `${cloud} svg`, ` filter: drop-shadow(0 0 ${d(1.5)} rgba(0, 0, 0, 0.7)) !important; `),
         rule(cloud && `${cloud} svg`, ` width: ${d(PAGE_LAYOUT.cloudIcon)} !important; height: ${d(PAGE_LAYOUT.cloudIcon)} !important; `),
+        // Centred as Home's: Steam's icon box (16 u in the 1.1.1 theme) as tall as the icon, which hung out of its bottom
+        // and sat low in the circle after the open transition (1.65 px docked, Michael on the Ally).
+        rule(cloudIcon, ` height: ${d(PAGE_LAYOUT.cloudIcon)} !important; `),
         rule(cloud && `${cloud}.gpfocus`, ` background: #ffffff !important; color: ${CLOUD_FOCUS_BAD} !important; `),
         rule(cloud && `${cloud}:focus`, ` background: #ffffff !important; color: ${CLOUD_FOCUS_BAD} !important; `),
 
