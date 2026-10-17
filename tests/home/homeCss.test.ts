@@ -808,6 +808,9 @@ describe('homeCss mouse hover', () => {
         expect(css).toContain(`.gh-cap.gh-cap-hover:not(.gh-cap-sel):not(.gh-cap-lib-on)`);
         expect(css).toMatch(new RegExp(`\\.gh-cap\\.gh-cap-hover[^{]*\\{[^}]*box-shadow: ${ring.replace(/[().]/g, '\\$&')}`));
     });
+    it("opened with a mouse, the growing Play pill has no focus ring or glow (the page shows none then)", () => {
+        expect(css).toMatch(/html\[data-gg-mouse\] \.gh-root\[data-gh-opening="morph"\] \.gh-actions > \.gh-btn\[data-action="play"\]::after \{[^}]*box-shadow: none !important/);
+    });
     it('no hover look without mouse mode: every :hover rule is under html[data-gg-mouse]', () => {
         for (const sel of css.match(/[^{}]*:hover[^{]*\{/g) ?? []) expect(sel).toContain('html[data-gg-mouse]');
     });

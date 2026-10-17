@@ -14,6 +14,7 @@ import { homeMode } from './mode';
 import { settings } from '../data/settings';
 import { clearOpen, markOpen, onOpenReady, OpenIntent } from '../data/openIntent';
 import { pageArrivalSelectors, steamEnterOffCss, steamFooter } from '../styles/theme';
+import { MOUSE_ATTR } from './mouseMode';
 import { clearSteamBarCover } from './useHideSteamBar';
 
 /** Opens a game's page directly, without the transition (Play pill fallbacks, Steam call fallbacks). */
@@ -183,7 +184,7 @@ function startHome(c: OpenContext): (() => void) | null {
                 const stats = pageStatsFromChips(readChipTexts(root), c.look, size);
                 const store = home.store ?? { x: 0, y: 0, w: 0, h: 0 };
                 const page = pageTargets(c.look, screen, stats, canvasMeasure(root), { w: store.w, h: store.h }, c.extras ? readExtrasAsked(root) : undefined);
-                return applyOpening(root, 'morph', openMotion(home, page, c.look, scale), null, c.extras);
+                return applyOpening(root, 'morph', openMotion(home, page, c.look, scale, !root.ownerDocument?.documentElement?.hasAttribute(MOUSE_ATTR)), null, c.extras);
             }
         } catch (error) {
             console.warn(`${LOG_PREFIX} Home: could not set up the morph`, error);

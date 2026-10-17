@@ -29,12 +29,13 @@ export interface ModeInput {
 
 /**
  * Whether mouse mode is on after `input`, from `on`. Pure. Only a mouse moving with no button held starts it (Michael:
- * people move a mouse to see it is live before they drag or click); a mouse's press or drag leaves it as it was. A key
- * (the controller, as Steam sends it, or a keyboard) ends it, and so does a finger or a pen (no pen hover for now: a pen's
+ * people move a mouse to see it is live before they drag or click); a mouse's press or drag leaves it as it was. A
+ * controller button ends it (Steam sends one as its own vgp_onbuttondown event, never as a key: probed on the Ally), a
+ * keyboard's key too, and so does a finger or a pen (no pen hover for now: a pen's
  * tap leaves Chromium's sticky :hover as a finger's does).
  */
 export function mouseModeAfter(on: boolean, input: ModeInput): boolean {
-    if (input.type === 'keydown') return false;
+    if (input.type === 'keydown' || input.type === 'vgp_onbuttondown') return false;
     if (input.pointerType !== 'mouse') return input.pointerType ? false : on;
     return input.type === 'pointermove' && input.buttons === 0 ? true : on;
 }
@@ -46,7 +47,7 @@ export interface MouseModeDoc {
     removeEventListener(type: string, fn: (e: Event) => void, options?: AddEventListenerOptions): void;
 }
 
-const EVENTS = ['pointermove', 'pointerdown', 'keydown'] as const;
+const EVENTS = ['pointermove', 'pointerdown', 'keydown', 'vgp_onbuttondown'] as const;
 const OPTIONS: AddEventListenerOptions = { capture: true, passive: true };
 const installed = new WeakMap<MouseModeDoc, { users: number; stop(): void }>();
 

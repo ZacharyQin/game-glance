@@ -246,6 +246,16 @@ describe('openMotion', () => {
         expect(a.sy).toBeCloseTo(pageH / r.pill.h, 3);
     });
 
+    it("opened with a mouse, it lands on the page's pill unfocused (mouse mode hides the focus look and its growth)", () => {
+        const page = spotlight();
+        const v = vars(openMotion(homeRects(), page, 'spotlight', s, false));
+        expect(Number(v['--gho-play-sx'])).toBeCloseTo(page.play.w / r.pill.w, 3);
+        expect(Number(v['--gho-play-sy'])).toBeCloseTo(page.play.h / r.pill.h, 3);
+        const fg = parse(v['--gho-play-fg']);
+        expect(fg.tx).toBeCloseTo((page.play.x - r.pill.x) / s, 1);
+        const a = parse(v['--gho-play-arrow']);
+        expect(a.sx).toBeCloseTo(PAGE_LAYOUT.playArrow.w / HOME_PILL.arrow, 3);
+    });
     it("the page's focused pill's exact box (round ends, unlike the stretched layer), relative to Home's pill", () => {
         const v = vars(openMotion(homeRects(), spotlight(), 'spotlight', s));
         expect(Number(v['--gho-play-sx'])).toBeCloseTo(pageW / r.pill.w, 3);

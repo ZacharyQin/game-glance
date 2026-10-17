@@ -29,8 +29,9 @@ describe('mouseModeAfter', () => {
         expect(mouseModeAfter(true, { type: 'pointerdown', pointerType: 'touch', buttons: 1 })).toBe(false);
         expect(mouseModeAfter(true, { type: 'pointermove', pointerType: 'touch', buttons: 1 })).toBe(false);
     });
-    it('a key (the controller, as Steam sends it, or a keyboard) turns it off', () => {
+    it('a key or a controller button turns it off (Steam sends the controller as vgp_onbuttondown, never as keys)', () => {
         expect(mouseModeAfter(true, { type: 'keydown' })).toBe(false);
+        expect(mouseModeAfter(true, { type: 'vgp_onbuttondown' })).toBe(false);
     });
     it('a mouse drag (a button held) leaves it as it was: no ring under a drag, and none lost', () => {
         expect(mouseModeAfter(false, { type: 'pointermove', pointerType: 'mouse', buttons: 1 })).toBe(false);
@@ -57,6 +58,9 @@ describe('installMouseMode', () => {
         expect(f.on()).toBe(false);
         f.fire('pointermove', { pointerType: 'mouse', buttons: 0 });
         f.fire('keydown');
+        expect(f.on()).toBe(false);
+        f.fire('pointermove', { pointerType: 'mouse', buttons: 0 });
+        f.fire('vgp_onbuttondown', { detail: { button: 12 } });
         expect(f.on()).toBe(false);
     });
     it('installs once per document (Home and the page both ask) and goes when the last one lets go', () => {

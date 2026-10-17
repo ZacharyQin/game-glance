@@ -52,7 +52,7 @@ const union = (boxes: Box[]): Box => {
 
 const isStat = (key: string, page: PageTargets): key is StatKey => Object.prototype.hasOwnProperty.call(page.stats, key);
 
-export function openMotion(home: HomeRects, page: PageTargets, look: PageLook, canvasScale: number): MotionVar[] {
+export function openMotion(home: HomeRects, page: PageTargets, look: PageLook, canvasScale: number, focused = true): MotionVar[] {
     const s = canvasScale;
     // Home's canvas and the page share one scale rule (home/scale.ts, themeCss --gg-d), so the page's d unit is s.
     const d = s;
@@ -65,8 +65,9 @@ export function openMotion(home: HomeRects, page: PageTargets, look: PageLook, c
     out['--gho-eyebrow'] = translate((page.eyebrowBottomLeft.x - home.eyebrow.x) / s, (page.eyebrowBottomLeft.y - (home.eyebrow.y + home.eyebrow.h)) / s);
 
     // The page focuses its Play on arrival, and a focused Play grows about its centre (as Home's): the morph lands on it.
-    // (A focused pill grows by what a circle grows: 4% taller, as much wider in px; themeCss.pillFocusScale.)
-    const pf = pillFocusScale(PAGE_LAYOUT.playW, PAGE_LAYOUT.icon);
+    // (A focused pill grows by what a circle grows: 4% taller, as much wider in px; themeCss.pillFocusScale.) Not
+    // `focused` (opened in mouse mode, where the page shows no focus look): its size at rest.
+    const pf = focused ? pillFocusScale(PAGE_LAYOUT.playW, PAGE_LAYOUT.icon) : { x: 1, y: 1 };
     const to: Box = { x: page.play.x - (page.play.w * (pf.x - 1)) / 2, y: page.play.y - (page.play.h * (pf.y - 1)) / 2, w: page.play.w * pf.x, h: page.play.h * pf.y };
     // The pill itself only moves (by its left edge and centre line); its background layer, inside it, grows to the page
     // pill's size about that centre line, so the label never stretches.

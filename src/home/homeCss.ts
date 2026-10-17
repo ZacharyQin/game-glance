@@ -633,6 +633,8 @@ export function openingRules(): string[] {
         // (round ends; the stretched layer's are oval) fades in as the pill comes to rest, under the glyph and label.
         rule(`${M} ${play}::after`, "content: ''; position: absolute; left: -1px; top: calc(var(--gho-play-dy) - 1px); width: calc((100% + 2px) * var(--gho-play-sx)); height: calc((100% + 2px) * var(--gho-play-sy)); border-radius: 999px; background: var(--glance-accent); box-shadow: 0 0 0 2px rgba(255,255,255,.9), 0 14px 40px -8px var(--glance-accent); pointer-events: none"),
         soft(`${M} ${play}::after`, 'opacity: 0'),
+        // Opened with a mouse, the page shows its Play without the focus look (mouseMode): the pill grows without its ring and glow.
+        rule(`${HOVER} ${M} ${play}::after`, 'box-shadow: none'),
         rule([`${M} ${play} > .gh-btn-icon`, `${M} ${play} > .gh-btn-label`, `${M} ${play} > .gh-play-arrow`].join(', '), 'z-index: 1'),
         rule(`${M} ${play} > .gh-play-arrow`, 'transform-origin: 100% 50%'),
         rule(`${MT} ${play} > .gh-play-arrow`, `transform: var(--gho-play-arrow); transition: ${move}`),
