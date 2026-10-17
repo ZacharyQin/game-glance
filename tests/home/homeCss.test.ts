@@ -629,6 +629,13 @@ describe('homeCss open transition', () => {
             expect(body(`.gh-open-extras .gh-x-${n}`), n).toContain(`top: calc(var(--gho-x-${n}-y) - var(--gho-x-${n}-cy, 0px))`);
         }
     });
+    it("the extras' labels and caption have the page's line height, 'normal' (the font's own: 1.5 fit only at 16:9)", () => {
+        const all = rules(css);
+        const body = (sel: string) => all.find(([s]) => s === sel)?.[1] ?? '';
+        expect(body('.gh-open-extras .gh-x-label')).toContain('line-height: normal');
+        expect(body('.gh-open-extras .gh-x-caption')).toContain('line-height: normal');
+        expect(body('.gh-open-extras .gh-x-value')).toContain('line-height: 1.2');
+    });
     it('the glass panels are hidden until opening, and the second only when there are two', () => {
         const all = rules(css);
         expect(all.find(([sel]) => sel === '.gh-open-shell')?.[1]).toContain('display: none');
@@ -921,8 +928,9 @@ describe('homeCss open transition: text twins', () => {
         // browser placed the twin's text 0.65 px lower than the page's in the same centred box, and it stepped up at the end.
         expect(body('.gh-twin[data-role="playLabel"]')).toContain(`line-height: ${STEAM_PLAY_LINE}px`);
         expect(STEAM_PLAY_LINE).toBe(20);
-        // The page's labels inherit a 1.5 line height from Steam: the twins state it.
-        expect(body('.gh-twin[data-role="label"]')).toContain('line-height: 1.5');
+        // The page's labels have Steam's line height, 'normal': the font's own, rounded to device px (1.5 at 16:9 docked,
+        // about 1.43 at 21:9, where 1.5 stood each row 0.6 px taller). The twins take the same.
+        expect(body('.gh-twin[data-role="label"]')).toContain('line-height: normal');
         expect(body('.gh-twin[data-accent]')).toContain('color: var(--glance-accent-text)');
     });
     it("home's text fades out as its twin fades in, only where a twin exists", () => {

@@ -1,5 +1,5 @@
 import type { HomeRects, MotionVar } from './openMotion';
-import type { Box, ExtraColumn, ExtrasAsked, Measure, PageLook, PageStat, StatKey } from './openTargets';
+import type { Box, ExtraColumn, ExtrasAsked, LineMeasure, Measure, PageLook, PageStat, StatKey } from './openTargets';
 import type { HltbResult } from '../data/hltb';
 import { settleDelta, TwinSpec } from './openTwins';
 import { tr } from '../i18n/steamText';
@@ -279,6 +279,40 @@ export function canvasMeasure(root: Element): Measure {
         ctx.font = `700 ${fontPx}px ${family}`;
         const shown = label ? text.toUpperCase() : text;
         return ctx.measureText(shown).width + (label ? shown.length * 0.18 * fontPx : 0);
+    };
+}
+
+/**
+ * The page's 'normal' line height for a label (bold) or the caption (regular) at a font size, as the page draws it: a
+ * hidden line in Home's document in the same font (a 'normal' line is the font's own, rounded to whole device px, so no
+ * constant fits every screen). Once per role and size; 0 when nothing can be measured.
+ */
+export function lineMeasure(root: Element): LineMeasure {
+    const known = new Map<string, number>();
+    return (role, fontPx) => {
+        const key = `${role}|${fontPx}`;
+        const kept = known.get(key);
+        if (kept !== undefined) return kept;
+        let height = 0;
+        try {
+            const doc = root.ownerDocument;
+            if (!doc) return 0;
+            const el = doc.createElement('div');
+            Object.assign(el.style, {
+                position: 'absolute', left: '0', top: '0', visibility: 'hidden', pointerEvents: 'none', margin: '0', padding: '0', border: '0',
+                whiteSpace: 'nowrap', lineHeight: 'normal', fontSize: `${fontPx}px`, fontWeight: role === 'label' ? '700' : '400',
+                fontFamily: doc.defaultView?.getComputedStyle(root).fontFamily || 'sans-serif',
+            });
+            el.textContent = role === 'label' ? 'PLAY TIME' : 'Played';
+            root.appendChild(el);
+            height = el.getBoundingClientRect().height;
+            el.remove();
+        } catch {
+            height = 0;
+        }
+        const h = Number.isFinite(height) && height > 0 ? height : 0;
+        known.set(key, h);
+        return h;
     };
 }
 

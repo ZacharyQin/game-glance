@@ -739,7 +739,7 @@ export function openingRules(): string[] {
         soft('.gh-twin[data-role="title"]', `${pageType('title', dd)} max-width: ${dd(640)}; white-space: normal; text-wrap: balance; overflow-wrap: anywhere; text-shadow: 0 ${dd(4)} ${dd(30)} rgba(0,0,0,.4)`),
         soft('.gh-twin[data-role="eyebrow"]', `${pageType('eyebrow', dd)} color: var(--glance-accent-text)`),
         // The page's labels inherit a 1.5 line height from Steam (PAGE_TYPE leaves it out): stated here.
-        soft('.gh-twin[data-role="label"]', `${pageType('label', dd)} line-height: 1.5; color: rgba(255,255,255,.62)`),
+        soft('.gh-twin[data-role="label"]', `${pageType('label', dd)} line-height: ${PAGE_LINES.label}; color: rgba(255,255,255,.62)`),
         soft('.gh-twin[data-role="value"]', pageType('value', dd)),
         soft('.gh-twin[data-role="cleanValue"]', pageType('cleanValue', dd)),
         // Steam's fixed line height on the Play label (STEAM_PLAY_LINE): the browser places text in a 20 px line box a little

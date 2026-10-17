@@ -112,6 +112,19 @@ describe('pageTargets stats', () => {
     const played: PageStat = { key: 'played', label: 'Play Time', value: '1 h' };
     const main: PageStat = { key: 'hltb', label: 'Main', value: '9 h' };
     const columns: ExtraColumn[] = [{ key: 'mainExtras', label: '+ Extras', value: '12 h' }, { key: 'completionist', label: '100%', value: '24 h' }];
+    it("a label's line is the measured 'normal' one when Home measures it (21:9: 12.5, not 1.5 x 8.75), so the values below land where the page's are", () => {
+        const wide = { width: 1500, height: 644.53125, dpr: 1.28 };
+        const d = 644.53125 / 810;
+        const lines = (role: 'label' | 'caption', fontPx: number) => (role === 'label' ? 12.5 : fontPx * 1.4);
+        const t = pageTargets('spotlight', wide, [played, main], measure, store, { columns, bar: true }, lines);
+        const s = t.stats.played!;
+        expect(s.label.h).toBe(12.5);
+        expect(s.value.y).toBeCloseTo(s.label.y + 12.5 + PAGE_LAYOUT.stats.rowGap * d, 6);
+        expect(t.extras!.caption.h).toBeCloseTo(PAGE_LAYOUT.cardText.caption * d * 1.4, 6);
+        // Without a measure: the old constants (1.5 for labels).
+        const plain = pageTargets('spotlight', wide, [played, main], measure, store, { columns, bar: true });
+        expect(plain.stats.played!.label.h).toBeCloseTo(PAGE_LAYOUT.stats.label * d * 1.5, 6);
+    });
     it('the HowLongToBeat columns follow Main in order, one gap apart; the bar sits between them and the caption', () => {
         const t = pageTargets('spotlight', screen, [played, main], measure, store, { columns, bar: true });
         const m = t.stats.hltb!.label;

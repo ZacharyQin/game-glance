@@ -65,18 +65,24 @@ export function cardBorder(dpr: number | undefined, d: number): number {
     return dpr && dpr > 0 ? Math.max(1, Math.floor(d * dpr)) / dpr : d;
 }
 /**
- * The page's line heights: labels inherit Steam's 1.5, values are set to 1.2 (themeCss), the HowLongToBeat caption inherits
- * the font's normal one (measured on the device: 1.45). Home's open transition draws the same texts with them.
+ * The page's line heights, as Home's open transition draws the same texts: values are set to 1.2 (themeCss); labels and
+ * the HowLongToBeat caption keep Steam's 'normal', the font's own line, rounded to whole device px. That came to 1.5 for
+ * the labels at 16:9 docked, but about 1.43 at 21:9, where a 1.5 stood each label row 0.6 px taller than the page's and
+ * the text under it landed lower (Ally, emulated 1500x644).
  */
-export const PAGE_LINES = { label: 1.5, value: 1.2, caption: 1.45 } as const;
-const LABEL_LINE = PAGE_LINES.label;
+export const PAGE_LINES = { label: 'normal', value: 1.2, caption: 'normal' } as const;
+/** A 'normal' line's height in CSS px for a role's font size, measured in Home's document (openHome.lineMeasure); 0: unknown. */
+export type LineMeasure = (role: 'label' | 'caption', fontPx: number) => number;
+/** Without a measure: the lines as measured at 16:9 docked. */
+const LABEL_LINE = 1.5;
 const VALUE_LINE = PAGE_LINES.value;
-const CAPTION_LINE = PAGE_LINES.caption;
+const CAPTION_LINE = 1.45;
 /** The Spotlight cards' height with three description lines (handoff px; the theme's TV_CARDS_H). */
 const CARDS_H = PAGE_LAYOUT.playTop.tvCards;
 
 export function pageTargets(
     look: PageLook, screen: { width: number; height: number; dpr?: number }, stats: PageStat[], measure: Measure, storeSize: { w: number; h: number }, asked?: ExtrasAsked,
+    lines?: LineMeasure,
 ): PageTargets {
     const L = PAGE_LAYOUT;
     const W = screen.width;
@@ -110,7 +116,11 @@ export function pageTargets(
     const titleBottomLeft = { x: side, y: blockBottom - eyebrowH - L.titleBlock.gap * d };
 
     const labelFont = L.stats.label * d;
-    const labelH = labelFont * LABEL_LINE;
+    const lineOf = (role: 'label' | 'caption', fontPx: number, fallback: number) => {
+        const h = lines?.(role, fontPx) ?? 0;
+        return Number.isFinite(h) && h > 0 ? h : fontPx * fallback;
+    };
+    const labelH = lineOf('label', labelFont, LABEL_LINE);
     const valueRole = look === 'clean' ? 'cleanValue' : 'value';
     const valueFont = (look === 'clean' ? L.cleanInfo.value : L.stats.value) * d;
     const valueH = valueFont * VALUE_LINE;
@@ -171,7 +181,7 @@ export function pageTargets(
             }
             const afterTiers = tiersY + statsH + L.cards.hltbGap * d;
             const bar: Box | undefined = asked.bar ? { x: h0.x, y: afterTiers, w: inner(hltb), h: L.cardText.bar * d } : undefined;
-            const caption: Box = { x: h0.x, y: bar ? bar.y + bar.h + L.cards.hltbGap * d : afterTiers, w: inner(hltb), h: L.cardText.caption * CAPTION_LINE * d };
+            const caption: Box = { x: h0.x, y: bar ? bar.y + bar.h + L.cards.hltbGap * d : afterTiers, w: inner(hltb), h: lineOf('caption', L.cardText.caption * d, CAPTION_LINE) };
             extras = { desc, hltbTitle: { x: h0.x, y: h0.y, w: inner(hltb), h: labelH }, columns, bar, caption };
         }
         store = { x: W - side - storeSize.w, y: top - L.storePillTop * d, w: storeSize.w, h: storeSize.h };

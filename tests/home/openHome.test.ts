@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { applyOpening, extrasFlags, extrasParts, measureHome, missingStats, mountTwins, readTwinTexts, restTwinsOnExtras, settleTwins, viewportSize, openVariant, pageStatsFromChips, readExtrasAsked } from '../../src/home/openHome';
+import { applyOpening, extrasFlags, extrasParts, lineMeasure, measureHome, missingStats, mountTwins, readTwinTexts, restTwinsOnExtras, settleTwins, viewportSize, openVariant, pageStatsFromChips, readExtrasAsked } from '../../src/home/openHome';
 import type { TwinSpec } from '../../src/home/openTwins';
 import { BRIDGE_FADE_EASE, mountOpenBridge } from '../../src/home/openBridge';
 
@@ -532,5 +532,37 @@ describe('settleTwins: the extras layer too', () => {
         const doc = { querySelector: (sel: string) => (sel === 'P' ? page : null) } as unknown as Document;
         settleTwins(copy, doc, { 'x-value-mainExtras': 'P' });
         expect(vars).toEqual({ '--t-dx': '0.0122px', '--t-dy': '-0.0122px' });
+    });
+});
+
+describe('lineMeasure', () => {
+    it("measures a 'normal' line in Home's document at the role's weight and size, once per size, and leaves nothing behind", () => {
+        const made: Array<{ style: Record<string, string>; removed: boolean }> = [];
+        const doc = {
+            createElement: () => {
+                const el = {
+                    style: {} as Record<string, string>,
+                    textContent: '',
+                    removed: false,
+                    getBoundingClientRect: () => ({ height: parseFloat(el.style.fontSize) * (el.style.fontWeight === '700' ? 1.43 : 1.4) }),
+                    remove() { el.removed = true; },
+                };
+                made.push(el);
+                return el;
+            },
+            defaultView: { getComputedStyle: () => ({ fontFamily: '"Motiva Sans"' }) },
+        };
+        const root = { ownerDocument: doc, appendChild: (c: unknown) => c };
+        const lines = lineMeasure(root as unknown as Element);
+        expect(lines('label', 8.75)).toBeCloseTo(8.75 * 1.43, 6);
+        expect(lines('label', 8.75)).toBeCloseTo(8.75 * 1.43, 6);
+        expect(made).toHaveLength(1);
+        expect(made[0].style).toMatchObject({ lineHeight: 'normal', fontWeight: '700', fontFamily: '"Motiva Sans"', visibility: 'hidden' });
+        expect(made[0].removed).toBe(true);
+        expect(lines('caption', 10)).toBeCloseTo(14, 6);
+        expect(made[1].style.fontWeight).toBe('400');
+    });
+    it('nothing measurable: 0, so pageTargets keeps its constants', () => {
+        expect(lineMeasure({ ownerDocument: null } as unknown as Element)('label', 9)).toBe(0);
     });
 });

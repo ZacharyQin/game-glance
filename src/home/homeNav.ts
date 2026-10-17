@@ -5,7 +5,7 @@ import { markLeaving } from './homeMemory';
 import { playNavSound } from './navSound';
 import { takeSteamFocus } from './steamFocus';
 import { createOpenTransition, OpenTransition } from './openTransition';
-import { applyOpening, canvasMeasure, extrasFlags, missingStats, OpenVariant, openVariant, pageStatsFromChips, readChipTexts, readExtrasAsked, readExtrasSize, readTwinTexts, measureHome, settleTwins, viewportSize } from './openHome';
+import { applyOpening, canvasMeasure, lineMeasure, extrasFlags, missingStats, OpenVariant, openVariant, pageStatsFromChips, readChipTexts, readExtrasAsked, readExtrasSize, readTwinTexts, measureHome, settleTwins, viewportSize } from './openHome';
 import { TwinSpec, twinSpecs } from './openTwins';
 import { openMotion } from './openMotion';
 import { pageTargets, PageLook } from './openTargets';
@@ -184,7 +184,7 @@ function startHome(c: OpenContext): (() => void) | null {
                 const size = c.extras.split(' ').includes('size') ? readExtrasSize(root) : null;
                 const stats = pageStatsFromChips(readChipTexts(root), c.look, size);
                 const store = home.store ?? { x: 0, y: 0, w: 0, h: 0 };
-                const page = pageTargets(c.look, screen, stats, canvasMeasure(root), { w: store.w, h: store.h }, c.extras ? readExtrasAsked(root) : undefined);
+                const page = pageTargets(c.look, screen, stats, canvasMeasure(root), { w: store.w, h: store.h }, c.extras ? readExtrasAsked(root) : undefined, lineMeasure(root));
                 const focused = !root.ownerDocument?.documentElement?.hasAttribute(MOUSE_ATTR);
                 // The moving text as page-sized twins (openTwins); without them (any failure) Home's own text morphs as before.
                 let twins: TwinSpec[] = [];
