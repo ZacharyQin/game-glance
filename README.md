@@ -4,7 +4,12 @@ A [Decky Loader](https://decky.xyz) plugin for Steam's Game Mode. It turns each 
 with everything about the game at a glance, and can replace Steam's Home with **Spotlight Home**: your games, one at a
 time, over their own art.
 
-https://github.com/user-attachments/assets/7772cd5b-ac8c-428e-a612-e9d594454a50
+https://github.com/user-attachments/assets/a2864c1d-3ac3-4fcd-a4c2-fa4e457b00e9
+
+https://github.com/user-attachments/assets/a074223d-caf1-40b5-a495-8b70e2473ee9
+
+
+https://github.com/user-attachments/assets/00f502ad-51dd-49a8-80a1-b986f4b49a0e
 
 
 ## Features
