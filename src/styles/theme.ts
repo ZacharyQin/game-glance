@@ -1,6 +1,7 @@
 import { appDetailsClasses, appDetailsHeaderClasses, findClassModule, playSectionClasses } from '@decky/ui';
 import { LOG_PREFIX } from '../constants';
-import { arrivalSelectors, buildAccentCss, steamFooterSelector, buildArrivingCss, buildSteamEnterOffCss, buildCleanCss, buildDownloadCss, buildLaunchCss, buildThemeCss, buildUnifideckCss, ClassMap, launchTargets, ThemeClasses, ThemeOptions } from './themeCss';
+import { arrivalSelectors, buildAccentCss, steamFooterSelector, buildArrivingCss, buildSteamEnterOffCss, buildCleanCss, buildDownloadCss, buildLaunchCss, buildRingCss, buildThemeCss, buildUnifideckCss, ClassMap, launchTargets, ringBoost, ThemeClasses, ThemeOptions } from './themeCss';
+import { viewportSize } from '../home/openHome';
 import type { ReadySelectors } from './pageReady';
 
 let classes: ThemeClasses | null = null;
@@ -34,6 +35,12 @@ function themeClasses(): ThemeClasses {
 
 export function themeCss(options?: ThemeOptions): string {
     return buildThemeCss(themeClasses(), options);
+}
+
+/** The page's glass rings as bright as Home's on this window's screen (themeCss.ringBoost). */
+export function ringCss(win: Parameters<typeof viewportSize>[0]): string {
+    const { width, height, dpr } = viewportSize(win);
+    return buildRingCss(ringBoost(dpr ?? 0, width, height));
 }
 
 /** The game's accent for the restyled page (Spotlight Home on); '' if the colour or Steam's class is unusable. */

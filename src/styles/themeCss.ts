@@ -149,6 +149,29 @@ export function pageDUnit(width: number, height: number): number {
     return homeCanvas(width, height).scale;
 }
 
+/**
+ * How much brighter the page's glass rings are drawn to look like Home's, on a screen of `dpr` device px per CSS px and
+ * `width` x `height` CSS px. Chromium draws a border on whole device px (at least one) in the element's own units:
+ * Home's 1 canvas px is max(1, floor(dpr)) device px, then scaled by the canvas (soft: 1.15 on the Ally), the page's 1 d unit
+ * is max(1, floor(d * dpr)) (crisp: 1 on the Ally). The ratio of the two, so the light each ring gives is the same; 1 when
+ * the ratio is not known.
+ */
+export function ringBoost(dpr: number, width: number, height: number): number {
+    if (!(dpr > 0)) return 1;
+    const d = pageDUnit(width, height);
+    const home = Math.max(1, Math.floor(dpr)) * d;
+    const page = Math.max(1, Math.floor(d * dpr));
+    return Math.round((home / page) * 1000) / 1000;
+}
+
+/** The page's ring boost (ringBoost) as --gg-ring, which the glass rings' colours are multiplied by. */
+export function buildRingCss(boost: number): string {
+    return `:root { --gg-ring: ${boost}; }`;
+}
+
+/** A ring colour: white at Home's `alpha`, times the page's ring boost (--gg-ring). */
+const ring = (alpha: number) => `rgba(255, 255, 255, calc(${alpha} * var(--gg-ring, 1)))`;
+
 export interface ThemeOptions {
     /** Spotlight Home's look (both toggles on, homeMode().restyleDetails): only appends rules to the 1.1.1 theme. */
     restyle?: boolean;
@@ -407,7 +430,7 @@ export function buildCleanCss({ header, details, root }: ThemeClasses): string {
         `.gg-cards { display: none !important; }`,
         // The info card at the right end of the row, vertically centred on the Play pill; the glass of the other cards.
         `.gg-clean-info { position: absolute; right: 0; top: 50%; transform: translateY(-50%); display: flex; align-items: flex-start; gap: ${d(PAGE_LAYOUT.cleanInfo.colGap)};
-            padding: ${d(PAGE_LAYOUT.cleanInfo.padY)} ${d(PAGE_LAYOUT.cleanInfo.padX)}; border-radius: ${d(16)}; border: ${d(1)} solid rgba(255, 255, 255, 0.12); background: rgba(12, 16, 22, 0.38);
+            padding: ${d(PAGE_LAYOUT.cleanInfo.padY)} ${d(PAGE_LAYOUT.cleanInfo.padX)}; border-radius: ${d(16)}; border: ${d(1)} solid ${ring(0.12)}; background: rgba(12, 16, 22, 0.38);
             backdrop-filter: blur(${d(16)}); color: #fff; }`,
         `.gg-clean-info > div { display: flex; flex-direction: column; gap: ${d(PAGE_LAYOUT.stats.rowGap)}; }`,
         `.gg-clean-info .gg-value { font-size: ${d(PAGE_LAYOUT.cleanInfo.value)}; line-height: 1.2; }`,
@@ -510,8 +533,8 @@ function restyleRules({ header, details, root, play, shared }: ThemeClasses, lay
         rule(playButton && `${playButton} [role="button"] + [role="button"] svg`, ` width: ${d(PAGE_LAYOUT.playArrow.glyph)} !important; height: ${d(PAGE_LAYOUT.playArrow.glyph)} !important; `),
         // Its ring is Home's: 1 d unit (1 canvas px on Home), never 1 px, which is drawn on whole device px (2 at the Ally's
         // 2.32) and read brighter than Home's as the open transition handed over (Michael on the Ally). Not the cloud: placed
-        // at a fractional position, its 1 px is drawn soft like Home's already.
-        rule(menuButton, ` background: rgba(12, 16, 22, 0.4) !important; border-width: ${d(1)} !important; backdrop-filter: blur(${d(12)}) !important; `),
+        // at a fractional position, its 1 px is drawn soft like Home's already. Its colour is Home's, as bright as Home's (ringBoost).
+        rule(menuButton, ` background: rgba(12, 16, 22, 0.4) !important; border-width: ${d(1)} !important; border-color: ${ring(0.18)} !important; backdrop-filter: blur(${d(12)}) !important; `),
         rule(menuButton && `${menuButton}.gpfocus`, ` background: #ffffff !important; `),
         // (Each focus look here also under DOM focus: after a tap or a click Steam keeps focus but drops gpfocus, and a page
         // opened that way has its Play focused without it, which the open transition lands on.)
@@ -560,7 +583,7 @@ function restyleRules({ header, details, root, play, shared }: ThemeClasses, lay
         // its own width (cardMaxWidths): with room to spare the info card stays left, HowLongToBeat at the right edge.
         `.gg-cards { display: grid; grid-template-columns: minmax(0, ${PAGE_LAYOUT.cards.split[0]}fr) minmax(0, ${PAGE_LAYOUT.cards.split[1]}fr); gap: ${d(PAGE_LAYOUT.cards.gridGap)}; }`,
         `.gg-card { display: flex; flex-direction: column; gap: ${d(PAGE_LAYOUT.cards.colGap)}; padding: ${d(PAGE_LAYOUT.cards.padY)} ${d(PAGE_LAYOUT.cards.padX)}; border-radius: ${d(16)};
-            background: rgba(12, 16, 22, 0.38); border-color: rgba(255, 255, 255, 0.12); border-width: ${d(1)}; backdrop-filter: blur(${d(16)});
+            background: rgba(12, 16, 22, 0.38); border-color: ${ring(0.12)}; border-width: ${d(1)}; backdrop-filter: blur(${d(16)});
             min-height: ${d(PAGE_LAYOUT.playTop.tvCards - 2 * PAGE_LAYOUT.cards.padY - 2)}; max-width: ${cardContentMax(cardMaxWidths()[0])}; }`,
         // (One height for every game: three description lines' worth, as The Witcher's (its content: stats, gap and three
         // lines, 136 of the 178 the cards take with their padding and border; measured 179 on the Ally with Steam's border); a short description, or none, left

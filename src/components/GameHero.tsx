@@ -30,7 +30,7 @@ import { useOpenArrival } from '../hooks/useOpenArrival';
 import { openPending } from '../data/openIntent';
 import { knownDescription, peekHltb, rememberDescription, rememberHltb } from '../home/warmup';
 import { accentMemo, knownAccent } from '../home/accentMemo';
-import { accentCss, arrivingCss, cleanCss, downloadCss, launchCss, launchSelectors, themeCss, unifideckCss } from '../styles/theme';
+import { accentCss, arrivingCss, cleanCss, downloadCss, launchCss, launchSelectors, ringCss, themeCss, unifideckCss } from '../styles/theme';
 import { CleanInfo } from './CleanInfo';
 import { ErrorBoundary } from './ErrorBoundary';
 import { GameStatusBar } from './GameStatusBar';
@@ -153,6 +153,7 @@ function Hero({ overview, details, restyle, clean }: Props & { restyle: boolean;
     if (game.appId === 0) return null;
     // The Clean look, only where its layout applies (Steam's classes found); otherwise the page keeps its cards.
     const cleanStyle = clean ? cleanCss() : '';
+    const ringStyle = pageDoc?.defaultView ? ringCss(pageDoc.defaultView) : '';
     const family = restyle ? familyPillLabel(game.appId) : null;
     const eyebrow = restyle ? openedFrom?.eyebrow ?? lastPlayedEyebrow(overview, locale, unifideck?.lastPlayed ?? null) : null;
     return (
@@ -173,6 +174,7 @@ function Hero({ overview, details, restyle, clean }: Props & { restyle: boolean;
             <div className="gg-hero" ref={heroRef}>
                 <style>{themeCss({ restyle })}</style>
                 <style>{unifideckCss({ restyle })}</style>
+                {ringStyle && <style>{ringStyle}</style>}
                 {cleanStyle && <style>{cleanStyle}</style>}
                 {launching && <style>{launchCss()}</style>}
                 {accent && <style>{accentCss(accent)}</style>}

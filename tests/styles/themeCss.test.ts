@@ -1,8 +1,8 @@
 import { sourcePillIcon, sourcePillLook } from '../../src/styles/sourcePill';
 import { describe, expect, it } from 'vitest';
-import { arrivalSelectors, buildAccentCss, buildArrivingCss, buildCleanCss, buildSteamEnterOffCss, steamFooterSelector, buildDownloadCss, buildLaunchCss, buildThemeCss, buildUnifideckCss, launchTargets, ThemeClasses } from '../../src/styles/themeCss';
+import { arrivalSelectors, buildAccentCss, buildArrivingCss, buildCleanCss, buildSteamEnterOffCss, steamFooterSelector, buildDownloadCss, buildLaunchCss, buildRingCss, buildThemeCss, buildUnifideckCss, launchTargets, ThemeClasses } from '../../src/styles/themeCss';
 import { homeCanvas } from '../../src/home/scale';
-import { cardMaxWidths, PAGE_LAYOUT, PAGE_SCRIM_LAYERS, PAGE_SCRIMS, pageDUnit, pillFocusScale, STEAM_LEGEND_PX } from '../../src/styles/themeCss';
+import { cardMaxWidths, PAGE_LAYOUT, PAGE_SCRIM_LAYERS, PAGE_SCRIMS, pageDUnit, pillFocusScale, ringBoost, STEAM_LEGEND_PX } from '../../src/styles/themeCss';
 
 const full: ThemeClasses = {
     header: { TopCapsule: 'hd_Top', BoxSizer: 'hd_Box' },
@@ -499,9 +499,26 @@ describe('buildThemeCss restyle (Spotlight Home on)', () => {
     it("the glass rings are Home's, 1 d unit (1 canvas px there), not 1 px: a 1 px border is drawn on 2 whole device px at the Ally's 2.32 and read brighter than Home's as the open transition handed over", () => {
         expect(rulesFor(restyled, '.ps_Menu')).toContain('border-width: calc(1 * var(--gg-d)) !important;');
         expect(rulesFor(restyled, '.gg-card')).toContain('border-width: calc(1 * var(--gg-d));');
-        expect(buildCleanCss(full)).toMatch(/\.gg-clean-info \{[^}]*border: calc\(1 \* var\(--gg-d\)\) solid rgba\(255, 255, 255, 0\.12\)/);
+        expect(buildCleanCss(full)).toMatch(/\.gg-clean-info \{[^}]*border: calc\(1 \* var\(--gg-d\)\) solid /);
         // The cloud keeps its 1 px: placed at a fractional position, it is drawn soft like Home's already (Michael: no change there).
         expect(rulesFor(restyled, '.ps_Cloud')).toContain('border: 1px solid rgba(255, 255, 255, 0.18) !important;');
+    });
+    it("the glass rings are as bright as Home's: their colour is Home's times --gg-ring (ringBoost), 1 when not set", () => {
+        expect(rulesFor(restyled, '.ps_Menu')).toContain('border-color: rgba(255, 255, 255, calc(0.18 * var(--gg-ring, 1))) !important;');
+        expect(rulesFor(restyled, '.gg-card')).toContain('border-color: rgba(255, 255, 255, calc(0.12 * var(--gg-ring, 1)));');
+        expect(buildCleanCss(full)).toMatch(/\.gg-clean-info \{[^}]*border: calc\(1 \* var\(--gg-d\)\) solid rgba\(255, 255, 255, calc\(0\.12 \* var\(--gg-ring, 1\)\)\)/);
+        expect(buildRingCss(1.15)).toBe(':root { --gg-ring: 1.15; }');
+    });
+    it("ringBoost: Home's ring as drawn on screen over the page's, both on whole device px", () => {
+        // The Ally handheld (2.32, 828x466: d 0.575): Home's 1 canvas px is 2 device px scaled to 1.15; the page's 1 d unit is 1.
+        const d = pageDUnit(828.0172, 466.3793);
+        expect(ringBoost(2.32, 828.0172, 466.3793)).toBeCloseTo(2 * d, 3);
+        // The Deck (1, 1280x800: d 1): both 1 device px.
+        expect(ringBoost(1, 1280, 800)).toBe(1);
+        // A 1080p screen at 1 (d 1.333): Home's 1.333 device px, soft, against the page's 1.
+        expect(ringBoost(1, 1920, 1080)).toBeCloseTo(pageDUnit(1920, 1080), 3);
+        // Unknown ratio: no change.
+        expect(ringBoost(0, 1280, 800)).toBe(1);
     });
     it('Play: white words and glyph on the accent pill, as on Home (Steam drew the glyph dark and the words white)', () => {
         expect(rulesFor(restyled, '.rt_PlayBtn [role="button"]')).toContain('color: #ffffff !important');
@@ -711,7 +728,7 @@ describe('buildThemeCss restyle (Spotlight Home on)', () => {
         for (const [, selector, body] of steamRules) {
             const props = body.split(';').map((d) => d.split(':')[0].trim()).filter(Boolean);
             for (const prop of props) {
-                expect([selector, prop]).toEqual([selector, expect.stringMatching(/^(--gg-accent|--gg-play-top|--gg-row-h|--gg-ok|--gg-warn|--gg-bad|--gg-off|transition|color|background|border|border-width|filter|box-shadow|visibility|padding-left|padding-right|padding-top|padding-bottom|font-size|font-weight|width|height|margin-right|top|min-width|flex|padding|backdrop-filter|display|object-position|transform|transform-style)$/)]);
+                expect([selector, prop]).toEqual([selector, expect.stringMatching(/^(--gg-accent|--gg-play-top|--gg-row-h|--gg-ok|--gg-warn|--gg-bad|--gg-off|transition|color|background|border|border-width|border-color|filter|box-shadow|visibility|padding-left|padding-right|padding-top|padding-bottom|font-size|font-weight|width|height|margin-right|top|min-width|flex|padding|backdrop-filter|display|object-position|transform|transform-style)$/)]);
             }
         }
         // (100vh only in the Play row's anchor variable, which the 1.1.1 layout rules read: the default and the TV's, and in
