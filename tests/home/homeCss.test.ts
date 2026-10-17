@@ -823,7 +823,10 @@ describe('homeCss sheet toggle (mouse only)', () => {
     it('a chevron centred in the gap above the games row, hidden and unclickable unless a mouse is in use', () => {
         const rest = body('.gh-sheet-toggle');
         expect(rest).toContain('left: 50%');
-        expect(rest).toContain(`top: calc(${geo.top - 27}px - var(--gh-top))`);
+        // Its bottom 18 px above the cards (Michael: 3 was too tight); the buttons' row ends left of it, so it may rise past them.
+        expect(rest).toContain(`top: calc(${geo.top - 18 - 24}px - var(--gh-top))`);
+        // Above the tabs row, which spans the page and takes clicks once the sheet is up (it covered the chevron there).
+        expect(rest).toMatch(/z-index: [1-9]/);
         expect(rest).toContain('opacity: 0');
         expect(rest).toContain('pointer-events: none');
         const on = body('html[data-gg-mouse] .gh-sheet-toggle');
@@ -831,7 +834,7 @@ describe('homeCss sheet toggle (mouse only)', () => {
         expect(on).toContain('pointer-events: auto');
     });
     it('with the sheet up it moves onto the tabs row and points up, by transform only, with the sheet', () => {
-        const dy = Math.round((FEED_SHEET.tabsTop + (FEED_SHEET.tabHeight - 24) / 2 - (geo.top - 27)) * 100) / 100;
+        const dy = Math.round((FEED_SHEET.tabsTop + (FEED_SHEET.tabHeight - 24) / 2 - (geo.top - 18 - 24)) * 100) / 100;
         expect(body('.gh-page-up .gh-sheet-toggle')).toContain(`transform: translate(-50%, ${dy}px) rotate(180deg)`);
         expect(body('.gh-sheet-toggle')).toMatch(/transition: transform 500ms/);
     });

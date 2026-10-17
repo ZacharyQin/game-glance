@@ -151,7 +151,7 @@ export const FEED_SHEET = {
 } as const;
 
 /** The mouse's sheet toggle (a chevron): its box, its icon, and how far its top sits above the games row's. */
-export const SHEET_TOGGLE = { w: 44, h: 24, lift: 27, icon: { w: 28, h: 12 } } as const;
+export const SHEET_TOGGLE = { w: 44, h: 24, lift: 18 + 24, icon: { w: 28, h: 12 } } as const;
 
 /** The most the stack moves down, whatever the screen. */
 export const MAX_STACK_SHIFT = 120;
@@ -385,12 +385,14 @@ export function homeCss(cardScale: number = CARD_SCALE_HANDHELD): string {
         rule('.gh-recents', `position: absolute; left: var(--gh-row, ${SIDE_INSET.handheld - ROW_OFFSET}px); right: 0; top: calc(${geo.top}px - var(--gh-top)); height: ${geo.capsuleH}px; margin: 0; padding: 0; pointer-events: auto; touch-action: none; user-select: none`),
         rule('.gh-page-up .gh-recents', 'pointer-events: none'),
         // The sheet toggle, for a mouse only (mouseMode; a finger swipes, the controller presses Down / B): a chevron centred
-        // in the gap above the games row (31 px between the buttons and the cards: no room for a circle) that raises the feed
+        // above the games row, its bottom 18 px above the cards (3 was too tight, Michael; the buttons' row ends left of it,
+        // so it may rise past their bottom; no room for a circle), drawn over the tabs row (which spans the page and took its
+        // clicks once the sheet was up), that raises the feed
         // sheet; with the sheet up it rides onto the middle of the tabs row, which the tab names leave free, pointing up, and
         // brings the games back. One element, moved and turned by transform only (motion.ts), with the sheet.
         rule('.gh-sheet-toggle', `position: absolute; left: 50%; top: calc(${geo.top - SHEET_TOGGLE.lift}px - var(--gh-top)); width: ${SHEET_TOGGLE.w}px; height: ${SHEET_TOGGLE.h}px;
             margin: 0; padding: 0; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,.7); filter: drop-shadow(0 1px 3px rgba(0,0,0,.6));
-            cursor: pointer; opacity: 0; pointer-events: none; transform: translate(-50%, 0); transition: transform ${SHEET}, opacity 200ms, color 150ms`),
+            z-index: 3; cursor: pointer; opacity: 0; pointer-events: none; transform: translate(-50%, 0); transition: transform ${SHEET}, opacity 200ms, color 150ms`),
         rule('.gh-sheet-toggle svg', `width: ${SHEET_TOGGLE.icon.w}px; height: ${SHEET_TOGGLE.icon.h}px; margin: 0; fill: none; stroke: currentColor; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round`),
         rule(`${HOVER} .gh-sheet-toggle`, 'opacity: 1; pointer-events: auto'),
         rule(`${HOVER} .gh-sheet-toggle:hover`, 'color: #fff'),
