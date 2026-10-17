@@ -5,7 +5,8 @@ import { markLeaving } from './homeMemory';
 import { playNavSound } from './navSound';
 import { takeSteamFocus } from './steamFocus';
 import { createOpenTransition, OpenTransition } from './openTransition';
-import { applyOpening, canvasMeasure, extrasFlags, missingStats, OpenVariant, openVariant, pageStatsFromChips, readChipTexts, readExtrasAsked, readExtrasSize, measureHome, viewportSize } from './openHome';
+import { applyOpening, canvasMeasure, extrasFlags, missingStats, OpenVariant, openVariant, pageStatsFromChips, readChipTexts, readExtrasAsked, readExtrasSize, readTwinTexts, measureHome, viewportSize } from './openHome';
+import { TwinSpec, twinSpecs } from './openTwins';
 import { openMotion } from './openMotion';
 import { pageTargets, PageLook } from './openTargets';
 import { mountOpenBridge } from './openBridge';
@@ -184,7 +185,15 @@ function startHome(c: OpenContext): (() => void) | null {
                 const stats = pageStatsFromChips(readChipTexts(root), c.look, size);
                 const store = home.store ?? { x: 0, y: 0, w: 0, h: 0 };
                 const page = pageTargets(c.look, screen, stats, canvasMeasure(root), { w: store.w, h: store.h }, c.extras ? readExtrasAsked(root) : undefined);
-                return applyOpening(root, 'morph', openMotion(home, page, c.look, scale, !root.ownerDocument?.documentElement?.hasAttribute(MOUSE_ATTR)), null, c.extras);
+                const focused = !root.ownerDocument?.documentElement?.hasAttribute(MOUSE_ATTR);
+                // The moving text as page-sized twins (openTwins); without them (any failure) Home's own text morphs as before.
+                let twins: TwinSpec[] = [];
+                try {
+                    twins = twinSpecs(home, page, readTwinTexts(root), stats, c.look, focused, scale);
+                } catch (error) {
+                    console.warn(`${LOG_PREFIX} Home: could not set up the text twins`, error);
+                }
+                return applyOpening(root, 'morph', openMotion(home, page, c.look, scale, focused), null, c.extras, twins);
             }
         } catch (error) {
             console.warn(`${LOG_PREFIX} Home: could not set up the morph`, error);

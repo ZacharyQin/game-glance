@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { applyOpening, extrasFlags, extrasParts, measureHome, missingStats, viewportSize, openVariant, pageStatsFromChips, readExtrasAsked } from '../../src/home/openHome';
+import { applyOpening, extrasFlags, extrasParts, measureHome, missingStats, mountTwins, readTwinTexts, viewportSize, openVariant, pageStatsFromChips, readExtrasAsked } from '../../src/home/openHome';
+import type { TwinSpec } from '../../src/home/openTwins';
 import { BRIDGE_FADE_EASE, mountOpenBridge } from '../../src/home/openBridge';
 
 describe('openVariant', () => {
@@ -106,6 +107,13 @@ describe('applyOpening', () => {
         expect(f.attrs.get('data-gh-shells')).toBe('2');
         f.frames.splice(0).forEach((cb) => cb());
         expect(f.attrs.get('data-gh-phase')).toBe('to');
+    });
+    it('twins that cannot be drawn: the morph still starts, without them (Home\'s own text morphs)', () => {
+        const f = fakeRoot();
+        const twin: TwinSpec = { name: 'title', role: 'title', text: 'X', x: 0, y: 0, origin: 'base', from: 'none', to: 'none', accent: false };
+        expect(() => applyOpening(f.root, 'morph', [], null, '', [twin])).not.toThrow();
+        expect(f.attrs.get('data-gh-opening')).toBe('morph');
+        expect(f.attrs.has('data-gh-twins')).toBe(false);
     });
     it("a feed card's game: its hero art as a variable", () => {
         const f = fakeRoot();
@@ -357,5 +365,55 @@ describe("the page's size stat when Home's chip drew it (a Steam game's Space Re
     it('Home showed the size chip: the page is told, so its size stat is not hidden while it arrives', () => {
         expect(extrasFlags('', ['played', 'size', 'hltb'])).toEqual({ homeSize: true });
         expect(extrasFlags('', ['played', 'hltb'])).toEqual({});
+    });
+});
+
+describe('text twins on Home', () => {
+    /** Just enough of an element for mountTwins: children, attributes, text and style variables. */
+    function fakeEl(tag = 'div') {
+        const el = {
+            tag,
+            attrs: {} as Record<string, string>,
+            vars: {} as Record<string, string>,
+            className: '',
+            textContent: '',
+            children: [] as unknown[],
+            parent: null as null | { children: unknown[] },
+            style: { setProperty(n: string, v: string) { el.vars[n] = v; } },
+            setAttribute(n: string, v: string) { el.attrs[n] = v; },
+            appendChild(c: { parent: unknown }) { el.children.push(c); c.parent = el; return c; },
+            remove() { if (el.parent) el.parent.children.splice(el.parent.children.indexOf(el), 1); },
+            ownerDocument: null as unknown,
+        };
+        return el;
+    }
+    const spec = (name: string): TwinSpec => ({ name, role: 'label', text: `T-${name}`, x: 10, y: 20, origin: 'midline', from: 'translate(1px, 2px) scale(0.5)', to: 'none', accent: name === 'value-hltb' });
+    it('mountTwins creates one element per spec with its text and variables, and removes them', () => {
+        const root = fakeEl();
+        root.ownerDocument = { createElement: () => fakeEl() };
+        const remove = mountTwins(root as unknown as HTMLElement, [spec('label-played'), spec('value-hltb')]);
+        expect(root.children).toHaveLength(1);
+        const layer = root.children[0] as ReturnType<typeof fakeEl>;
+        expect(layer.className).toBe('gh-open-twins');
+        const [a, b] = layer.children as Array<ReturnType<typeof fakeEl>>;
+        expect(a.className).toBe('gh-twin');
+        expect(a.attrs).toMatchObject({ 'data-twin': 'label-played', 'data-role': 'label', 'data-origin': 'midline' });
+        expect(a.textContent).toBe('T-label-played');
+        expect(a.vars).toEqual({ '--t-x': '10px', '--t-y': '20px', '--t-from': 'translate(1px, 2px) scale(0.5)', '--t-to': 'none' });
+        expect(a.attrs['data-accent']).toBeUndefined();
+        expect(b.attrs['data-accent']).toBe('');
+        remove();
+        expect(root.children).toHaveLength(0);
+    });
+    it('mountTwins with no specs adds nothing', () => {
+        const root = fakeEl();
+        root.ownerDocument = { createElement: () => fakeEl() };
+        mountTwins(root as unknown as HTMLElement, [])();
+        expect(root.children).toHaveLength(0);
+    });
+    it('readTwinTexts: the title, eyebrow and Play label as shown; null title for a logo', () => {
+        const q = (map: Record<string, string | null>) => ({ querySelector: (sel: string) => (map[sel] == null ? null : { textContent: map[sel] }) }) as unknown as Element;
+        expect(readTwinTexts(q({ '.gh-title-slot .gh-title': 'Cronos', '.gh-eyebrow': 'Last played', '.gh-btn[data-action="play"] .gh-btn-label': 'Play' }))).toEqual({ title: 'Cronos', eyebrow: 'Last played', play: 'Play' });
+        expect(readTwinTexts(q({ '.gh-eyebrow': 'Last played', '.gh-btn[data-action="play"] .gh-btn-label': 'Play' })).title).toBeNull();
     });
 });

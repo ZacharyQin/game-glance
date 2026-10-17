@@ -1,7 +1,9 @@
 import type { HomeRects, MotionVar } from './openMotion';
 import type { Box, ExtraColumn, ExtrasAsked, Measure, PageLook, PageStat, StatKey } from './openTargets';
 import type { HltbResult } from '../data/hltb';
+import type { TwinSpec } from './openTwins';
 import { tr } from '../i18n/steamText';
+import { LOG_PREFIX } from '../constants';
 
 /**
  * Spotlight Home's side of the open transition: which variant runs (openVariant), Home's boxes (measureHome), the
@@ -88,7 +90,40 @@ export function measureHome(root: Element | null): HomeRects | null {
  * game's hero for heroFade. Returns the undo (a cancel before the hand-over): every variable and attribute goes, and
  * the pending frame does nothing.
  */
-export function applyOpening(root: HTMLElement, variant: OpenVariant, vars: MotionVar[], heroUrl: string | null, extras = ''): () => void {
+/**
+ * The open's text twins (home/openTwins) drawn in their own layer in `root` (homeCss .gh-open-twins), each with its text
+ * and its place and transforms as variables; returns their removal. Nothing for no specs.
+ */
+export function mountTwins(root: HTMLElement, specs: TwinSpec[]): () => void {
+    if (specs.length === 0) return () => undefined;
+    const doc = root.ownerDocument;
+    const layer = doc.createElement('div');
+    layer.className = 'gh-open-twins';
+    for (const t of specs) {
+        const el = doc.createElement('div');
+        el.className = 'gh-twin';
+        el.setAttribute('data-twin', t.name);
+        el.setAttribute('data-role', t.role);
+        el.setAttribute('data-origin', t.origin);
+        if (t.accent) el.setAttribute('data-accent', '');
+        el.textContent = t.text;
+        el.style.setProperty('--t-x', `${t.x}px`);
+        el.style.setProperty('--t-y', `${t.y}px`);
+        el.style.setProperty('--t-from', t.from);
+        el.style.setProperty('--t-to', t.to);
+        layer.appendChild(el);
+    }
+    root.appendChild(layer);
+    return () => layer.remove();
+}
+
+/** The texts the twins draw, as Home shows them: the title (null for a logo), the eyebrow, the Play label. */
+export function readTwinTexts(root: Element): { title: string | null; eyebrow: string; play: string } {
+    const text = (sel: string) => root.querySelector(sel)?.textContent ?? null;
+    return { title: text('.gh-title-slot .gh-title'), eyebrow: text('.gh-eyebrow') ?? '', play: text('.gh-btn[data-action="play"] .gh-btn-label') ?? '' };
+}
+
+export function applyOpening(root: HTMLElement, variant: OpenVariant, vars: MotionVar[], heroUrl: string | null, extras = '', twins: TwinSpec[] = []): () => void {
     const names: string[] = [];
     const set = (name: string, value: string) => {
         root.style.setProperty(name, value);
@@ -100,6 +135,17 @@ export function applyOpening(root: HTMLElement, variant: OpenVariant, vars: Moti
     if (shells) root.setAttribute('data-gh-shells', shells);
     // The page's parts Home draws as it turns into it (extrasParts): homeCss shows only those.
     if (extras) root.setAttribute('data-gh-extras', extras);
+    // The text twins (morph only): homeCss fades out Home's text each one replaces (data-gh-twins).
+    let unmountTwins = () => undefined as void;
+    if (variant === 'morph' && twins.length > 0) {
+        try {
+            unmountTwins = mountTwins(root, twins);
+            root.setAttribute('data-gh-twins', twins.map((t) => t.name).join(' '));
+        } catch (error) {
+            // Without them Home's own text morphs, as before the twins.
+            console.warn(`${LOG_PREFIX} Home: could not draw the text twins`, error);
+        }
+    }
     root.setAttribute('data-gh-opening', variant);
     root.setAttribute('data-gh-phase', 'from');
     let live = true;
@@ -112,7 +158,8 @@ export function applyOpening(root: HTMLElement, variant: OpenVariant, vars: Moti
     return () => {
         live = false;
         for (const name of names) root.style.removeProperty(name);
-        for (const attr of ['data-gh-opening', 'data-gh-phase', 'data-gh-shells', 'data-gh-extras']) root.removeAttribute(attr);
+        for (const attr of ['data-gh-opening', 'data-gh-phase', 'data-gh-shells', 'data-gh-extras', 'data-gh-twins']) root.removeAttribute(attr);
+        unmountTwins();
     };
 }
 

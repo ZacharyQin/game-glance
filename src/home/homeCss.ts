@@ -8,7 +8,7 @@ import { FRIEND_COLOURS } from './friends';
 import { FEED_ROW2_HEADER } from './feedLayout';
 import { PERSONA_DOT, PERSONA_DOT_COLOURS, PersonaDot, STATUS_BAR, STATUS_FADE_MS } from './statusItems';
 import { ACCENT_MS, CAP_ART_FADE_MS, CAP_STATE_MS, FEED_ART_FADE_MS, FEED_SCROLL, HERO_FADE_MS, MORPH_EASE, OPEN_TIMINGS, RETURN_TIMINGS, SETTLE_WIDEN_MS, SHEET, SHEET_MS, SLIDE, SLIDE_EASE } from './motion';
-import { PAGE_LAYOUT, PAGE_SCRIMS, pillFocusScale, STEAM_TOP_GRADIENT } from '../styles/themeCss';
+import { PAGE_LAYOUT, PAGE_SCRIMS, pageType, pillFocusScale, STEAM_TOP_GRADIENT } from '../styles/themeCss';
 import { PAGE_LINES } from './openTargets';
 import { CARD_SCALE_HANDHELD, GLOW as CAP_GLOW, RECENTS_BOTTOM, recentsGeometry } from './recentsLayout';
 import { PILL_INSET, ROW_OFFSET, SIDE_INSET } from './insets';
@@ -603,6 +603,17 @@ export function openingRules(): string[] {
     const dd = (n: number) => `calc(${n}px * var(--gho-x-d))`;
     const X = '.gh-open-extras';
     const at = (name: string) => `left: var(--gho-x-${name}-x); top: var(--gho-x-${name}-y); width: var(--gho-x-${name}-w)`;
+    // The twins' crossfade ends at this share of the morph; the Home text each twin replaces, by twin name.
+    const twinAt = Math.round((T.twinFade / T.morph) * 1000) / 10;
+    const twinOut: Array<[string, string]> = [
+        ['title', '.gh-title-slot'],
+        ['eyebrow', '.gh-eyebrow'],
+        ['play', `.gh-btn[data-action="play"] .gh-btn-label`],
+        ...(['size', 'played', 'achievements', 'hltb'] as const).flatMap((k): Array<[string, string]> => [
+            [`label-${k}`, `.gh-chip[data-chip="${k}"] .gh-chip-label`],
+            [`value-${k}`, `.gh-chip[data-chip="${k}"] .gh-chip-value`],
+        ]),
+    ];
     return [
         lateFade('gh-open-extras-in', 0, 1, T.extras, 'ease-out'),
         lateFade('gh-open-pill-out', 1, 0, T.extras, 'ease-in'),
@@ -690,6 +701,34 @@ export function openingRules(): string[] {
         // Its own opacity stays the start value (0, soft: an animation cannot override !important): the GPU draws that until
         // the animation runs, and the animation holds the end.
         rule(`${MT}[data-gh-extras] ${X}`, late('gh-open-extras-in')),
+        // The text twins (home/openTwins, openHome.mountTwins): each moving text drawn again in its own layer at the page's
+        // size and type (themeCss.PAGE_TYPE, in the page's d unit), placed where the page puts it, from Home's text to no
+        // transform, so the hand-over shows the page's text as the page draws it. Home's text hands over to them over the
+        // morph's first 40% (OPEN_TIMINGS.twinFade), opacity only. (Own layer: the extras layer fades in only at the end.)
+        `@keyframes gh-twin-in { 0% { opacity: 0; animation-timing-function: ease-out; } ${twinAt}%, 100% { opacity: 1; } }`,
+        `@keyframes gh-twin-out { 0% { opacity: 1; animation-timing-function: ease-in; } ${twinAt}%, 100% { opacity: 0; } }`,
+        soft('.gh-open-twins', 'display: none; position: absolute; left: 0; top: 0; width: 100%; height: 100%; margin: 0; padding: 0; pointer-events: none'),
+        soft(`${M} .gh-open-twins`, 'display: block'),
+        // The origin point is placed by the translate property (its share of the twin's own height, plus the glide at the
+        // hand-over, --t-dx/--t-dy), so transform carries only the morph, about that same point.
+        soft('.gh-twin', `position: absolute; left: var(--t-x); top: var(--t-y); margin: 0; padding: 0; white-space: nowrap; color: #fff;
+            transform-origin: var(--t-origin, 0 0); translate: var(--t-dx, 0px) calc(var(--t-dy, 0px) - var(--t-shift, 0%)); transform: var(--t-from); opacity: 0`),
+        soft('.gh-twin[data-origin="top"]', '--t-origin: 0 0; --t-shift: 0%'),
+        soft('.gh-twin[data-origin="base"]', 'transform-origin: 0 100%; --t-shift: 100%'),
+        soft('.gh-twin[data-origin="midline"]', 'transform-origin: 0 50%; --t-shift: 50%'),
+        soft(`${MT} .gh-twin`, `transform: var(--t-to); transition: ${move}; animation: gh-twin-in ${T.morph}ms linear both`),
+        soft('.gh-twin[data-role="title"]', `${pageType('title', dd)} max-width: ${dd(640)}; white-space: normal; text-wrap: balance; overflow-wrap: anywhere; text-shadow: 0 ${dd(4)} ${dd(30)} rgba(0,0,0,.4)`),
+        soft('.gh-twin[data-role="eyebrow"]', `${pageType('eyebrow', dd)} color: var(--glance-accent-text)`),
+        // The page's labels inherit a 1.5 line height from Steam (PAGE_TYPE leaves it out): stated here.
+        soft('.gh-twin[data-role="label"]', `${pageType('label', dd)} line-height: 1.5; color: rgba(255,255,255,.62)`),
+        soft('.gh-twin[data-role="value"]', pageType('value', dd)),
+        soft('.gh-twin[data-role="cleanValue"]', pageType('cleanValue', dd)),
+        soft('.gh-twin[data-role="playLabel"]', pageType('playLabel', dd)),
+        soft('.gh-twin[data-accent]', 'color: var(--glance-accent-text)'),
+        ...twinOut.map(([name, sel]) => soft(`${MT}[data-gh-twins~="${name}"] ${sel}`, `animation: gh-twin-out ${T.morph}ms linear both`)),
+        // The bridge (nothing animates in it): the twins at their end, Home's twinned text hidden, stated above the live rules.
+        soft(`.gh-root.gh-bridge[data-gh-opening][data-gh-phase] .gh-twin`, 'opacity: 1; transform: var(--t-to); animation: none; transition: none'),
+        ...twinOut.map(([name, sel]) => soft(`.gh-root.gh-bridge[data-gh-opening][data-gh-phase][data-gh-twins~="${name}"] ${sel}`, 'opacity: 0; animation: none')),
         rule(`${X} .gh-x-desc`, `display: none; position: absolute; ${at('desc')}; margin: 0; font-size: ${dd(L.cardText.desc)}; font-weight: 400; line-height: ${L.cardText.descLine};
             color: rgba(255,255,255,.84); -webkit-line-clamp: ${L.cardText.descLines}; -webkit-box-orient: vertical; overflow: hidden`),
         rule('.gh-root[data-gh-extras~="desc"] .gh-x-desc', 'display: -webkit-box'),

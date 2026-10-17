@@ -5,7 +5,7 @@ import {
     FEED_SHEET, hexAlpha, homeCss, MAX_STACK_SHIFT, sourcePillTop, stackShift, TITLE_BLOCK, titleBlockBottom, titleBlockLayout,
 } from '../../src/home/homeCss';
 import { sourcePillLook } from '../../src/styles/sourcePill';
-import { PAGE_LAYOUT, PAGE_SCRIMS, pillFocusScale, STEAM_TOP_GRADIENT } from '../../src/styles/themeCss';
+import { PAGE_LAYOUT, PAGE_SCRIMS, pageType, pillFocusScale, STEAM_TOP_GRADIENT } from '../../src/styles/themeCss';
 import { ACCENT_MS, CAP_ART_FADE_MS, CAP_STATE_MS, HERO_FADE_MS, OPEN_TIMINGS, RETURN_TIMINGS, SHEET_MS, SLIDE_MS } from '../../src/home/motion';
 import { CARD_SCALE_DOCKED, CARD_SCALE_HANDHELD, recentsGeometry, recentsGlowTop } from '../../src/home/recentsLayout';
 
@@ -844,5 +844,72 @@ describe('homeCss sheet toggle (mouse only)', () => {
     });
     it('the tabs row has no "more" hint any more (it never showed: inside the tabs, which are hidden at rest)', () => {
         expect(css).not.toContain('gh-tabs-more');
+    });
+});
+
+describe('homeCss open transition: text twins', () => {
+    const css = homeCss(CARD_SCALE_HANDHELD);
+    // (--gho-x-d is a plain number: sizes are px times it.)
+    const dd = (n: number) => `calc(${n}px * var(--gho-x-d))`;
+    const body = (sel: string) => {
+        const i = css.indexOf(`${sel} {`);
+        return i < 0 ? '' : css.slice(i, css.indexOf('}', i));
+    };
+    const M = '.gh-root[data-gh-opening="morph"]';
+    const MT = `${M}[data-gh-phase="to"]`;
+    it("twins: page type in d units, placed, from → to with the morph, faded in over the first 40%", () => {
+        for (const role of ['title', 'eyebrow', 'label', 'value', 'cleanValue', 'playLabel'] as const) {
+            expect(body(`.gh-twin[data-role="${role}"]`), role).toContain(pageType(role, dd));
+        }
+        expect(body('.gh-open-twins')).toContain('display: none');
+        expect(body(`${M} .gh-open-twins`)).toContain('display: block');
+        const twin = body('.gh-twin');
+        expect(twin).toContain('left: var(--t-x)');
+        expect(twin).toContain('top: var(--t-y)');
+        expect(twin).toContain('transform: var(--t-from)');
+        expect(twin).toContain('opacity: 0');
+        expect(twin).toContain('translate: var(--t-dx, 0px) calc(var(--t-dy, 0px) - var(--t-shift, 0%))');
+        const to = body(`${MT} .gh-twin`);
+        expect(to).toContain('transform: var(--t-to)');
+        expect(to).toContain(`transform ${OPEN_TIMINGS.morph}ms`);
+        expect(to).toContain(`animation: gh-twin-in ${OPEN_TIMINGS.morph}ms linear both`);
+        expect(css).toMatch(/@keyframes gh-twin-in \{ 0% \{ opacity: 0;[^}]*\} 40%, 100% \{ opacity: 1; \} \}/);
+        expect(body('.gh-twin[data-origin="base"]')).toContain('transform-origin: 0 100%');
+        expect(body('.gh-twin[data-origin="base"]')).toContain('--t-shift: 100%');
+        expect(body('.gh-twin[data-origin="midline"]')).toContain('--t-shift: 50%');
+        // The page's labels inherit a 1.5 line height from Steam: the twins state it.
+        expect(body('.gh-twin[data-role="label"]')).toContain('line-height: 1.5');
+        expect(body('.gh-twin[data-accent]')).toContain('color: var(--glance-accent-text)');
+    });
+    it("home's text fades out as its twin fades in, only where a twin exists", () => {
+        expect(css).toMatch(/@keyframes gh-twin-out \{ 0% \{ opacity: 1;[^}]*\} 40%, 100% \{ opacity: 0; \} \}/);
+        const out = `animation: gh-twin-out ${OPEN_TIMINGS.morph}ms linear both`;
+        expect(body(`${MT}[data-gh-twins~="title"] .gh-title-slot`)).toContain(out);
+        expect(body(`${MT}[data-gh-twins~="eyebrow"] .gh-eyebrow`)).toContain(out);
+        expect(body(`${MT}[data-gh-twins~="play"] .gh-btn[data-action="play"] .gh-btn-label`)).toContain(out);
+        for (const k of ['size', 'played', 'achievements', 'hltb']) {
+            expect(body(`${MT}[data-gh-twins~="label-${k}"] .gh-chip[data-chip="${k}"] .gh-chip-label`), k).toContain(out);
+            expect(body(`${MT}[data-gh-twins~="value-${k}"] .gh-chip[data-chip="${k}"] .gh-chip-value`), k).toContain(out);
+        }
+    });
+    it("title twin keeps the page's max width (and wraps as the page's does)", () => {
+        const t = body('.gh-twin[data-role="title"]');
+        expect(t).toContain(`max-width: ${dd(640)}`);
+        expect(t).toContain('white-space: normal');
+        expect(t).toContain('text-wrap: balance');
+    });
+    it("the bridge holds the twins' end state and Home's text hidden, nothing replaying", () => {
+        const B = '.gh-root.gh-bridge[data-gh-opening][data-gh-phase]';
+        const twin = body(`${B} .gh-twin`);
+        expect(twin).toContain('opacity: 1');
+        expect(twin).toContain('animation: none');
+        expect(twin).toContain('transform: var(--t-to)');
+        const hide = body(`${B}[data-gh-twins~="label-played"] .gh-chip[data-chip="played"] .gh-chip-label`);
+        expect(hide).toContain('opacity: 0');
+        expect(hide).toContain('animation: none');
+        expect(body(`${B}[data-gh-twins~="title"] .gh-title-slot`)).toContain('opacity: 0');
+    });
+    it('no !important on transform or opacity in any twin rule', () => {
+        for (const m of css.matchAll(/[^{}]*gh-twin[^{]*\{([^}]*)\}/g)) expect(m[1]).not.toMatch(/(?:transform|opacity|translate):[^;]*!important/);
     });
 });
