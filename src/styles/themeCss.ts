@@ -489,8 +489,8 @@ export function buildLaunchCss(classes: ThemeClasses): string {
  * The eyebrow/title block is shown only with the full-screen layout, where the logo was; otherwise (a renamed Steam
  * class) it stays hidden and Steam's logo is left alone, so the page never shows two titles.
  */
-/** Branch mark for the preferred-version control, as a mask so focus can recolor it. */
-const VERSION_ICON = `url("data:image/svg+xml,${encodeURIComponent("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='black' d='M7 3a2.25 2.25 0 0 0-.75 4.37v9.26a2.25 2.25 0 1 0 1.5 0v-3.4A3.75 3.75 0 0 0 11.5 17h.13a2.25 2.25 0 1 0 0-1.5H11.5A2.25 2.25 0 0 1 9.25 13.25V7.37A2.25 2.25 0 0 0 7 3z'/></svg>")}")`;
+/** Stacked pages for the preferred-version control. Same filled weight as Steam's circle icons; a branch mark turned to mush at this size. */
+const VERSION_ICON = `url("data:image/svg+xml,${encodeURIComponent("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'><path fill='black' fill-rule='evenodd' d='M13 7h15a2 2 0 0 1 2 2v13h-4V11H13V7zm-6 6h15a2 2 0 0 1 2 2v15a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V15a2 2 0 0 1 2-2z'/></svg>")}")`;
 
 function restyleRules({ header, details, root, play, shared }: ThemeClasses, layout: boolean): string[] {
     const topCapsule = cls(header, 'TopCapsule');
