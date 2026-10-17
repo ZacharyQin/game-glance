@@ -489,6 +489,9 @@ export function buildLaunchCss(classes: ThemeClasses): string {
  * The eyebrow/title block is shown only with the full-screen layout, where the logo was; otherwise (a renamed Steam
  * class) it stays hidden and Steam's logo is left alone, so the page never shows two titles.
  */
+/** Branch mark for the preferred-version control, as a mask so focus can recolor it. */
+const VERSION_ICON = `url("data:image/svg+xml,${encodeURIComponent("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='black' d='M7 3a2.25 2.25 0 0 0-.75 4.37v9.26a2.25 2.25 0 1 0 1.5 0v-3.4A3.75 3.75 0 0 0 11.5 17h.13a2.25 2.25 0 1 0 0-1.5H11.5A2.25 2.25 0 0 1 9.25 13.25V7.37A2.25 2.25 0 0 0 7 3z'/></svg>")}")`;
+
 function restyleRules({ header, details, root, play, shared }: ThemeClasses, layout: boolean): string[] {
     const topCapsule = cls(header, 'TopCapsule');
     const titleImage = cls(header, 'TitleImageContainer');
@@ -498,6 +501,9 @@ function restyleRules({ header, details, root, play, shared }: ThemeClasses, lay
     const playButton = cls(root, 'ActionButtonAndStatusPanel');
     const menuButton = cls(play, 'MenuButton');
     const cloud = cls(play, 'CloudStatusRow');
+    const appButtons = cls(root, 'AppButtons');
+    const versionRow = cls(shared, 'SharedLibrary');
+    const versionLink = versionRow && `${versionRow} a[role="button"]`;
 
     const rules: string[] = [
         // Steam's thin download bar under the Play pill is never shown (the pill itself fills, buildDownloadCss), so it
@@ -599,10 +605,20 @@ function restyleRules({ header, details, root, play, shared }: ThemeClasses, lay
         `.gg-more { display: none; }`,
         `.gg-pill { top: calc(-1 * ${d(PAGE_LAYOUT.storePillTop)}); ${sourcePillLook(d)} }`,
         `.gg-pill-icon { ${sourcePillIcon(d)} }`,
-        // A game from the family library: Steam's line under Play ("From your Steam Family's library") has no room between
-        // the row and the cards; the family pill (data/family) says it beside the store pill instead, drawn like it. It sits
-        // inside the store pill, just to its left, so it follows the pill wherever the layout puts it.
-        rule(cls(shared, 'SharedLibrary'), ` display: none !important; `),
+        // "From your Steam library" has no room under Play. The sentence collapses; its "change preferred
+        // version" link becomes a circle one slot after the cloud button (or in the cloud's slot when there is
+        // none). display:none would leave that link in the controller focus order at 0,0.
+        rule(versionRow, ` display: block !important; position: static !important; height: 0 !important; margin: 0 !important; padding: 0 !important; overflow: visible !important; font-size: 0 !important; line-height: 0 !important; pointer-events: none !important; `),
+        rule(versionLink, ` position: absolute !important; z-index: 2 !important; top: 0 !important; pointer-events: auto !important;
+            left: calc(var(--gg-side) + var(--gg-play-w) + var(--gg-gap) + (var(--gg-buttons, 2) + var(--gg-after-cloud, 1)) * (var(--gg-icon) + var(--gg-gap))) !important;
+            width: var(--gg-icon) !important; height: var(--gg-icon) !important; margin: 0 !important; padding: 0 !important; box-sizing: border-box !important;
+            display: inline-flex !important; align-items: center !important; justify-content: center !important; border-radius: 50% !important;
+            font-size: 0 !important; color: #fff !important; background: rgba(12, 16, 22, 0.4) !important; border: 1px solid rgba(255, 255, 255, 0.18) !important;
+            backdrop-filter: blur(${d(12)}) !important; `),
+        rule(versionLink && `${versionLink}::before`, ` content: '' !important; width: ${d(PAGE_LAYOUT.circleIcon)} !important; height: ${d(PAGE_LAYOUT.circleIcon)} !important; background: currentColor !important; -webkit-mask: ${VERSION_ICON} center / contain no-repeat !important; mask: ${VERSION_ICON} center / contain no-repeat !important; `),
+        rule(versionLink && `${versionLink}.gpfocus`, ` background: #ffffff !important; color: #0b0f14 !important; `),
+        ...[1, 2, 3, 4, 5].map((n) => rule(playSection && appButtons && versionLink && `${playSection}:has(${appButtons} > :nth-child(${n}):last-child) ${versionLink}`, ` --gg-buttons: ${n}; `)),
+        rule(playSection && cloud && versionLink && `${playSection}:not(:has(~ ${cloud})) ${versionLink}`, ` --gg-after-cloud: 0; `),
         `.gg-family { position: absolute; right: calc(100% + ${d(10)}); top: 50%; transform: translateY(-50%); display: inline-flex; align-items: center;
             margin: 0; border-radius: 999px; border: 1px solid; color: #fff; line-height: 1; white-space: nowrap; ${sourcePillLook(d)} }`,
         `.gg-family-icon { flex: 0 0 auto; ${sourcePillIcon(d)} }`,

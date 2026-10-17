@@ -481,9 +481,13 @@ describe('buildThemeCss restyle (Spotlight Home on)', () => {
     };
     const restyled = buildThemeCss(steam, { restyle: true });
 
-    it('family library: Steam\'s line under Play is hidden, and the family pill sits just left of the store pill, drawn like it', () => {
+    it('preferred version: the library sentence collapses and its link is a circle after the cloud button', () => {
         const withShared = buildThemeCss({ ...steam, shared: { SharedLibrary: 'sl_Shared', Row: 'sl_Row' } }, { restyle: true });
-        expect(withShared).toContain('.sl_Shared { display: none !important; }');
+        expect(withShared).toContain('.sl_Shared { display: block !important;');
+        expect(withShared).not.toContain('.sl_Shared { display: none');
+        expect(withShared).toContain('.sl_Shared a[role="button"] {');
+        expect(withShared).toContain('(var(--gg-buttons, 2) + var(--gg-after-cloud, 1))');
+        expect(withShared).toContain('.rt_Play:not(:has(~ .ps_Cloud)) .sl_Shared a[role="button"] { --gg-after-cloud: 0; }');
         expect(restyled).not.toContain('sl_Shared');
         expect(restyled).toMatch(/\.gg-family \{ position: absolute; right: calc\(100% \+ calc\(10 \* var\(--gg-d\)\)\); top: 50%; transform: translateY\(-50%\);/);
         expect(rulesFor(restyled, '.gg-family')).toContain(sourcePillLook((n) => `calc(${n} * var(--gg-d))`));
