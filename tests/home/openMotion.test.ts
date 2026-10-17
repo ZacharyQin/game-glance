@@ -233,6 +233,19 @@ describe('openMotion', () => {
         expect(v['--gho-circle-2']).toBeUndefined();
     });
 
+    it("a Unifideck cloud's ring: in canvas px, as wide as Unifideck's 2 CSS px once the circle has grown onto the page's", () => {
+        const v = vars(openMotion(homeRects(), spotlight(), 'spotlight', s));
+        // Home's cloud (circle 3) grows from its own box onto the page's third circle (62.5 wide).
+        expect(parseFloat(v['--gho-uni-ring'])).toBeCloseTo((2 * (r.circle3.w / s)) / 62.5, 3);
+        expect(v['--gho-uni-ring']).toMatch(/px$/);
+    });
+    it("the page's fourth circle (Unifideck's trash) in canvas px, for the circle Home draws there as it opens", () => {
+        const v = vars(openMotion(homeRects(), spotlight(), 'spotlight', s));
+        expect(Number(v['--gho-circle-extra-x'])).toBeCloseTo(625 / s, 3);
+        expect(Number(v['--gho-circle-extra-y'])).toBeCloseTo(493.1 / s, 3);
+        expect(Number(v['--gho-circle-extra-w'])).toBeCloseTo(62.5 / s, 3);
+    });
+
     // The page focuses Play on arrival, and a focused Play is scaled about its centre (as Home's): the morph lands on it.
     const f = PAGE_LAYOUT.focusScale;
     // The focused pill grows by what a circle grows (themeCss.pillFocusScale): 4% in height, the same px in width.

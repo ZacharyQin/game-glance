@@ -251,6 +251,8 @@ describe('buildUnifideckCss (a Unifideck game\u2019s page)', () => {
         expect(css).toMatch(/\.unifideck-install-btn[^{]*\{[^}]*justify-content: flex-start !important/);
         // Its cloud button's in-sync check badge at Unifideck's proportion to the 24 glyph (our circles' rule would size it 24).
         expect(css).toContain('.unifideck-icon-btn svg.unifideck-cloud-badge { width: calc(13 * var(--gg-d)) !important; height: calc(13 * var(--gg-d)) !important; }');
+        // Unifideck's inline 0.05em letter spacing drew its word wider than Home's and Steam's ("Play" stepped at the open).
+        expect(css).toMatch(/\.unifideck-play-btn[^{]*\{[^}]*letter-spacing: normal !important/);
         // Unifideck's own 8 px flex gap would add to the glyph's gap (its word sat 14 px further right than Home's).
         expect(css).toMatch(/\.unifideck-install-btn[^{]*\{[^}]*gap: 0 !important/);
         expect(css).toContain(`padding: 0 calc(${PAGE_LAYOUT.pill.padX} * var(--gg-d)) !important`);

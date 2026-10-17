@@ -726,7 +726,7 @@ describe('the way back (B from a page)', () => {
         const blurred = [...css.matchAll(/([^{}]+)\{[^}]*backdrop-filter: blur/g)].map((m) => m[1].trim());
         expect(blurred.length).toBeGreaterThan(0);
         for (const sel of blurred) {
-            if (['.gh-open-shell', '.gh-open-extras', '.gh-status'].some((outside) => sel.includes(outside))) continue;
+            if (['.gh-open-shell', '.gh-open-extras', '.gh-open-circle', '.gh-status'].some((outside) => sel.includes(outside))) continue;
             const last = sel.split(',').map((p) => p.trim().split(/[\s>+~]+/).pop()!);
             for (const compound of last) expect(HOME_GLASS.some((g) => compound.includes(g)), sel).toBe(true);
         }
@@ -786,6 +786,23 @@ describe('delayed fades in the open transition', () => {
 
 describe("a Unifideck game's cloud button (Unifideck's own look, as on its page)", () => {
     const css = homeCss(CARD_SCALE_HANDHELD);
+    it("opening, its ring grows with the circle to Unifideck's 2 CSS px on the page (openMotion --gho-uni-ring)", () => {
+        expect(css).toMatch(/\.gh-root\[data-gh-opening="morph"\] \.gh-btn-cloud\.gh-cloud-uni:not\(\.gh-focus\):not\(:focus\)\s*\{[^}]*box-shadow: 0 0 0 var\(--gho-uni-ring, 2px\) var\(--gh-uni-ring, transparent\) inset/);
+    });
+    it("Unifideck's trash circle: drawn at the page's fourth circle as Home's circles look, fading in late, held in the bridge", () => {
+        const body = (sel: string) => {
+            const i = css.indexOf(`${sel} {`);
+            return i < 0 ? '' : css.slice(i, css.indexOf('}', i));
+        };
+        expect(body('.gh-open-circle')).toContain('display: none');
+        expect(body('.gh-open-circle')).toContain('backdrop-filter: blur(12px)');
+        const at = body('.gh-root[data-gh-opening="morph"] .gh-open-circle');
+        for (const d of ['display: flex', 'left: calc(var(--gho-circle-extra-x) * 1px)', 'top: calc(var(--gho-circle-extra-y) * 1px)', 'width: calc(var(--gho-circle-extra-w) * 1px)']) expect(at).toContain(d);
+        expect(body('.gh-root[data-gh-opening="morph"][data-gh-phase="to"] .gh-open-circle')).toContain('animation: gh-open-extras-in');
+        expect(body('.gh-root.gh-bridge[data-gh-opening][data-gh-phase] .gh-open-circle')).toContain('opacity: 1');
+        expect(body('.gh-open-circle svg')).toContain(`width: ${PAGE_LAYOUT.circleIcon}px`);
+    });
+
     it('a white glyph at the circles\' glyph size, its state ring inside it (unless focused), dimmed without cloud support', () => {
         expect(css).toMatch(/\.gh-btn-cloud\.gh-cloud-uni\s*\{[^}]*color: #fff/);
         expect(css).toMatch(new RegExp(`\\.gh-btn-cloud\\.gh-cloud-uni svg\\s*\\{[^}]*width: ${PAGE_LAYOUT.circleIcon}px[^}]*filter: none`));

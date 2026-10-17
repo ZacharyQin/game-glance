@@ -339,6 +339,8 @@ export function homeCss(cardScale: number = CARD_SCALE_HANDHELD): string {
         rule('.gh-btn-cloud.gh-cloud-uni', 'color: #fff'),
         rule('.gh-btn-cloud.gh-cloud-uni svg', `width: ${PAGE_LAYOUT.circleIcon}px; height: ${PAGE_LAYOUT.circleIcon}px; filter: none`),
         rule('.gh-btn-cloud.gh-cloud-uni:not(.gh-focus)', 'box-shadow: 0 0 0 2px var(--gh-uni-ring, transparent) inset'),
+        // Opening, its ring grows with the circle to the page's 2 CSS px (openMotion --gho-uni-ring), not to 2 canvas px.
+        rule('.gh-root[data-gh-opening="morph"] .gh-btn-cloud.gh-cloud-uni:not(.gh-focus)', 'box-shadow: 0 0 0 var(--gho-uni-ring, 2px) var(--gh-uni-ring, transparent) inset'),
         rule('.gh-btn-cloud.gh-cloud-uni-dim', 'opacity: .5'),
         rule('.gh-btn-cloud.gh-cloud-uni svg.gh-uni-badge', 'width: 13px; height: 13px'),
         // White words and glyph on the accent, as on the game page's Play.
@@ -627,6 +629,16 @@ export function openingRules(): string[] {
         // 16 d units. Its ring is Home's 1px, so it looks like the chips' all the way: Chromium snaps a border to whole device px
         // in the canvas's own units, before the scale, so the page's 1 device px drawn in here came out half as bright on the Ally.
         rule('.gh-open-shell', 'display: none; position: absolute; left: 0; top: 0; margin: 0; padding: 0; pointer-events: none; transform-origin: 0 0; border-radius: 16px; background: rgba(12,16,22,.38); border: 1px solid rgba(255,255,255,.12); backdrop-filter: blur(16px)'),
+        // A Unifideck game's page has a fourth circle (Uninstall) Home has no button for: one is drawn at its place as Home's
+        // circles look at the page's size, and fades in late as the page's other parts do, so it does not pop in after the
+        // hand-over. Its own fade, not the extras layer's: a backdrop blur inside a fading parent sees nothing behind it.
+        rule('.gh-open-circle', `display: none; position: absolute; left: 0; top: 0; margin: 0; padding: 0; pointer-events: none; box-sizing: border-box; aspect-ratio: 1;
+            align-items: center; justify-content: center; border-radius: 999px; color: #fff; background: rgba(12,16,22,.4); border: 1px solid rgba(255,255,255,.18);
+            backdrop-filter: blur(12px); opacity: 0`),
+        rule('.gh-open-circle svg', `width: ${PAGE_LAYOUT.circleIcon}px; height: ${PAGE_LAYOUT.circleIcon}px; margin: 0; fill: currentColor`),
+        rule(`${M} .gh-open-circle`, 'display: flex; left: calc(var(--gho-circle-extra-x) * 1px); top: calc(var(--gho-circle-extra-y) * 1px); width: calc(var(--gho-circle-extra-w) * 1px)'),
+        rule(`${MT} .gh-open-circle`, late('gh-open-extras-in')),
+        rule('.gh-root.gh-bridge[data-gh-opening][data-gh-phase] .gh-open-circle', 'opacity: 1; animation: none'),
         rule(O, 'pointer-events: none'),
         // The bridge (openBridge): a frozen copy of Home in its final state; nothing inside it may animate again.
         rule('.gh-root.gh-bridge, .gh-root.gh-bridge *', 'animation: none; transition: none'),

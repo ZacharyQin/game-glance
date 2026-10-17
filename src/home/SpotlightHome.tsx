@@ -42,6 +42,7 @@ import { useHomeData } from './useHomeData';
 import { collectionEyebrow } from './collections';
 import { preloadLogos } from './logoArt';
 import { tr } from '../i18n/steamText';
+import { FaTrash } from 'react-icons/fa';
 
 /** Hero dim: none at rest (the art is shaded as on the game page, homeCss .gh-scrim-page), .45 while the feed sheet is up. */
 const DIM_REST = 0;
@@ -468,6 +469,8 @@ export function SpotlightHome() {
                 {/* Open transition: the glass panels the chips grow into, one per page card (hidden until opening). */}
                 <div className="gh-open-shell" data-i="0" />
                 <div className="gh-open-shell" data-i="1" />
+                {/* An installed Unifideck game's page has Uninstall as a fourth circle (its trash glyph): drawn there as it opens. */}
+                {!onLibrary && uniInstalled === true && <div className="gh-open-circle"><FaTrash /></div>}
                 {/* Between Steam's top bar (52) and button legend (46); Home draws neither. */}
                 <div className="gh-safe">
                     {/* The page container: moved down by the stack shift (homeCss.stackShift); raised while focus is in the tabs or feed. */}
