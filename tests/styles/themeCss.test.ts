@@ -972,6 +972,9 @@ describe('the page arriving after the open transition', () => {
         const buttons = `.${full.root!.AppButtons}`;
         for (const look of ['spotlight', 'clean'] as const) {
             expect(buildArrivingCss(full, look, 'parts', false), look).toContain(`.unifideck-hide-native-play ${buttons}:has(> :nth-child(4)) > :nth-child(n+4)`);
+            // Home drew one at its place as it opened (homeCss .gh-open-circle): the page's is there at once under the copy
+            // (arriving after the copy had faded, it flickered).
+            expect(buildArrivingCss(full, look, 'parts', false, { uninstall: true }), look).not.toContain(':nth-child(n+4)');
         }
     });
     it('a Unifideck size column Home drew (extras) is there at once; otherwise it arrives with the new parts', () => {

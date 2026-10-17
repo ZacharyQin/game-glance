@@ -290,7 +290,9 @@ export function openGame(appId: number, source?: HTMLElement | null) {
         // The page's stat columns Home showed no chip for (a new game's Play time) arrive instead of popping in.
         const homeMissing = variant === 'morph' && root ? missingStats(readChipTexts(root).map((c) => c.key), extras) : undefined;
         const homeChipKeys = variant === 'morph' && root ? readChipTexts(root).map((c) => c.key) : [];
-        const intent: OpenIntent = { look: pageRestyled ? look : 'steam', mode: variant === 'morph' ? 'parts' : 'all', eyebrow, homeCloud, homeBars, homeFamily, homeMissing, ...extrasFlags(extras, homeChipKeys) };
+        // A Unifideck game's Uninstall circle Home draws as it opens (.gh-open-circle): the page's must not arrive again.
+        const homeUninstall = variant === 'morph' && root ? root.querySelector('.gh-open-circle') !== null : undefined;
+        const intent: OpenIntent = { look: pageRestyled ? look : 'steam', mode: variant === 'morph' ? 'parts' : 'all', eyebrow, homeCloud, homeBars, homeFamily, homeMissing, homeUninstall, ...extrasFlags(extras, homeChipKeys) };
         next = { root, appId, variant, look, heroUrl, intent, extras };
         controller().open(appId, variant);
     } catch (error) {

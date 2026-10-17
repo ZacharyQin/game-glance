@@ -773,7 +773,7 @@ const ARRIVE_RISE_PX = 14;
  */
 export function buildArrivingCss(
     classes: ThemeClasses, look: 'spotlight' | 'clean', mode: 'parts' | 'all', revealed = false,
-    extra: { cloud?: boolean; bars?: string[]; desc?: boolean; hltb?: boolean; family?: boolean; missing?: string[]; size?: boolean } = {},
+    extra: { cloud?: boolean; bars?: string[]; desc?: boolean; hltb?: boolean; family?: boolean; missing?: string[]; size?: boolean; uninstall?: boolean } = {},
 ): string {
     const { header, details, root, play } = classes;
     if (!(cls(header, 'TopCapsule') && cls(details, 'InnerContainer') && cls(details, 'AppDetailsOverviewPanel') && cls(root, 'AppDetailsContainer'))) return '';
@@ -784,9 +784,11 @@ export function buildArrivingCss(
     // A stat column Home showed no chip for (`extra.missing`: a new game's Play time), and Unifideck's store version
     // dropdown (Steam's DialogDropDown), arrive too instead of popping in.
     const missing = (extra.missing ?? []).filter((key) => /^[a-z]+$/i.test(key)).map((key) => `[data-stat="${key}"]`);
-    // Unifideck's Uninstall circle (its installed row's fourth button: Home shows none) arrives too, not popping in.
+    // Unifideck's Uninstall circle (its installed row's fourth button: Home's row has none) arrives too, not popping in;
+    // unless Home drew one at its place as it opened (`extra.uninstall`: homeCss .gh-open-circle), when the page's is
+    // there at once under the copy (arriving after the copy had faded, it flickered).
     const buttons = cls(root, 'AppButtons');
-    const uninstall = buttons ? [`${UNIFIDECK_PAGE} ${buttons}:has(> :nth-child(4)) > :nth-child(n+4)`] : [];
+    const uninstall = buttons && !extra.uninstall ? [`${UNIFIDECK_PAGE} ${buttons}:has(> :nth-child(4)) > :nth-child(n+4)`] : [];
     const shared = [...(extra.size ? [] : ['[data-stat="size"]']), ...uninstall, ...missing, ...(extra.family ? [] : ['.gg-family']), ...(cloud ? [cloud] : []), ':has(> .DialogDropDown_CurrentDisplay)'];
     // Spotlight: the description and the HowLongToBeat card's rest, unless Home drew them as it opened (`extra.desc`,
     // `extra.hltb`: home/OpenExtras), when the page's are there at once under Home's copy.
