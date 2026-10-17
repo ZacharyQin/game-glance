@@ -33,30 +33,36 @@ export function OpenExtras({ description, hltb, playedMinutes, locale, source, f
         <div className="gh-open-extras" data-parts={parts}>
             {parts.includes('desc') && <p className="gh-x-desc" data-settle={SETTLE.desc}>{description}</p>}
             {view && (
-                <div className="gh-x-hltb">
-                    <div className="gh-x-label" data-settle={SETTLE.hltbTitle}>{HLTB_TITLE}</div>
-                    <div className="gh-x-stats">
-                        {view.columns.map((c) => (
-                            <div key={c.key}>
-                                <div className="gh-x-label" data-settle={SETTLE.label(c.key)}>{c.label}</div>
-                                <div className="gh-x-value" data-settle={SETTLE.value(c.key)}>{c.value}</div>
-                            </div>
-                        ))}
+                <div className="gh-x-card" data-for="hltb">
+                    <div className="gh-x-hltb">
+                        <div className="gh-x-label" data-settle={SETTLE.hltbTitle}>{HLTB_TITLE}</div>
+                        <div className="gh-x-stats">
+                            {view.columns.map((c) => (
+                                <div key={c.key}>
+                                    <div className="gh-x-label" data-settle={SETTLE.label(c.key)}>{c.label}</div>
+                                    <div className="gh-x-value" data-settle={SETTLE.value(c.key)}>{c.value}</div>
+                                </div>
+                            ))}
+                        </div>
+                        {view.bar !== null && <div className="gh-x-bar"><div style={{ width: `${view.bar}%` }} /></div>}
+                        {view.caption !== null && <div className="gh-x-caption" data-settle={SETTLE.caption}>{view.caption}</div>}
                     </div>
-                    {view.bar !== null && <div className="gh-x-bar"><div style={{ width: `${view.bar}%` }} /></div>}
-                    {view.caption !== null && <div className="gh-x-caption" data-settle={SETTLE.caption}>{view.caption}</div>}
                 </div>
             )}
             {playedMissing && (
-                <div className="gh-x-played">
-                    <div className="gh-x-label" data-settle={SETTLE.statLabel('played')}>{tr('played')}</div>
-                    <div className="gh-x-value" data-settle={SETTLE.statValue('played')}>{formatHours(minutesToHours(playedMinutes), locale)}</div>
+                <div className="gh-x-card" data-for="played">
+                    <div className="gh-x-played">
+                        <div className="gh-x-label" data-settle={SETTLE.statLabel('played')}>{tr('played')}</div>
+                        <div className="gh-x-value" data-settle={SETTLE.statValue('played')}>{formatHours(minutesToHours(playedMinutes), locale)}</div>
+                    </div>
                 </div>
             )}
             {size && (
-                <div className="gh-x-size">
-                    <div className="gh-x-label" data-settle={SETTLE.statLabel('size')}>{size.label}</div>
-                    <div className="gh-x-value" data-settle={SETTLE.statValue('size')}>{size.value}</div>
+                <div className="gh-x-card" data-for="size">
+                    <div className="gh-x-size">
+                        <div className="gh-x-label" data-settle={SETTLE.statLabel('size')}>{size.label}</div>
+                        <div className="gh-x-value" data-settle={SETTLE.statValue('size')}>{size.value}</div>
+                    </div>
                 </div>
             )}
             {source && (

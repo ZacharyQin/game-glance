@@ -87,23 +87,43 @@ describe('openMotion', () => {
             extras: { desc: box(50.8, 686.1, 698.1, 70.3), hltbTitle: box(819.2, 614.7, 630, 17.2), columns: {}, caption: box(819.2, 728.2, 630, 22.7) },
         };
         const v = vars(openMotion({ ...homeRects(), root: box(10, 20, 1500, 844) }, page, 'spotlight', s));
-        expect(v['--gho-x-d']).toBe(String(Math.round(s * 10000) / 10000));
+        expect(v['--gho-x-d']).toBe(String(s));
         expect([v['--gho-x-desc-x'], v['--gho-x-desc-y'], v['--gho-x-desc-w']]).toEqual(['40.8px', '666.1px', '698.1px']);
         expect([v['--gho-x-hltb-x'], v['--gho-x-hltb-y'], v['--gho-x-hltb-w']]).toEqual(['809.2px', '594.7px', '630px']);
+    });
+
+    it("the page's d unit unrounded, so the extras' and twins' text is the page's size exactly (docked Ally: 30 x d is 31.25, not 31.251)", () => {
+        const docked = 1500 / 1440;
+        const v = vars(openMotion({ ...homeRects(), root: box(0, 0, 1500, 844) }, spotlight(), 'spotlight', docked));
+        expect(v['--gho-x-d']).toBe(String(docked));
+        expect(Math.abs(Number(v['--gho-x-d']) * 30 - 31.25)).toBeLessThan(1e-9);
+        expect(v['--gho-x-played-font']).toBe(`${30 * docked}px`);
+    });
+
+    it("the extras' HowLongToBeat inside and Play time column each in a layer at the page card that holds them (root px)", () => {
+        const page: PageTargets = {
+            ...spotlight(),
+            extras: { desc: box(50.8, 686.1, 698.1, 70.3), hltbTitle: box(819.2, 614.7, 630, 17.2), columns: {}, caption: box(819.2, 728.2, 630, 22.7) },
+        };
+        const v = vars(openMotion({ ...homeRects(), root: box(10, 20, 1500, 844) }, page, 'spotlight', s));
+        expect([v['--gho-x-hltb-cx'], v['--gho-x-hltb-cy']]).toEqual(['783.4px', '573.1px']);
+        expect([v['--gho-x-played-cx'], v['--gho-x-played-cy']]).toEqual(['15px', '573.1px']);
+        // The description is not in a card.
+        expect(v['--gho-x-desc-cx']).toBeUndefined();
     });
 
     it("the Play time column's place and value size in the extras layer (a new game's), per look", () => {
         const v = vars(openMotion({ ...homeRects(), root: box(10, 20, 1500, 844) }, spotlight(), 'spotlight', s));
         expect([v['--gho-x-played-x'], v['--gho-x-played-y']]).toEqual([`${Math.round((50.8 - 10) * 10000) / 10000}px`, `${Math.round((614.7 - 20) * 10000) / 10000}px`]);
-        expect(v['--gho-x-played-font']).toBe(`${Math.round(30 * s * 10000) / 10000}px`);
+        expect(v['--gho-x-played-font']).toBe(`${30 * s}px`);
         const clean = vars(openMotion(homeRects(), { ...spotlight(), shells: [box(900, 480, 500, 90)] }, 'clean', s));
-        expect(clean['--gho-x-played-font']).toBe(`${Math.round(22 * s * 10000) / 10000}px`);
+        expect(clean['--gho-x-played-font']).toBe(`${22 * s}px`);
     });
 
     it("the store pill's place in the extras layer, for both looks: its right edge and top on the page, in the root's px", () => {
         const v = vars(openMotion({ ...homeRects(), root: box(10, 20, 1500, 844) }, spotlight(), 'spotlight', s));
         expect([v['--gho-x-pill-x'], v['--gho-x-pill-y']]).toEqual([`${Math.round((1372.1 + 102.9 - 10) * 10000) / 10000}px`, `${Math.round((507.7 - 20) * 10000) / 10000}px`]);
-        expect(v['--gho-x-d']).toBe(String(Math.round(s * 10000) / 10000));
+        expect(v['--gho-x-d']).toBe(String(s));
     });
 
     it('without extras on the page targets (or no root measured): the extras sit in window px, or there are none', () => {

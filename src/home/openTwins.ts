@@ -3,7 +3,10 @@ import { PAGE_LAYOUT, PAGE_TYPE, pillFocusScale, TypeRole } from '../styles/them
 export { SETTLE } from '../styles/themeCss';
 import { HOME_PILL, TITLE_BLOCK } from './homeCss';
 import { HOME_CHIP_FONTS, HomeRects } from './openMotion';
+import { cardAround } from './openTargets';
 import type { Box, PageLook, PageStat, PageTargets, StatKey } from './openTargets';
+
+export { cardAround };
 
 /**
  * The open transition's text twins (spec docs/superpowers/specs/2026-10-17-open-text-twins-design.md): each moving text
@@ -35,6 +38,12 @@ export interface TwinSpec {
     accent: boolean;
     /** A `pill` twin's box (the page pill's size) and its label's left inset, px. */
     box?: { w: number; h: number; inset: number };
+    /**
+     * The top-left of the page card the twin lands in, root px: the twin is drawn in a layer there (openHome.mountTwins).
+     * The page's card is a compositing layer (its backdrop blur), whose origin Chromium puts on a whole device px, and its
+     * text is snapped from there: the same text outside a layer at that place drew a device px lower (Ally, docked).
+     */
+    card?: { x: number; y: number };
 }
 
 // 4 decimals: at 2, the bridge sat 0.01 px off the page, which drew a row a whole device px off near a half pixel.
@@ -61,7 +70,9 @@ export function twinSpecs(home: HomeRects, page: PageTargets, texts: { title: st
     const out: TwinSpec[] = [];
     const add = (name: string, role: TypeRole, text: string, homeBox: Box, at: { x: number; y: number }, origin: TwinOrigin, homeFont: number, extra: Partial<TwinSpec> = {}) => {
         const where = { x: r2(at.x - ox), y: r2(at.y - oy) };
-        out.push({ name, role, text, ...where, origin, from: twinFrom(local(homeBox), where, homeFont / PAGE_TYPE[role].size, origin), to: 'none', accent: false, ...extra });
+        const around = cardAround(page.shells, at);
+        const card = around ? { card: { x: r2(around.x - ox), y: r2(around.y - oy) } } : {};
+        out.push({ name, role, text, ...where, origin, from: twinFrom(local(homeBox), where, homeFont / PAGE_TYPE[role].size, origin), to: 'none', accent: false, ...card, ...extra });
     };
 
     if (texts.title !== null && home.titleText !== false) add('title', 'title', texts.title, home.titleSlot, page.titleBottomLeft, 'base', TITLE_BLOCK.titleSize);

@@ -585,7 +585,7 @@ describe('homeCss open transition', () => {
         const all = rules(css);
         const body = (sel: string) => all.find(([s]) => s === sel)?.[1] ?? '';
         expect(body('.gh-open-extras .gh-x-size')).toContain('display: none');
-        for (const decl of ['left: var(--gho-x-size-x)', 'top: var(--gho-x-size-y)']) expect(body('.gh-open-extras .gh-x-size')).toContain(decl);
+        for (const decl of ['left: calc(var(--gho-x-size-x) - var(--gho-x-size-cx, 0px))', 'top: calc(var(--gho-x-size-y) - var(--gho-x-size-cy, 0px))']) expect(body('.gh-open-extras .gh-x-size')).toContain(decl);
         expect(all.some(([sel, b]) => sel === '.gh-root[data-gh-extras~="size"] .gh-x-size' && b.includes('display: flex'))).toBe(true);
         expect(body('.gh-open-extras .gh-x-size .gh-x-value')).toContain('font-size: var(--gho-x-size-font)');
     });
@@ -593,7 +593,7 @@ describe('homeCss open transition', () => {
         const all = rules(css);
         const body = (sel: string) => all.find(([s]) => s === sel)?.[1] ?? '';
         expect(body('.gh-open-extras .gh-x-played')).toContain('display: none');
-        for (const decl of ['left: var(--gho-x-played-x)', 'top: var(--gho-x-played-y)']) expect(body('.gh-open-extras .gh-x-played')).toContain(decl);
+        for (const decl of ['left: calc(var(--gho-x-played-x) - var(--gho-x-played-cx, 0px))', 'top: calc(var(--gho-x-played-y) - var(--gho-x-played-cy, 0px))']) expect(body('.gh-open-extras .gh-x-played')).toContain(decl);
         expect(body('.gh-open-extras .gh-x-played .gh-x-value')).toContain('font-size: var(--gho-x-played-font)');
         expect(all.some(([sel, b]) => sel === '.gh-root[data-gh-extras~="played"] .gh-x-played' && b.includes('display: flex'))).toBe(true);
     });
@@ -616,6 +616,18 @@ describe('homeCss open transition', () => {
         expect(body('.gh-open-extras .gh-x-caption')).toContain(`font-size: ${dd(PAGE_LAYOUT.cardText.caption)}`);
         // Main's time is Home's chip, moving there: the layer keeps its place without drawing it.
         expect(body('.gh-open-extras .gh-x-stats > div:first-child .gh-x-value')).toContain('visibility: hidden');
+    });
+    it("the HowLongToBeat inside, Play time and size columns each sit in a layer at their page card's place, laid out inside it", () => {
+        const all = rules(css);
+        const body = (sel: string) => all.find(([s]) => s === sel)?.[1] ?? '';
+        for (const n of ['hltb', 'played', 'size']) {
+            const card = body(`.gh-open-extras .gh-x-card[data-for="${n}"]`);
+            expect(card, n).toContain(`left: var(--gho-x-${n}-cx, 0px)`);
+            expect(card, n).toContain(`top: var(--gho-x-${n}-cy, 0px)`);
+            expect(card, n).toContain('will-change: transform');
+            expect(body(`.gh-open-extras .gh-x-${n}`), n).toContain(`left: calc(var(--gho-x-${n}-x) - var(--gho-x-${n}-cx, 0px))`);
+            expect(body(`.gh-open-extras .gh-x-${n}`), n).toContain(`top: calc(var(--gho-x-${n}-y) - var(--gho-x-${n}-cy, 0px))`);
+        }
     });
     it('the glass panels are hidden until opening, and the second only when there are two', () => {
         const all = rules(css);
@@ -858,6 +870,13 @@ describe('homeCss open transition: text twins', () => {
     };
     const M = '.gh-root[data-gh-opening="morph"]';
     const MT = `${M}[data-gh-phase="to"]`;
+    it("a page card's twins share a layer at the card's place (its text snapped as the page's card snaps it)", () => {
+        const card = body('.gh-twin-card');
+        expect(card).toContain('position: absolute');
+        expect(card).toContain('left: var(--t-card-x)');
+        expect(card).toContain('top: var(--t-card-y)');
+        expect(card).toContain('will-change: transform');
+    });
     it("twins: page type in d units, placed, from → to with the morph, faded in over the first 40%", () => {
         for (const role of ['title', 'eyebrow', 'label', 'value', 'cleanValue', 'playLabel'] as const) {
             expect(body(`.gh-twin[data-role="${role}"]`), role).toContain(pageType(role, dd));

@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import type { HomeRects } from '../../src/home/openMotion';
 import { HOME_CHIP_FONTS } from '../../src/home/openMotion';
 import type { Box, PageStat, PageTargets } from '../../src/home/openTargets';
-import { settleDelta, twinFrom, twinSpecs } from '../../src/home/openTwins';
+import { cardAround, settleDelta, twinFrom, twinSpecs } from '../../src/home/openTwins';
 import { OPEN_TIMINGS } from '../../src/home/motion';
 import { HOME_PILL, TITLE_BLOCK } from '../../src/home/homeCss';
 import { PAGE_LAYOUT, PAGE_TYPE, pillFocusScale } from '../../src/styles/themeCss';
@@ -129,6 +129,15 @@ describe('twinSpecs', () => {
         expect(a.x).toBeCloseTo(b.x, 5);
         expect(a.from).toBe(b.from);
     });
+    it("a stat's twins sit in a layer at the page card that holds them (root px); the title, eyebrow and Play in none", () => {
+        const p = { ...page(), shells: [box(25, 593.1, 749.7, 185.4), box(793.4, 593.1, 681.6, 185.4)] };
+        const t = byName(twinSpecs({ ...homeRects(), root: box(10, 20, 1500, 844) }, p, texts, stats, 'spotlight', true, s));
+        const r = (n: number) => Math.round(n * 10000) / 10000;
+        expect(t['value-hltb'].card).toEqual({ x: r(793.4 - 10), y: r(593.1 - 20) });
+        expect(t['label-played'].card).toEqual({ x: 15, y: r(593.1 - 20) });
+        expect(t['value-achievements'].card).toEqual({ x: 15, y: r(593.1 - 20) });
+        for (const n of ['title', 'eyebrow', 'play']) expect(t[n].card, n).toBeUndefined();
+    });
     it('places to 4 decimals', () => {
         const p = { ...page(), stats: { ...page().stats, played: { label: box(50.8, 614.71234, 77.5, 17.2), value: box(50.8, 636.1, 77.5, 37.5) } } };
         expect(byName(twinSpecs(homeRects(), p, texts, stats, 'spotlight', true, s))['label-played'].y).toBe(Math.round((614.71234 + 8.6) * 10000) / 10000);
@@ -143,6 +152,18 @@ describe('twinSpecs', () => {
         expect(OPEN_TIMINGS.twinFade).toBe(180);
         expect(OPEN_TIMINGS.twinFade / OPEN_TIMINGS.morph).toBeCloseTo(0.4, 5);
         expect(OPEN_TIMINGS.settleGlide).toBe(150);
+    });
+});
+
+describe('cardAround', () => {
+    const cards = [box(25, 593.1, 749.7, 185.4), box(793.4, 593.1, 681.6, 185.4)];
+    it('the page card a point is in, edges included', () => {
+        expect(cardAround(cards, { x: 819.2, y: 682.45 })).toEqual(cards[1]);
+        expect(cardAround(cards, { x: 25, y: 593.1 })).toEqual(cards[0]);
+    });
+    it('none outside every card', () => {
+        expect(cardAround(cards, { x: 25, y: 426 })).toBeNull();
+        expect(cardAround([], { x: 50, y: 600 })).toBeNull();
     });
 });
 

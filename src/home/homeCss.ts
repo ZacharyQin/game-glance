@@ -603,6 +603,8 @@ export function openingRules(): string[] {
     const dd = (n: number) => `calc(${n}px * var(--gho-x-d))`;
     const X = '.gh-open-extras';
     const at = (name: string) => `left: var(--gho-x-${name}-x); top: var(--gho-x-${name}-y); width: var(--gho-x-${name}-w)`;
+    // A part the page draws inside a card: placed inside its .gh-x-card layer (at the card, openMotion --gho-x-NAME-cx/cy).
+    const inCard = (name: string) => `left: calc(var(--gho-x-${name}-x) - var(--gho-x-${name}-cx, 0px)); top: calc(var(--gho-x-${name}-y) - var(--gho-x-${name}-cy, 0px))`;
     // The twins' crossfade ends at this share of the morph; the Home text each twin replaces, by twin name.
     const twinAt = Math.round((T.twinFade / T.morph) * 1000) / 10;
     const twinOut: Array<[string, string]> = [
@@ -713,6 +715,9 @@ export function openingRules(): string[] {
         // hand-over, --t-dx/--t-dy), so transform carries only the morph, about that same point.
         soft('.gh-twin', `position: absolute; left: var(--t-x); top: var(--t-y); margin: 0; padding: 0; white-space: nowrap; color: #fff;
             transform-origin: var(--t-origin, 0 0); translate: var(--t-dx, 0px) calc(var(--t-dy, 0px) - var(--t-shift, 0%)); transform: var(--t-from); opacity: 0`),
+        // A page card's twins (openTwins TwinSpec.card): in a layer at the card's place, as the page's card is one (see
+        // .gh-x-card below), placed inside it.
+        soft('.gh-twin-card', 'position: absolute; left: var(--t-card-x); top: var(--t-card-y); margin: 0; padding: 0; will-change: transform'),
         soft('.gh-twin[data-origin="top"]', '--t-origin: 0 0; --t-shift: 0%'),
         soft('.gh-twin[data-origin="base"]', 'transform-origin: 0 100%; --t-shift: 100%'),
         soft('.gh-twin[data-origin="midline"]', 'transform-origin: 0 50%; --t-shift: 50%'),
@@ -738,7 +743,12 @@ export function openingRules(): string[] {
         rule(`${X} .gh-x-desc`, `display: none; position: absolute; ${at('desc')}; margin: 0; font-size: ${dd(L.cardText.desc)}; font-weight: 400; line-height: ${L.cardText.descLine};
             color: rgba(255,255,255,.84); -webkit-line-clamp: ${L.cardText.descLines}; -webkit-box-orient: vertical; overflow: hidden`),
         rule('.gh-root[data-gh-extras~="desc"] .gh-x-desc', 'display: -webkit-box'),
-        rule(`${X} .gh-x-hltb`, `display: none; position: absolute; ${at('hltb')}; flex-direction: column; gap: ${dd(L.cards.hltbGap)}`),
+        // The page's cards are compositing layers (their backdrop blur): Chromium puts a layer's origin on a whole device px
+        // and snaps its text from there, so the same text outside one drew a device px lower (the HowLongToBeat times, Ally
+        // docked). Each part the page draws in a card sits in a layer at that card's place, as the page's does.
+        ...(['hltb', 'played', 'size'] as const).map((n) =>
+            rule(`${X} .gh-x-card[data-for="${n}"]`, `position: absolute; left: var(--gho-x-${n}-cx, 0px); top: var(--gho-x-${n}-cy, 0px); margin: 0; padding: 0; will-change: transform`)),
+        rule(`${X} .gh-x-hltb`, `display: none; position: absolute; ${inCard('hltb')}; width: var(--gho-x-hltb-w); flex-direction: column; gap: ${dd(L.cards.hltbGap)}`),
         rule('.gh-root[data-gh-extras~="hltb"] .gh-x-hltb', 'display: flex'),
         // The page's store pill (and family pill in it), right-aligned where the page draws it, as themeCss draws .gg-pill
         // and .gg-family; Home's own (moving, scaled) fades out as it fades in.
@@ -750,11 +760,11 @@ export function openingRules(): string[] {
             margin: 0; border-radius: 999px; border: 1px solid; color: #fff; line-height: 1; white-space: nowrap; ${sourcePillLook(dd)}`),
         rule(`${X} .gh-x-family-icon`, `flex: 0 0 auto; ${sourcePillIcon(dd)}`),
         // A new game's Play time column (Home shows its Added chip instead), as the page draws it, at its place.
-        rule(`${X} .gh-x-played`, `display: none; position: absolute; left: var(--gho-x-played-x); top: var(--gho-x-played-y); flex-direction: column; gap: ${dd(L.stats.rowGap)}`),
+        rule(`${X} .gh-x-played`, `display: none; position: absolute; ${inCard('played')}; flex-direction: column; gap: ${dd(L.stats.rowGap)}`),
         rule('.gh-root[data-gh-extras~="played"] .gh-x-played', 'display: flex'),
         rule(`${X} .gh-x-played .gh-x-value`, 'font-size: var(--gho-x-played-font)'),
         // A Unifideck game's size column (right after Played), as the page draws it, at its place.
-        rule(`${X} .gh-x-size`, `display: none; position: absolute; left: var(--gho-x-size-x); top: var(--gho-x-size-y); flex-direction: column; gap: ${dd(L.stats.rowGap)}`),
+        rule(`${X} .gh-x-size`, `display: none; position: absolute; ${inCard('size')}; flex-direction: column; gap: ${dd(L.stats.rowGap)}`),
         rule('.gh-root[data-gh-extras~="size"] .gh-x-size', 'display: flex'),
         rule(`${X} .gh-x-size .gh-x-value`, 'font-size: var(--gho-x-size-font)'),
         rule(`${MT}[data-gh-extras~="pills"] .gh-source`, `transition: ${move}; ${late('gh-open-pill-out')}`),

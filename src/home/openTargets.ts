@@ -187,3 +187,8 @@ export function pageTargets(
     }
     return { titleBottomLeft, eyebrowBottomLeft, play, circles, store, shells, stats: out, extras };
 }
+
+/** The page card (`cards`: PageTargets.shells) that point `p` is in, edges included, or null. Pure. */
+export function cardAround(cards: Box[], p: { x: number; y: number }): Box | null {
+    return cards.find((c) => p.x >= c.x && p.x <= c.x + c.w && p.y >= c.y && p.y <= c.y + c.h) ?? null;
+}

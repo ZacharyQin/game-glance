@@ -405,6 +405,21 @@ describe('text twins on Home', () => {
         remove();
         expect(root.children).toHaveLength(0);
     });
+    it("mountTwins puts the twins of one page card in one layer at that card, placed inside it (the page's card is a layer: its text is snapped there)", () => {
+        const root = fakeEl();
+        root.ownerDocument = { createElement: () => fakeEl() };
+        mountTwins(root as unknown as HTMLElement, [{ ...spec('label-played'), card: { x: 4, y: 5 } }, spec('eyebrow'), { ...spec('value-played'), card: { x: 4, y: 5 } }]);
+        const layer = root.children[0] as ReturnType<typeof fakeEl>;
+        const [card, eyebrow] = layer.children as Array<ReturnType<typeof fakeEl>>;
+        expect(layer.children).toHaveLength(2);
+        expect(card.className).toBe('gh-twin-card');
+        expect(card.vars).toEqual({ '--t-card-x': '4px', '--t-card-y': '5px' });
+        const inside = card.children as Array<ReturnType<typeof fakeEl>>;
+        expect(inside.map((c) => c.attrs['data-twin'])).toEqual(['label-played', 'value-played']);
+        expect(inside[0].vars).toMatchObject({ '--t-x': '6px', '--t-y': '15px' });
+        expect(eyebrow.className).toBe('gh-twin');
+        expect(eyebrow.vars).toMatchObject({ '--t-x': '10px', '--t-y': '20px' });
+    });
     it('mountTwins gives a pill twin its box as variables', () => {
         const root = fakeEl();
         root.ownerDocument = { createElement: () => fakeEl() };

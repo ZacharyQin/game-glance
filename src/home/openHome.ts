@@ -99,6 +99,21 @@ export function mountTwins(root: HTMLElement, specs: TwinSpec[]): () => void {
     const doc = root.ownerDocument;
     const layer = doc.createElement('div');
     layer.className = 'gh-open-twins';
+    // One layer per page card, at the card's place (TwinSpec.card): its twins are placed inside it.
+    const cards = new Map<string, HTMLElement>();
+    const cardFor = (c: { x: number; y: number }) => {
+        const key = `${c.x},${c.y}`;
+        let card = cards.get(key);
+        if (!card) {
+            card = doc.createElement('div');
+            card.className = 'gh-twin-card';
+            card.style.setProperty('--t-card-x', `${c.x}px`);
+            card.style.setProperty('--t-card-y', `${c.y}px`);
+            layer.appendChild(card);
+            cards.set(key, card);
+        }
+        return card;
+    };
     for (const t of specs) {
         const el = doc.createElement('div');
         el.className = 'gh-twin';
@@ -107,8 +122,10 @@ export function mountTwins(root: HTMLElement, specs: TwinSpec[]): () => void {
         el.setAttribute('data-origin', t.origin);
         if (t.accent) el.setAttribute('data-accent', '');
         el.textContent = t.text;
-        el.style.setProperty('--t-x', `${t.x}px`);
-        el.style.setProperty('--t-y', `${t.y}px`);
+        const ox = t.card?.x ?? 0;
+        const oy = t.card?.y ?? 0;
+        el.style.setProperty('--t-x', `${Math.round((t.x - ox) * 10000) / 10000}px`);
+        el.style.setProperty('--t-y', `${Math.round((t.y - oy) * 10000) / 10000}px`);
         el.style.setProperty('--t-from', t.from);
         el.style.setProperty('--t-to', t.to);
         if (t.box) {
@@ -116,7 +133,7 @@ export function mountTwins(root: HTMLElement, specs: TwinSpec[]): () => void {
             el.style.setProperty('--t-h', `${t.box.h}px`);
             el.style.setProperty('--t-inset', `${t.box.inset}px`);
         }
-        layer.appendChild(el);
+        (t.card ? cardFor(t.card) : layer).appendChild(el);
     }
     root.appendChild(layer);
     return () => layer.remove();

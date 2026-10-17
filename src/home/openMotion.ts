@@ -1,5 +1,6 @@
 import { PAGE_LAYOUT, pillFocusScale } from '../styles/themeCss';
 import { HOME_PILL, TITLE_BLOCK } from './homeCss';
+import { cardAround } from './openTargets';
 import type { Box, PageLook, PageTargets, StatKey } from './openTargets';
 
 /**
@@ -40,6 +41,8 @@ const PAGE_LABEL_LINE = 1.5;
 // 4 decimals: placements rounded to 0.01 px put the bridge's text a whole device px off near a half pixel (Ally, docked).
 const px = (n: number) => `${Math.round(n * 10000) / 10000}px`;
 const k = (n: number) => `${Math.round(n * 10000) / 10000}`;
+// Sizes of text unrounded: a font 0.001 px off the page's (31.251 for 31.25) set its digits a device px lower (Ally, docked).
+const font = (n: number) => `${n}px`;
 const translate = (x: number, y: number) => `translate(${px(x)}, ${px(y)})`;
 /** Maps box `from` onto box `to` (origin 0 0), in canvas px. */
 const mapBox = (from: Box, to: Box, s: number, uniform = false) =>
@@ -144,22 +147,32 @@ export function openMotion(home: HomeRects, page: PageTargets, look: PageLook, c
     // the description and the HowLongToBeat card's inside (by their top-left corners).
     const ox = home.root?.x ?? 0;
     const oy = home.root?.y ?? 0;
-    out['--gho-x-d'] = k(d);
+    // Unrounded, as the page's --gg-d: the extras' and twins' type is sized from it (font, above).
+    out['--gho-x-d'] = String(d);
     out['--gho-x-pill-x'] = px(page.store.x + page.store.w - ox);
     out['--gho-x-pill-y'] = px(page.store.y - oy);
     // The Play time column (a new game's: Home shows its Added chip instead), by its top-left corner, in the look's value size.
     // A Unifideck game's size column (right after Played), likewise.
+    // Each in a layer at the page card that holds it, as the page's card is one (openTwins.TwinSpec.card), by its top-left.
+    const inCard = (name: string, p: { x: number; y: number }) => {
+        const c = cardAround(page.shells, p);
+        if (!c) return;
+        out[`--gho-x-${name}-cx`] = px(c.x - ox);
+        out[`--gho-x-${name}-cy`] = px(c.y - oy);
+    };
     const size = page.stats.size;
     if (size) {
+        inCard('size', size.label);
         out['--gho-x-size-x'] = px(size.label.x - ox);
         out['--gho-x-size-y'] = px(size.label.y - oy);
-        out['--gho-x-size-font'] = px((look === 'clean' ? PAGE_LAYOUT.cleanInfo.value : PAGE_LAYOUT.stats.value) * d);
+        out['--gho-x-size-font'] = font((look === 'clean' ? PAGE_LAYOUT.cleanInfo.value : PAGE_LAYOUT.stats.value) * d);
     }
     const played = page.stats.played;
     if (played) {
+        inCard('played', played.label);
         out['--gho-x-played-x'] = px(played.label.x - ox);
         out['--gho-x-played-y'] = px(played.label.y - oy);
-        out['--gho-x-played-font'] = px((look === 'clean' ? PAGE_LAYOUT.cleanInfo.value : PAGE_LAYOUT.stats.value) * d);
+        out['--gho-x-played-font'] = font((look === 'clean' ? PAGE_LAYOUT.cleanInfo.value : PAGE_LAYOUT.stats.value) * d);
     }
     if (page.extras) {
         const at = (name: string, b: Box) => {
@@ -169,6 +182,7 @@ export function openMotion(home: HomeRects, page: PageTargets, look: PageLook, c
         };
         at('desc', page.extras.desc);
         at('hltb', page.extras.hltbTitle);
+        inCard('hltb', page.extras.hltbTitle);
     }
 
     return Object.keys(out).sort().map((name) => ({ name, value: out[name] }));
