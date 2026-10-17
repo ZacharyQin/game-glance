@@ -85,8 +85,8 @@ describe('buildThemeCss play row', () => {
     });
     it('keeps a visible focus highlight on Play, the arrow and the icon buttons', () => {
         const css = buildThemeCss(full);
-        expect(ruleFor(css, '.rt_PlayBtn [role="button"].gpfocus {')).toContain('background:');
-        expect(ruleFor(css, '.ps_Menu.gpfocus {')).toContain('background: #ffffff');
+        expect(ruleFor(css, ':where(html:not([data-gg-mouse])) .rt_PlayBtn [role="button"].gpfocus {')).toContain('background:');
+        expect(ruleFor(css, ':where(html:not([data-gg-mouse])) .ps_Menu.gpfocus {')).toContain('background: #ffffff');
         expect(ruleFor(css, '.ps_Menu {')).toContain('border-radius: 50%');
     });
     it('shrinks the cloud row to an icon coloured by sync state', () => {
@@ -360,12 +360,12 @@ describe('buildThemeCss 1.1.1 baseline', () => {
           .rt_PlayBtn [role="button"] > div { font-size: calc(16 * var(--gg-u)) !important; }
           .rt_PlayBtn [role="button"] + [role="button"] { flex: 0 0 calc(38 * var(--gg-u)) !important; width: calc(38 * var(--gg-u)) !important; padding: 0 !important;
                       display: flex !important; align-items: center !important; justify-content: center !important; border-left: 1px solid rgba(4, 17, 12, 0.25) !important; }
-          .rt_PlayBtn [role="button"].gpfocus { background: rgba(255, 255, 255, 0.28) !important; }
+          :where(html:not([data-gg-mouse])) .rt_PlayBtn [role="button"].gpfocus { background: rgba(255, 255, 255, 0.28) !important; }
           .rt_Buttons { margin-left: 0 !important; gap: var(--gg-gap) !important; }
           .rt_Buttons > * { margin: 0 !important; padding: 0 !important; }
           .ps_Menu { width: var(--gg-icon) !important; height: var(--gg-icon) !important; min-width: 0 !important; margin: 0 !important; box-sizing: border-box !important; border-radius: 50% !important;
                       background: rgba(255, 255, 255, 0.08) !important; border: 1px solid rgba(255, 255, 255, 0.18) !important; }
-          .ps_Menu.gpfocus { background: #ffffff !important; color: #0b0f14 !important; }
+          :where(html:not([data-gg-mouse])) .ps_Menu.gpfocus { background: #ffffff !important; color: #0b0f14 !important; }
           .rt_PlayBtn svg, .ps_Menu svg { width: calc(24 * var(--gg-u)) !important; height: calc(24 * var(--gg-u)) !important; }
           .rt_PlayBtn [role="button"] svg { margin-right: calc(16 * var(--gg-u)) !important; }
           .rt_PlayBtn [role="button"] + [role="button"] svg { width: calc(12 * var(--gg-u)) !important; height: calc(12 * var(--gg-u)) !important; margin: 0 !important; }
@@ -490,7 +490,7 @@ describe('buildThemeCss restyle (Spotlight Home on)', () => {
         expect(cloud).toContain('backdrop-filter: blur(calc(12 * var(--gg-d))) !important;');
         expect(cloud).toContain('--gg-ok: #5cf2b4; --gg-warn: #ffd84d; --gg-bad: #ff8585; --gg-off: #c4c9d1;');
         expect(rulesFor(restyled, '.ps_Cloud svg')).toContain('drop-shadow');
-        expect(rulesFor(restyled, '.ps_Cloud.gpfocus')).toContain('background: #ffffff !important; color: #b3261e !important;');
+        expect(rulesFor(restyled, ':where(html:not([data-gg-mouse])) .ps_Cloud.gpfocus')).toContain('background: #ffffff !important; color: #b3261e !important;');
         // The menu circles' fill is the same.
         expect(rulesFor(restyled, '.ps_Menu')).toContain('background: rgba(12, 16, 22, 0.4) !important;');
         // Not in the 1.1.1 output.
@@ -511,13 +511,21 @@ describe('buildThemeCss restyle (Spotlight Home on)', () => {
     });
     it("everything clickable takes the hover ring under a mouse (in d units), never when focused, ring only but the cards", () => {
         const ring = 'box-shadow: 0 0 0 calc(2 * var(--gg-d)) rgba(255,255,255,.45) !important;';
-        const pill = rulesFor(restyled, 'html[data-gg-mouse] .rt_PlayBtn > div:has(> [role="button"]):hover:not(:has(.gpfocus)):not(:has(:focus))');
+        const pill = rulesFor(restyled, 'html[data-gg-mouse] .rt_PlayBtn > div:has(> [role="button"]):hover');
         expect(pill).toContain(ring);
         expect(pill).not.toContain('transform');
-        const circle = rulesFor(restyled, 'html[data-gg-mouse] .ps_Menu:hover:not(.gpfocus):not(:focus)');
+        const circle = rulesFor(restyled, 'html[data-gg-mouse] .ps_Menu:hover');
         expect(circle).toContain(ring);
         expect(circle).not.toContain('transform');
-        expect(rulesFor(restyled, 'html[data-gg-mouse] .ps_Cloud:hover:not(.gpfocus):not(:focus)')).toContain(ring);
+        expect(rulesFor(restyled, 'html[data-gg-mouse] .ps_Cloud:hover')).toContain(ring);
+        // In mouse mode the focus looks are off (Steam puts its focus back on a clicked button), at no weight: every focus
+        // rule of the pill, the circles and the cloud sits behind :where(html:not([data-gg-mouse])).
+        const gate = ':where(html:not([data-gg-mouse]))';
+        const focusRules = (restyled.match(/[^{}]*\{[^}]*\}/g) ?? []).map((r) => r.slice(0, r.indexOf('{')).trim())
+            .filter((s) => /\.(rt_PlayBtn|ps_Menu|ps_Cloud)/.test(s) && /(\.gpfocus|:focus)(?![\w-])/.test(s) && !s.split(gate).join('').includes(':not('));
+        expect(focusRules.length).toBeGreaterThanOrEqual(8);
+        for (const sel of focusRules) for (const part of sel.split(',')) expect(part.trim(), sel).toMatch(/^:where\(html:not\(\[data-gg-mouse\]\)\)/);
+        expect(rulesFor(restyled, `${gate} .ps_Menu.gpfocus`)).toContain('background: #ffffff !important;');
         // The cards (info, HowLongToBeat) lift as Home's feed cards do; a press still gives.
         const card = rulesFor(restyled, 'html[data-gg-mouse] .gg-card-tap:hover');
         expect(card).toContain(ring);
@@ -551,8 +559,8 @@ describe('buildThemeCss restyle (Spotlight Home on)', () => {
         expect(rulesFor(restyled, '.rt_PlayBtn [role="button"]::after')).toContain('display: none !important');
     });
     it("Play focused as Home's: the fill stays the accent (no lighter overlay), a white ring and accent glow, scaled as Home's", () => {
-        expect(rulesFor(restyled, '.rt_PlayBtn [role="button"].gpfocus')).toContain('background: transparent !important');
-        const ring = rulesFor(restyled, '.rt_PlayBtn > div:has(> [role="button"].gpfocus)');
+        expect(rulesFor(restyled, ':where(html:not([data-gg-mouse])) .rt_PlayBtn [role="button"].gpfocus')).toContain('background: transparent !important');
+        const ring = rulesFor(restyled, ':where(html:not([data-gg-mouse])) .rt_PlayBtn > div:has(> [role="button"].gpfocus)');
         expect(ring).toContain('rgba(255, 255, 255, 0.9)');
         const pf = pillFocusScale(PAGE_LAYOUT.playW, PAGE_LAYOUT.icon);
         expect(ring).toContain(`transform: scale(${pf.x}, ${pf.y}) !important`);
@@ -574,25 +582,25 @@ describe('buildThemeCss restyle (Spotlight Home on)', () => {
     });
     it('focus looks follow DOM focus too: a page opened by a tap or a click has Play focused without Steam\'s gpfocus', () => {
         // The open transition lands on a focused Play (openMotion): without this the pill shrank and lost its ring at the hand-over.
-        const ring = rulesFor(restyled, '.rt_PlayBtn > div:has(> [role="button"]:focus)');
+        const ring = rulesFor(restyled, ':where(html:not([data-gg-mouse])) .rt_PlayBtn > div:has(> [role="button"]:focus)');
         expect(ring).toContain('rgba(255, 255, 255, 0.9)');
         const pf = pillFocusScale(PAGE_LAYOUT.playW, PAGE_LAYOUT.icon);
         expect(ring).toContain(`transform: scale(${pf.x}, ${pf.y}) !important`);
         expect(ring).toContain('var(--glance-accent)');
-        expect(rulesFor(restyled, '.rt_PlayBtn [role="button"]:focus')).toContain('background: transparent !important');
-        expect(rulesFor(restyled, '.rt_PlayBtn [role="button"] + [role="button"]:focus')).toContain('background: rgba(255, 255, 255, 0.28) !important');
-        expect(rulesFor(restyled, '.ps_Menu:focus')).toContain('background: #ffffff !important');
-        expect(rulesFor(restyled, '.ps_Cloud:focus')).toContain('background: #ffffff !important; color: #b3261e !important;');
+        expect(rulesFor(restyled, ':where(html:not([data-gg-mouse])) .rt_PlayBtn [role="button"]:focus')).toContain('background: transparent !important');
+        expect(rulesFor(restyled, ':where(html:not([data-gg-mouse])) .rt_PlayBtn [role="button"] + [role="button"]:focus')).toContain('background: rgba(255, 255, 255, 0.28) !important');
+        expect(rulesFor(restyled, ':where(html:not([data-gg-mouse])) .ps_Menu:focus')).toContain('background: #ffffff !important');
+        expect(rulesFor(restyled, ':where(html:not([data-gg-mouse])) .ps_Cloud:focus')).toContain('background: #ffffff !important; color: #b3261e !important;');
     });
     it('the "Play from" arrow focused: the pill shows its focus and the arrow\'s segment is tinted, as on Home (Michael: Neva)', () => {
-        expect(rulesFor(restyled, '.rt_PlayBtn [role="button"] + [role="button"].gpfocus')).toContain('background: rgba(255, 255, 255, 0.28) !important');
+        expect(rulesFor(restyled, ':where(html:not([data-gg-mouse])) .rt_PlayBtn [role="button"] + [role="button"].gpfocus')).toContain('background: rgba(255, 255, 255, 0.28) !important');
     });
     it('buildThemeCss with restyle adds the eyebrow, title and accent rules', () => {
         // accent: one per-game colour, animated over 500 ms, on Play, the HLTB goal value and bar
         expect(restyled).toContain("@property --glance-accent { syntax: '<color>'; inherits: true; initial-value: #5fd1ae; }");
         expect(rulesFor(restyled, '.ad_Inner')).toContain('--gg-accent: var(--glance-accent);');
         expect(rulesFor(restyled, '.ad_Inner')).toContain('transition: --glance-accent 500ms ease;');
-        expect(rulesFor(restyled, '.rt_PlayBtn > div:has(> [role="button"].gpfocus)')).toContain('var(--glance-accent)');
+        expect(rulesFor(restyled, ':where(html:not([data-gg-mouse])) .rt_PlayBtn > div:has(> [role="button"].gpfocus)')).toContain('var(--glance-accent)');
         // handoff px scaled like Home: its 1440 canvas on 16:9, its 1280 canvas on 16:10
         expect(restyled).toContain(':root { --gg-d: min(calc(100vw / 1440), calc(100vh / 810)); }');
         expect(restyled).toContain('@media (max-aspect-ratio: 17/10) { :root { --gg-d: min(calc(100vw / 1280), calc(100vh / 800)); } }');

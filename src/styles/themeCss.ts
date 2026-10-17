@@ -1,5 +1,5 @@
 import { DOWNLOAD_FILL_COLOR, DOWNLOAD_FILL_MS } from './downloadFill';
-import { hoverRing, MOUSE_ATTR } from '../home/mouseMode';
+import { hoverRing, MOUSE_ATTR, NOT_MOUSE } from '../home/mouseMode';
 import { DEFAULT_ACCENT, legibleAccent } from '../home/accent';
 import { CLOUD_COLOURS, CLOUD_FOCUS_BAD } from '../home/cloud';
 import { homeCanvas } from '../home/scale';
@@ -269,12 +269,12 @@ export function buildThemeCss(classes: ThemeClasses, options: ThemeOptions = {})
         rule(playButton && `${playButton} [role="button"] > div`, ` font-size: ${u(16)} !important; `),
         rule(playButton && `${playButton} [role="button"] + [role="button"]`, ` flex: 0 0 ${u(38)} !important; width: ${u(38)} !important; padding: 0 !important;
             display: flex !important; align-items: center !important; justify-content: center !important; border-left: 1px solid rgba(4, 17, 12, 0.25) !important; `),
-        rule(playButton && `${playButton} [role="button"].gpfocus`, ` background: rgba(255, 255, 255, 0.28) !important; `),
+        rule(playButton && `${NOT_MOUSE} ${playButton} [role="button"].gpfocus`, ` background: rgba(255, 255, 255, 0.28) !important; `),
         rule(appButtons, ` margin-left: 0 !important; gap: var(--gg-gap) !important; `),
         rule(appButtons && `${appButtons} > *`, ` margin: 0 !important; padding: 0 !important; `),
         rule(menuButton, ` width: var(--gg-icon) !important; height: var(--gg-icon) !important; min-width: 0 !important; margin: 0 !important; box-sizing: border-box !important; border-radius: 50% !important;
             background: rgba(255, 255, 255, 0.08) !important; border: 1px solid rgba(255, 255, 255, 0.18) !important; `),
-        rule(menuButton && `${menuButton}.gpfocus`, ` background: #ffffff !important; color: #0b0f14 !important; `),
+        rule(menuButton && `${NOT_MOUSE} ${menuButton}.gpfocus`, ` background: #ffffff !important; color: #0b0f14 !important; `),
         // Steam's own icons and row padding, scaled like the rest (Steam sizes them in fixed pixels).
         rule(playButton && menuButton && [`${playButton} svg`, `${menuButton} svg`], ` width: ${u(24)} !important; height: ${u(24)} !important; `),
         rule(playButton && `${playButton} [role="button"] svg`, ` margin-right: ${u(16)} !important; `),
@@ -539,10 +539,10 @@ function restyleRules({ header, details, root, play, shared }: ThemeClasses, lay
         // 2.32) and read brighter than Home's as the open transition handed over (Michael on the Ally). Not the cloud: placed
         // at a fractional position, its 1 px is drawn soft like Home's already. Its colour is Home's, as bright as Home's (ringBoost).
         rule(menuButton, ` background: rgba(12, 16, 22, 0.4) !important; border-width: ${d(1)} !important; border-color: ${ring(0.18)} !important; backdrop-filter: blur(${d(12)}) !important; `),
-        rule(menuButton && `${menuButton}.gpfocus`, ` background: #ffffff !important; `),
+        rule(menuButton && `${NOT_MOUSE} ${menuButton}.gpfocus`, ` background: #ffffff !important; `),
         // (Each focus look here also under DOM focus: after a tap or a click Steam keeps focus but drops gpfocus, and a page
         // opened that way has its Play focused without it, which the open transition lands on.)
-        rule(menuButton && `${menuButton}:focus`, ` background: #ffffff !important; `),
+        rule(menuButton && `${NOT_MOUSE} ${menuButton}:focus`, ` background: #ffffff !important; `),
         rule(menuButton && `${menuButton} svg`, ` width: ${d(PAGE_LAYOUT.circleIcon)} !important; height: ${d(PAGE_LAYOUT.circleIcon)} !important; `),
         // The cloud status is the same circle as the others (Steam's own row background, and the lighter 1.1.1 fill, gave it
         // a lighter tinted disc); its icon keeps the state colour, re-tuned for the dark fill (CLOUD_COLOURS, shared with
@@ -555,27 +555,27 @@ function restyleRules({ header, details, root, play, shared }: ThemeClasses, lay
         // Centred as Home's: Steam's icon box (16 u in the 1.1.1 theme) as tall as the icon, which hung out of its bottom
         // and sat low in the circle after the open transition (1.65 px docked, Michael on the Ally).
         rule(cloudIcon, ` height: ${d(PAGE_LAYOUT.cloudIcon)} !important; `),
-        rule(cloud && `${cloud}.gpfocus`, ` background: #ffffff !important; color: ${CLOUD_FOCUS_BAD} !important; `),
-        rule(cloud && `${cloud}:focus`, ` background: #ffffff !important; color: ${CLOUD_FOCUS_BAD} !important; `),
+        rule(cloud && `${NOT_MOUSE} ${cloud}.gpfocus`, ` background: #ffffff !important; color: ${CLOUD_FOCUS_BAD} !important; `),
+        rule(cloud && `${NOT_MOUSE} ${cloud}:focus`, ` background: #ffffff !important; color: ${CLOUD_FOCUS_BAD} !important; `),
 
         // Play: white words and glyph on the accent pill, as on Home. Focused as Home's Play: the fill stays the accent (no
         // lighter overlay), a white ring and accent glow, and it grows by the focus scale.
         rule(playButton && `${playButton} [role="button"]`, ` color: #ffffff !important; `),
-        rule(playButton && `${playButton} [role="button"].gpfocus`, ` background: transparent !important; `),
-        rule(playButton && `${playButton} [role="button"]:focus`, ` background: transparent !important; `),
+        rule(playButton && `${NOT_MOUSE} ${playButton} [role="button"].gpfocus`, ` background: transparent !important; `),
+        rule(playButton && `${NOT_MOUSE} ${playButton} [role="button"]:focus`, ` background: transparent !important; `),
         // The "Play from" arrow focused: the pill shows its focus (below) and the arrow's segment is tinted, as on Home.
-        rule(playButton && `${playButton} [role="button"] + [role="button"].gpfocus`, ` background: rgba(255, 255, 255, 0.28) !important; `),
-        rule(playButton && `${playButton} [role="button"] + [role="button"]:focus`, ` background: rgba(255, 255, 255, 0.28) !important; `),
+        rule(playButton && `${NOT_MOUSE} ${playButton} [role="button"] + [role="button"].gpfocus`, ` background: rgba(255, 255, 255, 0.28) !important; `),
+        rule(playButton && `${NOT_MOUSE} ${playButton} [role="button"] + [role="button"]:focus`, ` background: rgba(255, 255, 255, 0.28) !important; `),
         // Steam's focus shine on Play (a green gradient on its ::after) would show over the accent pill.
         rule(playButton && `${playButton} [role="button"]::after`, ` display: none !important; `),
         rule(playButton && `${playButton} > div:has(> [role="button"])`, ` transition: transform 250ms, box-shadow 250ms !important; `),
-        rule(playButton && `${playButton} > div:has(> [role="button"].gpfocus)`, pillFocused),
-        rule(playButton && `${playButton} > div:has(> [role="button"]:focus)`, pillFocused),
+        rule(playButton && `${NOT_MOUSE} ${playButton} > div:has(> [role="button"].gpfocus)`, pillFocused),
+        rule(playButton && `${NOT_MOUSE} ${playButton} > div:has(> [role="button"]:focus)`, pillFocused),
         // A mouse over anything clickable (home/mouseMode, never a finger or the controller): Home's hover ring, ring only, in
-        // d units; not on what has focus (its focus look wins). The pill with its "Play from" arrow takes it as one.
-        rule(playButton && `${HOVER} ${playButton} > div:has(> [role="button"]):hover:not(:has(.gpfocus)):not(:has(:focus))`, ` box-shadow: ${hoverRing(d(2))} !important; `),
-        rule(menuButton && `${HOVER} ${menuButton}:hover:not(.gpfocus):not(:focus)`, ` box-shadow: ${hoverRing(d(2))} !important; `),
-        rule(cloud && `${HOVER} ${cloud}:hover:not(.gpfocus):not(:focus)`, ` box-shadow: ${hoverRing(d(2))} !important; `),
+        // d units, focused too: the focus looks are off in mouse mode (NOT_MOUSE). The pill with its "Play from" arrow takes it as one.
+        rule(playButton && `${HOVER} ${playButton} > div:has(> [role="button"]):hover`, ` box-shadow: ${hoverRing(d(2))} !important; `),
+        rule(menuButton && `${HOVER} ${menuButton}:hover`, ` box-shadow: ${hoverRing(d(2))} !important; `),
+        rule(cloud && `${HOVER} ${cloud}:hover`, ` box-shadow: ${hoverRing(d(2))} !important; `),
 
         // Eyebrow ("Last played · Today", accent) and the 64px/800 title, at most two lines. Hidden unless the
         // full-screen layout applies (below): all-or-nothing, like the rest of the layout.

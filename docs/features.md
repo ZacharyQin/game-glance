@@ -71,7 +71,8 @@ An optional new Home screen, off by default (Quick Access → Game Glance → Sp
 - **Mouse.** Click and drag as with a finger; the wheel moves through the games one card a notch (with the tabs up,
   through the row under the cursor) and stops at the ends; anything clickable under the cursor gets a faint ring, on Home and
   the game page (the games, buttons and tabs; a feed card and the game page's cards also lift a little). Only a mouse
-  that moves turns it on; a touch or the controller turns it off.
+  that moves turns it on; a touch or the controller turns it off. While it is on, the buttons' controller focus look
+  stays hidden (a clicked button no longer looks pressed when you come back to the page); the selected game keeps its look.
 - **Opening a game.** Home turns into the game's page: the art stays put while the title, Play and the buttons move to
   their places on the page and the chips grow into its cards.
 - **Steam Cloud.** For games with cloud saves, Steam's and Unifideck's, a cloud button shows the sync state and opens

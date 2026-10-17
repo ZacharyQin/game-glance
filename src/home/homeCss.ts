@@ -3,7 +3,7 @@ import { withDomFocus } from './focusCss';
 import { DEFAULT_ACCENT } from './accent';
 import { SOURCE_PILL, sourcePillIcon, sourcePillLook } from '../styles/sourcePill';
 import { CLOUD_COLOURS, CloudTone } from './cloud';
-import { hoverRing, MOUSE_ATTR } from './mouseMode';
+import { hoverRing, MOUSE_ATTR, NOT_MOUSE } from './mouseMode';
 import { FRIEND_COLOURS } from './friends';
 import { FEED_ROW2_HEADER } from './feedLayout';
 import { PERSONA_DOT, PERSONA_DOT_COLOURS, PersonaDot, STATUS_BAR, STATUS_FADE_MS } from './statusItems';
@@ -352,13 +352,14 @@ export function homeCss(cardScale: number = CARD_SCALE_HANDHELD): string {
         rule('.gh-btn-play svg', `width: ${HOME_PILL.icon}px; height: ${HOME_PILL.icon}px; margin: 0`),
         rule('.gh-btn-icon', 'display: flex; align-items: center; justify-content: center; line-height: 1'),
         rule('.gh-btn-play .gh-btn-icon', `font-size: ${HOME_PILL.icon}px`),
-        rule('.gh-btn.gh-focus', `box-shadow: 0 0 0 2px rgba(255,255,255,.9), 0 14px 40px -8px var(--glance-accent); transform: scale(${PAGE_LAYOUT.focusScale})`),
-        // A mouse over a button (mouseMode, never a finger or the controller): the game cards' hover ring, ring only. The stream
+        rule(`${NOT_MOUSE} .gh-btn.gh-focus`, `box-shadow: 0 0 0 2px rgba(255,255,255,.9), 0 14px 40px -8px var(--glance-accent); transform: scale(${PAGE_LAYOUT.focusScale})`),
+        // A mouse over a button (mouseMode, never a finger or the controller): the game cards' hover ring, ring only (focused
+        // too: the focus looks are off in mouse mode, NOT_MOUSE). The stream
         // segment is part of the Play pill: the pill takes the ring, as it takes the focus look.
-        rule(`${HOVER} .gh-btn:hover:not(.gh-focus):not(.gh-btn-stream)`, `box-shadow: ${hoverRing('2px')}`),
-        rule(`${HOVER} .gh-actions > .gh-btn-play:has(+ .gh-btn-stream:hover):not(.gh-focus)`, `box-shadow: ${hoverRing('2px')}`),
+        rule(`${HOVER} .gh-btn:hover:not(.gh-btn-stream)`, `box-shadow: ${hoverRing('2px')}`),
+        rule(`${HOVER} .gh-actions > .gh-btn-play:has(+ .gh-btn-stream:hover)`, `box-shadow: ${hoverRing('2px')}`),
         // The Play pill grows by what a circle grows (themeCss.pillFocusScale), so its gap to the circles stays.
-        rule('.gh-actions > .gh-btn-play.gh-focus', `transform: scale(${pillFocus.x}, ${pillFocus.y})`),
+        rule(`${NOT_MOUSE} .gh-actions > .gh-btn-play.gh-focus`, `transform: scale(${pillFocus.x}, ${pillFocus.y})`),
         // A game on more than one device (home/streaming): the pill ends in the page's "Play from" segment (a divider and
         // Steam's arrow glyph, part of the pill, so it grows with it), and a focusable arrow lies over it, right after Play
         // in the row (the row's gap pulled back). Focused, the segment lights as the page's does; no ring or growth of its own.
@@ -367,10 +368,10 @@ export function homeCss(cardScale: number = CARD_SCALE_HANDHELD): string {
         rule('.gh-play-arrow svg', `width: ${HOME_PILL.arrowGlyph}px; height: ${HOME_PILL.arrowGlyph}px; margin: 0; fill: currentColor`),
         rule('.gh-actions > .gh-btn-stream', `position: relative; z-index: 1; flex: 0 0 ${HOME_PILL.arrow}px; width: ${HOME_PILL.arrow}px; margin-left: -${HOME_PILL.arrow + 12}px; background: transparent;
             border: none; border-radius: 0 999px 999px 0; backdrop-filter: none; box-shadow: none; transform: none`),
-        rule('.gh-actions > .gh-btn-stream.gh-focus', 'background: transparent; box-shadow: none; transform: none'),
+        rule(`${NOT_MOUSE} .gh-actions > .gh-btn-stream.gh-focus`, 'background: transparent; box-shadow: none; transform: none'),
         // The arrow focused: the whole pill shows Home's focus, as the page's pill does for its arrow; the segment is tinted.
-        rule('.gh-actions > .gh-btn-play:has(+ .gh-btn-stream.gh-focus)', `box-shadow: 0 0 0 2px rgba(255,255,255,.9), 0 14px 40px -8px var(--glance-accent); transform: scale(${pillFocus.x}, ${pillFocus.y})`),
-        rule('.gh-actions > .gh-btn-play:has(+ .gh-btn-stream.gh-focus) > .gh-play-arrow', 'background: rgba(255,255,255,.28)'),
+        rule(`${NOT_MOUSE} .gh-actions > .gh-btn-play:has(+ .gh-btn-stream.gh-focus)`, `box-shadow: 0 0 0 2px rgba(255,255,255,.9), 0 14px 40px -8px var(--glance-accent); transform: scale(${pillFocus.x}, ${pillFocus.y})`),
+        rule(`${NOT_MOUSE} .gh-actions > .gh-btn-play:has(+ .gh-btn-stream.gh-focus) > .gh-play-arrow`, 'background: rgba(255,255,255,.28)'),
 
         // Recents row (handoff: left 44, 140 tall; times the card scale, its bottom stays at 688 and it grows upwards
         // from geo.top). Overflow stays visible: earlier capsules scroll off to the left edge.
@@ -453,13 +454,13 @@ export function homeCss(cardScale: number = CARD_SCALE_HANDHELD): string {
         rule('.gh-tab', `position: relative; margin: 0; padding: 8px 2px 10px; font-size: 13px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase;
             line-height: 1.2; white-space: nowrap; color: rgba(255,255,255,.6); background: transparent; outline: none; cursor: pointer; transition: color 200ms`),
         rule('.gh-tab.gh-tab-on', 'color: #fff'),
-        rule(`${HOVER} .gh-tab:hover:not(.gh-tab-on):not(.gh-tab-focus)`, 'color: rgba(255,255,255,.85)'),
+        rule(`${HOVER} .gh-tab:hover:not(.gh-tab-on)`, 'color: rgba(255,255,255,.85)'),
         rule('.gh-tab-line', `position: absolute; left: 0; right: 0; bottom: 0; height: 3px; border-radius: 2px; background: var(--glance-accent); opacity: 0; box-shadow: none;
             transition: opacity 250ms, box-shadow 250ms, background ${ACCENT_MS}ms`),
         rule('.gh-tab.gh-tab-on .gh-tab-line', 'opacity: .55'),
         // The tabs are out of sight while the sheet is down: their line takes a new accent at once.
         rule('.gh-page:not(.gh-page-up) .gh-tab-line', 'transition: none'),
-        rule('.gh-tab.gh-tab-focus .gh-tab-line', 'opacity: 1; box-shadow: 0 0 14px 2px var(--glance-accent)'),
+        rule(`${NOT_MOUSE} .gh-tab.gh-tab-focus .gh-tab-line`, 'opacity: 1; box-shadow: 0 0 14px 2px var(--glance-accent)'),
         // Friends tab: people icon and the number of friends online, after the label.
         rule('.gh-tab-count', `display: inline-flex; align-items: center; gap: 4px; margin: 0 0 0 8px; font-size: 11px; letter-spacing: .04em; line-height: 1;
             vertical-align: 1px; color: ${FRIEND_COLOURS.none}; transition: color 200ms`),

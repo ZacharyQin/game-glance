@@ -31,7 +31,7 @@ describe('homeCss', () => {
         const list = selectors(css);
         expect(list.length).toBeGreaterThan(10);
         // (Hover looks sit under mouse mode's mark on the document's root, ours too: mouseMode.MOUSE_ATTR.)
-        for (const sel of list) expect(sel.replace(/^html\[data-gg-mouse\] /, '').startsWith('.gh-'), sel).toBe(true);
+        for (const sel of list) expect(sel.replace(/^(html\[data-gg-mouse\]|:where\(html:not\(\[data-gg-mouse\]\)\)) /, '').startsWith('.gh-'), sel).toBe(true);
         const classes = css.match(/\.[a-zA-Z_][\w-]*/g) ?? [];
         for (const cls of classes) expect(cls.startsWith('.gh-'), cls).toBe(true);
     });
@@ -519,13 +519,13 @@ describe('homeCss open transition', () => {
         // Nothing of its own over the pill: a button's glass blur here blurred the segment away (device, 8e90058).
         expect(btn?.[1]).toMatch(/backdrop-filter: none/);
         expect(btn?.[1]).toMatch(/border: none/);
-        const focus = all.find(([sel]) => sel.split(', ')[0] === '.gh-actions > .gh-btn-stream.gh-focus');
+        const focus = all.find(([sel]) => sel.split(', ')[0] === ':where(html:not([data-gg-mouse])) .gh-actions > .gh-btn-stream.gh-focus');
         expect(focus?.[1]).toMatch(/background: transparent[^]*box-shadow: none[^]*transform: none/);
         // Focused, the whole pill shows Home's focus (as the page's pill does for its arrow), and the segment is tinted.
-        const pill = all.find(([sel]) => sel.split(', ')[0] === '.gh-actions > .gh-btn-play:has(+ .gh-btn-stream.gh-focus)');
+        const pill = all.find(([sel]) => sel.split(', ')[0] === ':where(html:not([data-gg-mouse])) .gh-actions > .gh-btn-play:has(+ .gh-btn-stream.gh-focus)');
         const hp = pillFocusScale(HOME_PILL.width, TITLE_BLOCK.button);
         expect(pill?.[1]).toMatch(new RegExp(`box-shadow: 0 0 0 2px rgba\\(255,255,255,\\.9\\)[^]*transform: scale\\(${hp.x}, ${hp.y}\\)`));
-        const tint = all.find(([sel]) => sel.split(', ')[0] === '.gh-actions > .gh-btn-play:has(+ .gh-btn-stream.gh-focus) > .gh-play-arrow');
+        const tint = all.find(([sel]) => sel.split(', ')[0] === ':where(html:not([data-gg-mouse])) .gh-actions > .gh-btn-play:has(+ .gh-btn-stream.gh-focus) > .gh-play-arrow');
         expect(tint?.[1]).toMatch(/background: rgba\(255,255,255,\.28\)/);
         // Opening: the segment moves with the pill and grows onto the page's (openMotion --gho-play-arrow), about its right end.
         expect(all.some(([sel, body]) => sel.includes('data-gh-phase="to"') && sel.endsWith('.gh-play-arrow') && body.includes('transform: var(--gho-play-arrow)'))).toBe(true);
@@ -661,12 +661,12 @@ describe('homeCss Play pill', () => {
         expect(body).not.toContain('--gh-on-accent');
     });
     it("focused: a white ring and accent glow, scaled by the page's focus scale (the page focuses its Play the same)", () => {
-        const body = /\.gh-btn\.gh-focus, \.gh-btn:focus \{([^}]*)\}/.exec(homeCss())?.[1] ?? '';
+        const body = /:where\(html:not\(\[data-gg-mouse\]\)\) \.gh-btn\.gh-focus, :where\(html:not\(\[data-gg-mouse\]\)\) \.gh-btn:focus \{([^}]*)\}/.exec(homeCss())?.[1] ?? '';
         expect(body).toContain('0 0 0 2px rgba(255,255,255,.9)');
         expect(body).toContain(`scale(${PAGE_LAYOUT.focusScale})`);
         // The Play pill grows by what a circle grows (its height's share), so its gap to the circles stays.
         const hp = pillFocusScale(HOME_PILL.width, TITLE_BLOCK.button);
-        expect(/\.gh-actions > \.gh-btn-play\.gh-focus, \.gh-actions > \.gh-btn-play\.gh-btn:focus \{([^}]*)\}/.exec(homeCss())?.[1] ?? '').toContain(`scale(${hp.x}, ${hp.y})`);
+        expect(/\.gh-actions > \.gh-btn-play\.gh-focus, :where\(html:not\(\[data-gg-mouse\]\)\) \.gh-actions > \.gh-btn-play\.gh-btn:focus \{([^}]*)\}/.exec(homeCss())?.[1] ?? '').toContain(`scale(${hp.x}, ${hp.y})`);
     });
 });
 
@@ -786,15 +786,23 @@ describe("a Unifideck game's cloud button (Unifideck's own look, as on its page)
 describe('homeCss mouse hover', () => {
     const css = homeCss(CARD_SCALE_HANDHELD);
     const ring = '0 0 0 2px rgba(255,255,255,.45)';
-    it("the buttons (Play pill, circles) take the game cards' ring under a mouse, not when focused, ring only", () => {
-        const body = css.match(/html\[data-gg-mouse\] \.gh-btn:hover:not\(\.gh-focus\)[^{]*\{([^}]*)\}/)?.[1] ?? '';
+    it("the buttons (Play pill, circles) take the game cards' ring under a mouse, focused or not (no focus look then), ring only", () => {
+        const body = css.match(/html\[data-gg-mouse\] \.gh-btn:hover:not\(\.gh-btn-stream\) \{([^}]*)\}/)?.[1] ?? '';
         expect(body).toContain(`box-shadow: ${ring} !important`);
         expect(body).not.toContain('transform');
-        // "Not focused" excludes DOM focus too (focusCss).
-        expect(css).toMatch(/html\[data-gg-mouse\] \.gh-btn:hover:not\(\.gh-focus\):not\(:focus\)/);
+        expect(css).toMatch(/html\[data-gg-mouse\] \.gh-actions > \.gh-btn-play:has\(\+ \.gh-btn-stream:hover\) \{/);
     });
-    it('a feed tab brightens its label under a mouse (not the selected one, not focused)', () => {
-        expect(css).toMatch(/html\[data-gg-mouse\] \.gh-tab:hover:not\(\.gh-tab-on\):not\(\.gh-tab-focus\)[^{]*\{[^}]*color: rgba\(255,255,255,\.85\)/);
+    it('a feed tab brightens its label under a mouse (not the selected one)', () => {
+        expect(css).toMatch(/html\[data-gg-mouse\] \.gh-tab:hover:not\(\.gh-tab-on\) \{[^}]*color: rgba\(255,255,255,\.85\)/);
+    });
+    it("in mouse mode the buttons' and tabs' focus looks are off (Steam puts its focus back on a clicked button), at no weight", () => {
+        const gate = ':where(html:not([data-gg-mouse]))';
+        // Every focus look of a button or a tab, and its DOM-focus twin, sits behind the gate; :where() adds nothing to its weight.
+        for (const sel of selectors(css).filter((s) => /\.gh-(btn[\w-]*|tab)[^{]*(\.gh-focus|\.gh-tab-focus)(?![\w-])/.test(s) && !/:not\(\.gh-focus\)/.test(s))) expect(sel, sel).toContain(gate);
+        expect(css).toContain(`${gate} .gh-btn.gh-focus`);
+        expect(css).toContain(`${gate} .gh-tab.gh-tab-focus .gh-tab-line`);
+        // The selected game keeps its look: it says whose art and buttons these are.
+        for (const sel of selectors(css).filter((s) => s.includes('gh-recents-focus'))) expect(sel).not.toContain(gate);
     });
     it('the game cards keep their ring, now the shared one', () => {
         expect(css).toContain(`.gh-cap.gh-cap-hover:not(.gh-cap-sel):not(.gh-cap-lib-on)`);

@@ -8,6 +8,13 @@
 /** On the document's root while a mouse is the input. */
 export const MOUSE_ATTR = 'data-gg-mouse';
 
+/**
+ * Before a focus look of a button: off in mouse mode, as focus outlines are for a mouse elsewhere (Steam puts its focus
+ * back on a clicked button when its page closes, which then looked pressed). Inside :where(), so it adds no weight and
+ * the look keeps losing to whatever it lost to before (the open transition's states).
+ */
+export const NOT_MOUSE = `:where(html:not([${MOUSE_ATTR}]))`;
+
 /** The hover ring of everything clickable (the game cards' since phase 2): 2 units of `two`, white at .45. */
 export function hoverRing(two: string): string {
     return `0 0 0 ${two} rgba(255,255,255,.45)`;
