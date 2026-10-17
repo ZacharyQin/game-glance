@@ -123,8 +123,21 @@ export function mountTwins(root: HTMLElement, specs: TwinSpec[]): () => void {
  * twins transition their translate by --t-dx/--t-dy). A twin without a counterpart, or one too far off, stays.
  */
 export function settleTwins(copy: HTMLElement, doc: Document, targets: Record<string, string>) {
-    const box = (el: { getBoundingClientRect(): { left: number; top: number; width: number; height: number } }) => {
-        const r = el.getBoundingClientRect();
+    // The text's own extent (a Range over its contents), never the element's box: the page's texts sit in stretched boxes
+    // (the eyebrow and title span the 640-unit title block, the title has padding, a column's label and value share its
+    // width), which the size guard rejected, so the title, eyebrow and narrower stat texts never glided (final review).
+    const box = (el: Element) => {
+        let r: { left: number; top: number; width: number; height: number } | null = null;
+        try {
+            const range = doc.createRange?.();
+            if (range) {
+                range.selectNodeContents(el);
+                r = range.getBoundingClientRect();
+            }
+        } catch {
+            r = null;
+        }
+        r ??= el.getBoundingClientRect();
         return { x: r.left, y: r.top, w: r.width, h: r.height };
     };
     for (const twin of copy.querySelectorAll<HTMLElement>('.gh-twin')) {

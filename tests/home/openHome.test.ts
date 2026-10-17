@@ -436,3 +436,27 @@ describe('settleTwins', () => {
         expect(vars.play).toBeUndefined();
     });
 });
+
+describe('settleTwins measures text, not layout boxes', () => {
+    it("a page text in a stretched box (the titleblock's full width, a column's width) still glides: its text extent is measured", () => {
+        const vars: Record<string, string> = {};
+        // The page's eyebrow box spans the 640-unit column; its text is 90 px wide, 1.5 px off the twin's.
+        const pageEl = { getBoundingClientRect: () => ({ left: 25, top: 400, width: 640, height: 14 }), text: { left: 26.5, top: 400, width: 90, height: 14 } };
+        const twinEl = {
+            getBoundingClientRect: () => ({ left: 25, top: 400, width: 90, height: 14 }),
+            text: { left: 25, top: 400, width: 90, height: 14 },
+            getAttribute: () => 'eyebrow',
+            style: { setProperty: (n: string, v: string) => (vars[n] = v) },
+        };
+        const doc = {
+            querySelector: () => pageEl,
+            createRange: () => {
+                let on: { text: object } | null = null;
+                return { selectNodeContents: (el: { text: object }) => (on = el), getBoundingClientRect: () => on!.text };
+            },
+        } as unknown as Document;
+        const copy = { querySelectorAll: () => [twinEl] } as unknown as HTMLElement;
+        settleTwins(copy, doc, { eyebrow: '.gg-eyebrow' });
+        expect(vars).toEqual({ '--t-dx': '1.5px', '--t-dy': '0px' });
+    });
+});
