@@ -480,6 +480,21 @@ export function buildCleanCss({ header, details, root }: ThemeClasses): string {
 const LAUNCH_FADE_MS = 200;
 
 /**
+ * Names for the open's extras layer text that settles onto the page at the hand-over (home/OpenExtras data-settle,
+ * openHome.settleTwins), as the twins do: the layer is laid out by its own rules, which landed 1/64 device px off the
+ * page's (a layout unit), enough to draw a row a whole device px off near a half pixel (Ally, docked).
+ */
+export const SETTLE = {
+    hltbTitle: 'x-hltb-title',
+    caption: 'x-caption',
+    desc: 'x-desc',
+    label: (key: string) => `x-label-${key}`,
+    value: (key: string) => `x-value-${key}`,
+    statLabel: (key: string) => `x-stat-label-${key}`,
+    statValue: (key: string) => `x-stat-value-${key}`,
+};
+
+/**
  * Each text twin's counterpart on the page (home/openTwins names): where the open's twins glide to at the hand-over
  * (openHome.settleTwins). The Play label's is left out without Steam's class.
  */
@@ -491,6 +506,15 @@ export function twinTargets({ root }: ThemeClasses, look: 'spotlight' | 'clean' 
     for (const k of ['size', 'played', 'achievements', 'hltb']) {
         out[`label-${k}`] = `${scope} [data-stat="${k}"] .gg-label`;
         out[`value-${k}`] = `${scope} [data-stat="${k}"] .gg-value`;
+        out[SETTLE.statLabel(k)] = `${scope} [data-stat="${k}"] .gg-label`;
+        out[SETTLE.statValue(k)] = `${scope} [data-stat="${k}"] .gg-value`;
+    }
+    out[SETTLE.hltbTitle] = '.gg-hltb > .gg-label';
+    out[SETTLE.caption] = '.gg-hltb .gg-caption';
+    out[SETTLE.desc] = '.gg-hero .gg-desc';
+    for (const k of ['hltb', 'mainExtras', 'completionist']) {
+        out[SETTLE.label(k)] = `.gg-hltb [data-stat="${k}"] .gg-label`;
+        out[SETTLE.value(k)] = `.gg-hltb [data-stat="${k}"] .gg-value`;
     }
     return out;
 }

@@ -914,6 +914,10 @@ describe('homeCss open transition: text twins', () => {
         expect(twin).toContain('transform: var(--t-to)');
         // The glide onto the page as measured (openHome.settleTwins sets --t-dx/--t-dy), above the copy's transition: none.
         expect(twin).toContain(`transition: translate ${OPEN_TIMINGS.settleGlide}ms ease-out !important`);
+        // The extras layer's text glides the same way (data-settle).
+        const x = body(`${B} [data-settle]`);
+        expect(x).toContain('translate: var(--t-dx, 0px) var(--t-dy, 0px)');
+        expect(x).toContain(`transition: translate ${OPEN_TIMINGS.settleGlide}ms ease-out !important`);
         const hide = body(`${B}[data-gh-twins~="label-played"] .gh-chip[data-chip="played"] .gh-chip-label`);
         expect(hide).toContain('opacity: 0');
         expect(hide).toContain('animation: none');

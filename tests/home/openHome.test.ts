@@ -467,3 +467,19 @@ describe('settleTwins measures text, not layout boxes', () => {
         expect(vars).toEqual({ '--t-dx': '1.5px', '--t-dy': '0px' });
     });
 });
+
+describe('settleTwins: the extras layer too', () => {
+    it('glides an element with data-settle onto its page text', () => {
+        const vars: Record<string, string> = {};
+        const el = {
+            getBoundingClientRect: () => ({ left: 1125.6836, top: 662.8906, width: 90.82, height: 39.063 }),
+            getAttribute: (n: string) => (n === 'data-settle' ? 'x-value-mainExtras' : null),
+            style: { setProperty: (n: string, v: string) => (vars[n] = v) },
+        };
+        const page = { getBoundingClientRect: () => ({ left: 1125.6958, top: 662.8784, width: 90.82, height: 39.063 }) };
+        const copy = { querySelectorAll: (sel: string) => (sel.includes('[data-settle]') ? [el] : []) } as unknown as HTMLElement;
+        const doc = { querySelector: (sel: string) => (sel === 'P' ? page : null) } as unknown as Document;
+        settleTwins(copy, doc, { 'x-value-mainExtras': 'P' });
+        expect(vars).toEqual({ '--t-dx': '0.0122px', '--t-dy': '-0.0122px' });
+    });
+});

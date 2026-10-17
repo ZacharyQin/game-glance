@@ -732,6 +732,8 @@ export function openingRules(): string[] {
         ...twinOut.map(([name, sel]) => soft(`${MT}[data-gh-twins~="${name}"] ${sel}`, `animation: gh-twin-out ${T.morph}ms linear both`)),
         // The bridge (nothing animates in it): the twins at their end, Home's twinned text hidden, stated above the live rules.
         soft(`.gh-root.gh-bridge[data-gh-opening][data-gh-phase] .gh-twin`, `opacity: 1; transform: var(--t-to); animation: none; transition: translate ${T.settleGlide}ms ease-out !important`),
+        // The extras layer's text glides onto the page's the same way (OpenExtras data-settle, openHome.settleTwins).
+        soft(`.gh-root.gh-bridge[data-gh-opening][data-gh-phase] [data-settle]`, `translate: var(--t-dx, 0px) var(--t-dy, 0px); transition: translate ${T.settleGlide}ms ease-out !important`),
         ...twinOut.map(([name, sel]) => soft(`.gh-root.gh-bridge[data-gh-opening][data-gh-phase][data-gh-twins~="${name}"] ${sel}`, 'opacity: 0; animation: none')),
         rule(`${X} .gh-x-desc`, `display: none; position: absolute; ${at('desc')}; margin: 0; font-size: ${dd(L.cardText.desc)}; font-weight: 400; line-height: ${L.cardText.descLine};
             color: rgba(255,255,255,.84); -webkit-line-clamp: ${L.cardText.descLines}; -webkit-box-orient: vertical; overflow: hidden`),

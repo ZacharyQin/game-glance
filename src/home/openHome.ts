@@ -145,8 +145,9 @@ export function settleTwins(copy: HTMLElement, doc: Document, targets: Record<st
         r ??= el.getBoundingClientRect();
         return { x: r.left, y: r.top, w: r.width, h: r.height };
     };
-    for (const twin of copy.querySelectorAll<HTMLElement>('.gh-twin')) {
-        const sel = targets[twin.getAttribute('data-twin') ?? ''];
+    // The twins, and the extras layer's text that settles the same way (OpenExtras data-settle).
+    for (const twin of copy.querySelectorAll<HTMLElement>('.gh-twin, [data-settle]')) {
+        const sel = targets[twin.getAttribute('data-twin') ?? twin.getAttribute('data-settle') ?? ''];
         const page = sel ? doc.querySelector<HTMLElement>(sel) : null;
         const glide = settleDelta(box(twin), page ? box(page) : null);
         if (!glide) continue;

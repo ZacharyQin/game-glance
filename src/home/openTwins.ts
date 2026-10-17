@@ -1,4 +1,6 @@
 import { PAGE_LAYOUT, PAGE_TYPE, pillFocusScale, TypeRole } from '../styles/themeCss';
+
+export { SETTLE } from '../styles/themeCss';
 import { HOME_PILL, TITLE_BLOCK } from './homeCss';
 import { HOME_CHIP_FONTS, HomeRects } from './openMotion';
 import type { Box, PageLook, PageStat, PageTargets, StatKey } from './openTargets';

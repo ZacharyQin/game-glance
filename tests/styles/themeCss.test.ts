@@ -2,6 +2,7 @@ import { sourcePillIcon, sourcePillLook } from '../../src/styles/sourcePill';
 import { describe, expect, it } from 'vitest';
 import { arrivalSelectors, buildAccentCss, buildArrivingCss, buildCleanCss, buildSteamEnterOffCss, steamFooterSelector, buildDownloadCss, buildLaunchCss, buildRingCss, buildThemeCss, buildUnifideckCss, launchTargets, ThemeClasses } from '../../src/styles/themeCss';
 import { homeCanvas } from '../../src/home/scale';
+import { SETTLE } from '../../src/home/openTwins';
 import { cardMaxWidths, PAGE_LAYOUT, PAGE_SCRIM_LAYERS, PAGE_SCRIMS, pageDUnit, PAGE_TYPE, pageType, pillFocusScale, playRowSelector, ringBoost, STEAM_LEGEND_PX, twinTargets } from '../../src/styles/themeCss';
 
 const full: ThemeClasses = {
@@ -582,6 +583,14 @@ describe('buildThemeCss restyle (Spotlight Home on)', () => {
         expect(sp['value-hltb']).toBe('.gg-hero [data-stat="hltb"] .gg-value');
         expect(twinTargets(full, 'clean')['value-size']).toBe('.gg-clean-info [data-stat="size"] .gg-value');
         expect(twinTargets({ ...full, root: {} }, 'spotlight').play).toBeUndefined();
+        // The extras layer's text settles too (openTwins.SETTLE names): the HowLongToBeat card, the description, the columns.
+        expect(sp[SETTLE.hltbTitle]).toBe('.gg-hltb > .gg-label');
+        expect(sp[SETTLE.label('mainExtras')]).toBe('.gg-hltb [data-stat="mainExtras"] .gg-label');
+        expect(sp[SETTLE.value('completionist')]).toBe('.gg-hltb [data-stat="completionist"] .gg-value');
+        expect(sp[SETTLE.caption]).toBe('.gg-hltb .gg-caption');
+        expect(sp[SETTLE.desc]).toBe('.gg-hero .gg-desc');
+        expect(sp[SETTLE.statValue('played')]).toBe('.gg-hero [data-stat="played"] .gg-value');
+        expect(twinTargets(full, 'clean')[SETTLE.statValue('size')]).toBe('.gg-clean-info [data-stat="size"] .gg-value');
     });
     it("the cloud's icon is centred in its circle, as on Home: Steam's icon box is as tall as the icon", () => {
         // (Its box kept the 1.1.1 theme's 16 u height under a 26 d unit icon, which hung out of its bottom: 1.65 px low docked.)
