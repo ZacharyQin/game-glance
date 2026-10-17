@@ -15,7 +15,7 @@ https://github.com/user-attachments/assets/7772cd5b-ac8c-428e-a612-e9d594454a50
   recent games or a collection, and Friends, News and Recommended tabs one press down.
 - **Touch.** On a handheld's touchscreen, tap a game to select it and again to open it, swipe the games row and the tabs'
   rows, swipe up for the tabs, and tap the game page's cards. A mouse clicks and drags the same way, scrolls the rows
-  with the wheel and lights the card under the cursor.
+  with the wheel and lights whatever you can click under the cursor.
 - **Screensaver.** Steam's Game Slideshow, drawn with your games and their art, with logo and stats.
 - **Non-Steam games.** Games added by [Heroic](https://heroicgameslauncher.com) or
   [Unifideck](https://github.com/mubaraknumann/unifideck) get their store, times and description too.

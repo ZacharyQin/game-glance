@@ -30,7 +30,8 @@ describe('homeCss', () => {
         const css = homeCss();
         const list = selectors(css);
         expect(list.length).toBeGreaterThan(10);
-        for (const sel of list) expect(sel.startsWith('.gh-'), sel).toBe(true);
+        // (Hover looks sit under mouse mode's mark on the document's root, ours too: mouseMode.MOUSE_ATTR.)
+        for (const sel of list) expect(sel.replace(/^html\[data-gg-mouse\] /, '').startsWith('.gh-'), sel).toBe(true);
         const classes = css.match(/\.[a-zA-Z_][\w-]*/g) ?? [];
         for (const cls of classes) expect(cls.startsWith('.gh-'), cls).toBe(true);
     });
@@ -779,5 +780,27 @@ describe("a Unifideck game's cloud button (Unifideck's own look, as on its page)
         expect(css).toMatch(/\.gh-btn-cloud\.gh-cloud-uni-dim\s*\{[^}]*opacity: \.5/);
         // Its in-sync check badge at Unifideck's proportion to the cloud (13 of the 24).
         expect(css).toMatch(/\.gh-btn-cloud\.gh-cloud-uni svg\.gh-uni-badge\s*\{[^}]*width: 13px/);
+    });
+});
+
+describe('homeCss mouse hover', () => {
+    const css = homeCss(CARD_SCALE_HANDHELD);
+    const ring = '0 0 0 2px rgba(255,255,255,.45)';
+    it("the buttons (Play pill, circles) take the game cards' ring under a mouse, not when focused, ring only", () => {
+        const body = css.match(/html\[data-gg-mouse\] \.gh-btn:hover:not\(\.gh-focus\)[^{]*\{([^}]*)\}/)?.[1] ?? '';
+        expect(body).toContain(`box-shadow: ${ring} !important`);
+        expect(body).not.toContain('transform');
+        // "Not focused" excludes DOM focus too (focusCss).
+        expect(css).toMatch(/html\[data-gg-mouse\] \.gh-btn:hover:not\(\.gh-focus\):not\(:focus\)/);
+    });
+    it('a feed tab brightens its label under a mouse (not the selected one, not focused)', () => {
+        expect(css).toMatch(/html\[data-gg-mouse\] \.gh-tab:hover:not\(\.gh-tab-on\):not\(\.gh-tab-focus\)[^{]*\{[^}]*color: rgba\(255,255,255,\.85\)/);
+    });
+    it('the game cards keep their ring, now the shared one', () => {
+        expect(css).toContain(`.gh-cap.gh-cap-hover:not(.gh-cap-sel):not(.gh-cap-lib-on)`);
+        expect(css).toMatch(new RegExp(`\\.gh-cap\\.gh-cap-hover[^{]*\\{[^}]*box-shadow: ${ring.replace(/[().]/g, '\\$&')}`));
+    });
+    it('no hover look without mouse mode: every :hover rule is under html[data-gg-mouse]', () => {
+        for (const sel of css.match(/[^{}]*:hover[^{]*\{/g) ?? []) expect(sel).toContain('html[data-gg-mouse]');
     });
 });

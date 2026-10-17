@@ -31,6 +31,7 @@ import { openPending } from '../data/openIntent';
 import { knownDescription, peekHltb, rememberDescription, rememberHltb } from '../home/warmup';
 import { accentMemo, knownAccent } from '../home/accentMemo';
 import { accentCss, arrivingCss, cleanCss, downloadCss, launchCss, launchSelectors, ringCss, themeCss, unifideckCss } from '../styles/theme';
+import { installMouseMode } from '../home/mouseMode';
 import { CleanInfo } from './CleanInfo';
 import { ErrorBoundary } from './ErrorBoundary';
 import { GameStatusBar } from './GameStatusBar';
@@ -126,6 +127,8 @@ function Hero({ overview, details, restyle, clean }: Props & { restyle: boolean;
     const heroRef = useRef<HTMLDivElement>(null);
     const [pageDoc, setPageDoc] = useState<Document | null>(null);
     useEffect(() => setPageDoc(heroRef.current?.ownerDocument ?? null), [game.appId]);
+    // Hover looks follow a mouse (home/mouseMode), here as on Home.
+    useEffect(() => (pageDoc ? installMouseMode(pageDoc) : undefined), [pageDoc]);
     // B and the D-pad go to Steam's gamepad focus, which can land on a hidden tab of Steam's own page on a Unifideck page (logic/gamepadFocus).
     useUnifideckGamepadFocus(pageDoc, game.isShortcut);
     const nativeSizeLabel = useUnifideckSizeLabel(pageDoc, game.appId, uniInstalled, restyle && game.isShortcut);

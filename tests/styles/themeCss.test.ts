@@ -509,6 +509,24 @@ describe('buildThemeCss restyle (Spotlight Home on)', () => {
         expect(buildCleanCss(full)).toMatch(/\.gg-clean-info \{[^}]*border: calc\(1 \* var\(--gg-d\)\) solid rgba\(255, 255, 255, calc\(0\.12 \* var\(--gg-ring, 1\)\)\)/);
         expect(buildRingCss(1.15)).toBe(':root { --gg-ring: 1.15; }');
     });
+    it("everything clickable takes the hover ring under a mouse (in d units), never when focused, ring only but the cards", () => {
+        const ring = 'box-shadow: 0 0 0 calc(2 * var(--gg-d)) rgba(255,255,255,.45) !important;';
+        const pill = rulesFor(restyled, 'html[data-gg-mouse] .rt_PlayBtn > div:has(> [role="button"]):hover:not(:has(.gpfocus)):not(:has(:focus))');
+        expect(pill).toContain(ring);
+        expect(pill).not.toContain('transform');
+        const circle = rulesFor(restyled, 'html[data-gg-mouse] .ps_Menu:hover:not(.gpfocus):not(:focus)');
+        expect(circle).toContain(ring);
+        expect(circle).not.toContain('transform');
+        expect(rulesFor(restyled, 'html[data-gg-mouse] .ps_Cloud:hover:not(.gpfocus):not(:focus)')).toContain(ring);
+        // The cards (info, HowLongToBeat) lift as Home's feed cards do; a press still gives.
+        const card = rulesFor(restyled, 'html[data-gg-mouse] .gg-card-tap:hover');
+        expect(card).toContain(ring);
+        expect(card).toContain('transform: translateY(calc(-2 * var(--gg-d)))');
+        expect(rulesFor(restyled, 'html[data-gg-mouse] .gg-card-tap:hover:active')).toContain('scale(0.98)');
+        // Not in the 1.1.1 output, and never without mouse mode.
+        expect(buildThemeCss(steam)).not.toContain(':hover');
+        for (const sel of restyled.match(/[^{}]*:hover[^{]*\{/g) ?? []) expect(sel).toContain('html[data-gg-mouse]');
+    });
     it("the cloud's icon is centred in its circle, as on Home: Steam's icon box is as tall as the icon", () => {
         // (Its box kept the 1.1.1 theme's 16 u height under a 26 d unit icon, which hung out of its bottom: 1.65 px low docked.)
         expect(rulesFor(restyled, '.ps_CloudIcon')).toContain(`height: calc(${PAGE_LAYOUT.cloudIcon} * var(--gg-d)) !important;`);

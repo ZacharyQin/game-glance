@@ -3,6 +3,7 @@ import { withDomFocus } from './focusCss';
 import { DEFAULT_ACCENT } from './accent';
 import { SOURCE_PILL, sourcePillIcon, sourcePillLook } from '../styles/sourcePill';
 import { CLOUD_COLOURS, CloudTone } from './cloud';
+import { hoverRing, MOUSE_ATTR } from './mouseMode';
 import { FRIEND_COLOURS } from './friends';
 import { FEED_ROW2_HEADER } from './feedLayout';
 import { PERSONA_DOT, PERSONA_DOT_COLOURS, PersonaDot, STATUS_BAR, STATUS_FADE_MS } from './statusItems';
@@ -48,6 +49,8 @@ function rule(selector: string, body: string): string {
  * pill inside it, the Library card's body, the feed cards.
  */
 export const HOME_GLASS = ['.gh-chip', '.gh-btn', '.gh-source', '.gh-family', '.gh-lib-body', '.gh-card'];
+/** Hover looks apply only in mouse mode (mouseMode). */
+const HOVER = `html[${MOUSE_ATTR}]`;
 const GLASS = 'background: rgba(12,16,22,.38); border: 1px solid rgba(255,255,255,.12); backdrop-filter: blur(14px)';
 const SCRIM = '5,7,10';
 const GLOW = '0 0 0 1px var(--glance-accent), 0 16px 40px -12px var(--glance-accent)';
@@ -350,6 +353,10 @@ export function homeCss(cardScale: number = CARD_SCALE_HANDHELD): string {
         rule('.gh-btn-icon', 'display: flex; align-items: center; justify-content: center; line-height: 1'),
         rule('.gh-btn-play .gh-btn-icon', `font-size: ${HOME_PILL.icon}px`),
         rule('.gh-btn.gh-focus', `box-shadow: 0 0 0 2px rgba(255,255,255,.9), 0 14px 40px -8px var(--glance-accent); transform: scale(${PAGE_LAYOUT.focusScale})`),
+        // A mouse over a button (mouseMode, never a finger or the controller): the game cards' hover ring, ring only. The stream
+        // segment is part of the Play pill: the pill takes the ring, as it takes the focus look.
+        rule(`${HOVER} .gh-btn:hover:not(.gh-focus):not(.gh-btn-stream)`, `box-shadow: ${hoverRing('2px')}`),
+        rule(`${HOVER} .gh-actions > .gh-btn-play:has(+ .gh-btn-stream:hover):not(.gh-focus)`, `box-shadow: ${hoverRing('2px')}`),
         // The Play pill grows by what a circle grows (themeCss.pillFocusScale), so its gap to the circles stays.
         rule('.gh-actions > .gh-btn-play.gh-focus', `transform: scale(${pillFocus.x}, ${pillFocus.y})`),
         // A game on more than one device (home/streaming): the pill ends in the page's "Play from" segment (a divider and
@@ -411,7 +418,7 @@ export function homeCss(cardScale: number = CARD_SCALE_HANDHELD): string {
         rule('.gh-cap-off:not(.gh-cap-sel)', 'filter: grayscale(1) brightness(.7)'),
         // A mouse over a card (home/mouse.hoverKey, never a finger): a faint white ring, half the selection's and without
         // its accent glow, and a little brighter; an uninstalled game loses some of its grey. Not the selected card.
-        rule('.gh-cap.gh-cap-hover:not(.gh-cap-sel):not(.gh-cap-lib-on)', `box-shadow: 0 0 0 2px rgba(255,255,255,.45), ${capShadow}; filter: brightness(1.12)`),
+        rule('.gh-cap.gh-cap-hover:not(.gh-cap-sel):not(.gh-cap-lib-on)', `box-shadow: ${hoverRing('2px')}, ${capShadow}; filter: brightness(1.12)`),
         rule('.gh-cap-off.gh-cap-hover:not(.gh-cap-sel)', 'filter: grayscale(.5) brightness(.9)'),
         // The way back (B from a page): the art is there at once; Home's title, chips, buttons and row fade in over it. Never
         // as one layer: a parent fading (opacity under 1) cuts the glass inside it off from the art, which showed unblurred
@@ -446,6 +453,7 @@ export function homeCss(cardScale: number = CARD_SCALE_HANDHELD): string {
         rule('.gh-tab', `position: relative; margin: 0; padding: 8px 2px 10px; font-size: 13px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase;
             line-height: 1.2; white-space: nowrap; color: rgba(255,255,255,.6); background: transparent; outline: none; cursor: pointer; transition: color 200ms`),
         rule('.gh-tab.gh-tab-on', 'color: #fff'),
+        rule(`${HOVER} .gh-tab:hover:not(.gh-tab-on):not(.gh-tab-focus)`, 'color: rgba(255,255,255,.85)'),
         rule('.gh-tab-line', `position: absolute; left: 0; right: 0; bottom: 0; height: 3px; border-radius: 2px; background: var(--glance-accent); opacity: 0; box-shadow: none;
             transition: opacity 250ms, box-shadow 250ms, background ${ACCENT_MS}ms`),
         rule('.gh-tab.gh-tab-on .gh-tab-line', 'opacity: .55'),
@@ -479,7 +487,7 @@ export function homeCss(cardScale: number = CARD_SCALE_HANDHELD): string {
             box-shadow: inset 0 0 0 1px var(--gh-edge); transition: box-shadow 300ms`),
         rule('.gh-card.gh-card-focus', `box-shadow: ${GLOW}; --gh-edge: rgba(255,255,255,.3); transform: translateY(-4px)`),
         // A mouse over a feed card: the recents' faint ring and half the focused card's lift.
-        rule('.gh-card.gh-card-hover:not(.gh-card-focus)', 'box-shadow: 0 0 0 2px rgba(255,255,255,.45), 0 6px 20px -10px rgba(0,0,0,.6); transform: translateY(-2px)'),
+        rule('.gh-card.gh-card-hover:not(.gh-card-focus)', `box-shadow: ${hoverRing('2px')}, 0 6px 20px -10px rgba(0,0,0,.6); transform: translateY(-2px)`),
         // Avatar rings: green online or in game, Steam's away blue away; offline: no ring and a dimmed avatar.
         rule('.gh-card-ring-online', `--gh-ring: ${FRIEND_COLOURS.online}`),
         rule('.gh-card-ring-away', `--gh-ring: ${FRIEND_COLOURS.away}`),

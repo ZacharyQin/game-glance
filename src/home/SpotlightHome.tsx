@@ -12,6 +12,7 @@ import { recentsButton, selectionForButton, type Zone } from './focusZones';
 import { sheetSwipe } from './rowDrag';
 import { rowWheelTarget } from './mouse';
 import { useWheelStep } from './useMouse';
+import { installMouseMode } from './mouseMode';
 import { HeroBackground } from './HeroBackground';
 import { neighbourIds } from './heroLayers';
 import { HERO_PRELOAD_DELAY_MS, HERO_PRELOAD_RADIUS, RETURN_TIMINGS } from './motion';
@@ -192,6 +193,11 @@ export function SpotlightHome() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [resolved, gameIds, data.recentsSettled]);
     const rootRef = useRef<HTMLDivElement>(null);
+    // Hover looks follow a mouse (mouseMode), on Steam's document, which the game page shares.
+    useEffect(() => {
+        const doc = rootRef.current?.ownerDocument;
+        return doc ? installMouseMode(doc) : undefined;
+    }, []);
     const cloud = useCloud(onLibrary ? null : data.focused?.appId ?? null);
     // The action button that last had focus. A button can leave while focused (the cloud circle when the next game
     // has none, the circles on the Library card): focus then moves to the row's last button instead of being lost.

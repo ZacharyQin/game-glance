@@ -1,4 +1,5 @@
 import { DOWNLOAD_FILL_COLOR, DOWNLOAD_FILL_MS } from './downloadFill';
+import { hoverRing, MOUSE_ATTR } from '../home/mouseMode';
 import { DEFAULT_ACCENT, legibleAccent } from '../home/accent';
 import { CLOUD_COLOURS, CLOUD_FOCUS_BAD } from '../home/cloud';
 import { homeCanvas } from '../home/scale';
@@ -54,6 +55,8 @@ const u = (n: number) => `calc(${n} * var(--gg-u))`;
  * cards are Home's size on every screen, so Home's title block and the details title line up.
  */
 const d = (px: number) => `calc(${px} * var(--gg-d))`;
+/** Hover looks apply only in mouse mode (home/mouseMode). */
+const HOVER = `html[${MOUSE_ATTR}]`;
 /** Accent changes animate over 500 ms on every accent-coloured property, as on Home (handoff "Interactions & motion"). */
 const ACCENT_MS = 500;
 
@@ -568,6 +571,11 @@ function restyleRules({ header, details, root, play, shared }: ThemeClasses, lay
         rule(playButton && `${playButton} > div:has(> [role="button"])`, ` transition: transform 250ms, box-shadow 250ms !important; `),
         rule(playButton && `${playButton} > div:has(> [role="button"].gpfocus)`, pillFocused),
         rule(playButton && `${playButton} > div:has(> [role="button"]:focus)`, pillFocused),
+        // A mouse over anything clickable (home/mouseMode, never a finger or the controller): Home's hover ring, ring only, in
+        // d units; not on what has focus (its focus look wins). The pill with its "Play from" arrow takes it as one.
+        rule(playButton && `${HOVER} ${playButton} > div:has(> [role="button"]):hover:not(:has(.gpfocus)):not(:has(:focus))`, ` box-shadow: ${hoverRing(d(2))} !important; `),
+        rule(menuButton && `${HOVER} ${menuButton}:hover:not(.gpfocus):not(:focus)`, ` box-shadow: ${hoverRing(d(2))} !important; `),
+        rule(cloud && `${HOVER} ${cloud}:hover:not(.gpfocus):not(:focus)`, ` box-shadow: ${hoverRing(d(2))} !important; `),
 
         // Eyebrow ("Last played · Today", accent) and the 64px/800 title, at most two lines. Hidden unless the
         // full-screen layout applies (below): all-or-nothing, like the rest of the layout.
@@ -594,8 +602,11 @@ function restyleRules({ header, details, root, play, shared }: ThemeClasses, lay
         // them shorter, which the open transition's panels (openTargets, the same height) then shrank to after the hand-over.)
         `.gg-card.gg-hltb { gap: ${d(PAGE_LAYOUT.cards.hltbGap)}; width: ${CARD_FILL_WIDTH}; max-width: ${cardContentMax(cardMaxWidths()[1])}; justify-self: end; }`,
         // A card that responds to a tap (#24, components/cardActions) gives a little under the finger.
-        `.gg-card-tap { transition: transform 120ms ease; }`,
+        `.gg-card-tap { transition: transform 120ms ease, box-shadow 120ms ease; }`,
         `.gg-card-tap:active { transform: scale(0.98); }`,
+        // Under a mouse, a card lifts with the hover ring, as Home's feed cards do; a press still gives.
+        `${HOVER} .gg-card-tap:hover { box-shadow: ${hoverRing(d(2))} !important; transform: translateY(${d(-2)}); }`,
+        `${HOVER} .gg-card-tap:hover:active { transform: translateY(${d(-2)}) scale(0.98); }`,
         // Steam's page panel lies over the cards (a tap landed on it, on the Deck): the hero is lifted above it and takes
         // no touches itself, only the tappable cards do, so nothing of Steam's below is covered.
         `.gg-hero { z-index: 2; pointer-events: none; }`,
