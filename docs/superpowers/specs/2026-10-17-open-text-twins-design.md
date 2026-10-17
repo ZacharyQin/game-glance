@@ -44,12 +44,15 @@ and no shift beyond 0.5 px at the handover, on Play's label, the title, the eyeb
 Each moving text gets a twin in the extras layer, drawn with the page's own type: the same font, size (in d units),
 weight, letter spacing, line height and colour as the page's rules in `themeCss`.
 
-| Twin | Page counterpart | Notes |
-|---|---|---|
-| Title | `.gg-title` | Only when the title is text. A logo keeps today's image morph. |
-| Eyebrow | `.gg-eyebrow` | |
-| Play label | the Play button's label (`ActionButtonAndStatusPanel [role="button"] > div`) | The glyph stays Home's: an icon scales cleanly. |
-| Stat label and value, per chip that becomes a page column | `.gg-stats [data-stat=K] .gg-label / .gg-value`; Clean: `.gg-clean-info [data-stat=K] …` | The HLTB accent copy in Spotlight becomes the value's twin, in the accent colour. |
+The twins, and the page element each one lands on:
+
+- **Title** → `.gg-title`. Only when the title is text; a logo keeps today's image morph.
+- **Eyebrow** → `.gg-eyebrow`.
+- **Play label** → the Play button's label (`ActionButtonAndStatusPanel [role="button"] > div`). The Play icon stays
+  Home's: an icon scales cleanly.
+- **Each stat's label and value**, for every chip that becomes a page column → `.gg-stats [data-stat=K] .gg-label` and
+  `.gg-value` (Clean: the same inside `.gg-clean-info`). In Spotlight, the HLTB accent copy becomes the value's twin, in
+  the accent colour.
 
 - Each twin is placed at its page target: the boxes `openTargets` already computes, in root px.
 - `transform-origin` is its top-left corner, or its left edge and centre line for the Play label, as `openMotion` uses.
