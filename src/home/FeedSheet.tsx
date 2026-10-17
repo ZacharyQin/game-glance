@@ -277,7 +277,6 @@ export function FeedSheet({ data, raised, viewport, space, onZone, onBackToGames
                         <div className="gh-tab-line" />
                     </Focusable>
                 ))}
-                <div className="gh-tabs-more" aria-hidden="true">▾ MORE</div>
             </Focusable>
             <div className="gh-feed" style={{ height: `${geometry.total}px` }}>
                 {items.length > 0 ? (

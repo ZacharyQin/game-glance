@@ -815,3 +815,31 @@ describe('homeCss mouse hover', () => {
         for (const sel of css.match(/[^{}]*:hover[^{]*\{/g) ?? []) expect(sel).toContain('html[data-gg-mouse]');
     });
 });
+
+describe('homeCss sheet toggle (mouse only)', () => {
+    const css = homeCss(CARD_SCALE_HANDHELD);
+    const geo = recentsGeometry(CARD_SCALE_HANDHELD);
+    const body = (sel: string) => css.match(new RegExp(`(?:^|\\n)\\s*${sel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')} \\{([^}]*)\\}`))?.[1] ?? '';
+    it('a chevron centred in the gap above the games row, hidden and unclickable unless a mouse is in use', () => {
+        const rest = body('.gh-sheet-toggle');
+        expect(rest).toContain('left: 50%');
+        expect(rest).toContain(`top: calc(${geo.top - 27}px - var(--gh-top))`);
+        expect(rest).toContain('opacity: 0');
+        expect(rest).toContain('pointer-events: none');
+        const on = body('html[data-gg-mouse] .gh-sheet-toggle');
+        expect(on).toContain('opacity: 1');
+        expect(on).toContain('pointer-events: auto');
+    });
+    it('with the sheet up it moves onto the tabs row and points up, by transform only, with the sheet', () => {
+        const dy = Math.round((FEED_SHEET.tabsTop + (FEED_SHEET.tabHeight - 24) / 2 - (geo.top - 27)) * 100) / 100;
+        expect(body('.gh-page-up .gh-sheet-toggle')).toContain(`transform: translate(-50%, ${dy}px) rotate(180deg)`);
+        expect(body('.gh-sheet-toggle')).toMatch(/transition: transform 500ms/);
+    });
+    it('brightens under the mouse, and goes away while a game opens', () => {
+        expect(body('html[data-gg-mouse] .gh-sheet-toggle:hover')).toContain('color: #fff');
+        expect(css).toMatch(/\.gh-root\[data-gh-opening\] \.gh-sheet-toggle \{[^}]*opacity: 0/);
+    });
+    it('the tabs row has no "more" hint any more (it never showed: inside the tabs, which are hidden at rest)', () => {
+        expect(css).not.toContain('gh-tabs-more');
+    });
+});

@@ -326,6 +326,11 @@ export function SpotlightHome() {
     // A vertical swipe anywhere on Home (rowDrag.sheetSwipe): up raises the feed sheet (focus to its current tab, as
     // Down does), down lowers it (focus back on the game cards, as B does). Sideways drags are the rows' own.
     const swipeStart = useRef<{ id: number; x: number; y: number } | null>(null);
+    /** Raises the feed sheet as Down does: focus to its current tab (the swipe up, the mouse's sheet toggle). */
+    const raiseSheet = () => {
+        const root = rootRef.current;
+        focusElement(root?.querySelector<HTMLElement>('.gh-tab-on') ?? root?.querySelector<HTMLElement>('.gh-tab'), 'the feed tab');
+    };
     const onRootPointerDown = (event: ReactPointerEvent) => {
         if (event.isPrimary) swipeStart.current = { id: event.pointerId, x: event.clientX, y: event.clientY };
     };
@@ -335,8 +340,7 @@ export function SpotlightHome() {
         swipeStart.current = null;
         const scale = canvasScale() || 1;
         const swipe = sheetSwipe((event.clientX - start.x) / scale, (event.clientY - start.y) / scale, sheetUp);
-        const root = rootRef.current;
-        if (swipe === 'raise') focusElement(root?.querySelector<HTMLElement>('.gh-tab-on') ?? root?.querySelector<HTMLElement>('.gh-tab'), 'the feed tab');
+        if (swipe === 'raise') raiseSheet();
         else if (swipe === 'lower') focusGames();
     };
     const onRootPointerCancel = () => {
@@ -468,6 +472,14 @@ export function SpotlightHome() {
                 <div className="gh-safe">
                     {/* The page container: moved down by the stack shift (homeCss.stackShift); raised while focus is in the tabs or feed. */}
                     <div className={`gh-page${sheetUp ? ' gh-page-up' : ''}`}>
+                        {/* The mouse's sheet toggle (homeCss: shown in mouse mode only; not Focusable, so the controller never lands on it). */}
+                        {contentUp && game ? (
+                            <div className="gh-sheet-toggle" role="button" aria-label={sheetUp ? 'Back to the games' : 'Show the feed'} onClick={() => (sheetUp ? focusGames() : raiseSheet())}>
+                                <svg viewBox="0 0 28 12" aria-hidden="true">
+                                    <path d="M2 2 L14 10 L26 2" />
+                                </svg>
+                            </div>
+                        ) : null}
                         {!contentUp ? null : game ? (
                             <>
                                 <section className="gh-title-block" ref={actionsRef} onFocus={onActionsFocus} onBlur={onActionsBlur}>

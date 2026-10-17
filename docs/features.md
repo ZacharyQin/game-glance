@@ -72,7 +72,8 @@ An optional new Home screen, off by default (Quick Access → Game Glance → Sp
   through the row under the cursor) and stops at the ends; anything clickable under the cursor gets a faint ring, on Home and
   the game page (the games, buttons and tabs; a feed card and the game page's cards also lift a little). Only a mouse
   that moves turns it on; a touch or the controller turns it off. While it is on, the buttons' controller focus look
-  stays hidden (a clicked button no longer looks pressed when you come back to the page); the selected game keeps its look.
+  stays hidden (a clicked button no longer looks pressed when you come back to the page); the selected game keeps its look. A chevron above the games row, shown only in mouse mode, raises the tabs; with
+  them up it sits in the middle of the tabs row, pointing up, and brings the games back.
 - **Opening a game.** Home turns into the game's page: the art stays put while the title, Play and the buttons move to
   their places on the page and the chips grow into its cards.
 - **Steam Cloud.** For games with cloud saves, Steam's and Unifideck's, a cloud button shows the sync state and opens

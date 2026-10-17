@@ -150,6 +150,9 @@ export const FEED_SHEET = {
     raise: 440,
 } as const;
 
+/** The mouse's sheet toggle (a chevron): its box, its icon, and how far its top sits above the games row's. */
+export const SHEET_TOGGLE = { w: 44, h: 24, lift: 27, icon: { w: 28, h: 12 } } as const;
+
 /** The most the stack moves down, whatever the screen. */
 export const MAX_STACK_SHIFT = 120;
 /** ...and the most it moves up when Steam's legend is taller than the 46 reserve (handheld: 72 logical px). */
@@ -381,6 +384,18 @@ export function homeCss(cardScale: number = CARD_SCALE_HANDHELD): string {
         // while a game opens (the root's own pointer-events: none doesn't reach a child that sets auto).
         rule('.gh-recents', `position: absolute; left: var(--gh-row, ${SIDE_INSET.handheld - ROW_OFFSET}px); right: 0; top: calc(${geo.top}px - var(--gh-top)); height: ${geo.capsuleH}px; margin: 0; padding: 0; pointer-events: auto; touch-action: none; user-select: none`),
         rule('.gh-page-up .gh-recents', 'pointer-events: none'),
+        // The sheet toggle, for a mouse only (mouseMode; a finger swipes, the controller presses Down / B): a chevron centred
+        // in the gap above the games row (31 px between the buttons and the cards: no room for a circle) that raises the feed
+        // sheet; with the sheet up it rides onto the middle of the tabs row, which the tab names leave free, pointing up, and
+        // brings the games back. One element, moved and turned by transform only (motion.ts), with the sheet.
+        rule('.gh-sheet-toggle', `position: absolute; left: 50%; top: calc(${geo.top - SHEET_TOGGLE.lift}px - var(--gh-top)); width: ${SHEET_TOGGLE.w}px; height: ${SHEET_TOGGLE.h}px;
+            margin: 0; padding: 0; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,.7); filter: drop-shadow(0 1px 3px rgba(0,0,0,.6));
+            cursor: pointer; opacity: 0; pointer-events: none; transform: translate(-50%, 0); transition: transform ${SHEET}, opacity 200ms, color 150ms`),
+        rule('.gh-sheet-toggle svg', `width: ${SHEET_TOGGLE.icon.w}px; height: ${SHEET_TOGGLE.icon.h}px; margin: 0; fill: none; stroke: currentColor; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round`),
+        rule(`${HOVER} .gh-sheet-toggle`, 'opacity: 1; pointer-events: auto'),
+        rule(`${HOVER} .gh-sheet-toggle:hover`, 'color: #fff'),
+        rule('.gh-page-up .gh-sheet-toggle', `transform: translate(-50%, ${Math.round((FEED_SHEET.tabsTop + (FEED_SHEET.tabHeight - SHEET_TOGGLE.h) / 2 - (geo.top - SHEET_TOGGLE.lift)) * 100) / 100}px) rotate(180deg)`),
+        rule('.gh-root[data-gh-opening] .gh-sheet-toggle', 'opacity: 0'),
         rule('.gh-root[data-gh-opening] .gh-recents', 'pointer-events: none'),
         rule('.gh-recents-track', `position: absolute; inset: 0; transition: transform ${SLIDE}`),
         rule('.gh-recents-drag .gh-recents-track', 'transition: none'),
@@ -466,8 +481,6 @@ export function homeCss(cardScale: number = CARD_SCALE_HANDHELD): string {
             vertical-align: 1px; color: ${FRIEND_COLOURS.none}; transition: color 200ms`),
         // Someone connected (online, away or in game): Steam's in-game green, never the game accent.
         rule('.gh-tab-count.gh-tab-count-on', `color: ${FRIEND_COLOURS.online}`),
-        rule('.gh-tabs-more', 'margin: 0 0 0 auto; align-self: center; font-size: 11px; letter-spacing: .16em; font-weight: 700; line-height: 1.2; color: rgba(255,255,255,.55); opacity: 1; transition: opacity 300ms'),
-        rule('.gh-page-up .gh-tabs-more', 'opacity: 0'),
         // Cards (top 756, 260 tall, gap 14); hidden until the sheet is up. Left, width and the art url are inline.
         rule('.gh-feed', `position: absolute; left: var(--gh-row, ${SIDE_INSET.handheld - ROW_OFFSET}px); right: 0; top: calc(756px - var(--gh-top)); margin: 0; padding: 0; opacity: 0; pointer-events: none; transition: opacity 400ms`),
         // One or two card rows (feedLayout.feedRows; heights inline), each with its own track and scroll; the second row's
