@@ -58,8 +58,9 @@ const isStat = (key: string, page: PageTargets): key is StatKey => Object.protot
 
 export function openMotion(home: HomeRects, page: PageTargets, look: PageLook, canvasScale: number, focused = true): MotionVar[] {
     const s = canvasScale;
-    // Home's canvas and the page share one scale rule (home/scale.ts, themeCss --gg-d), so the page's d unit is s.
-    const d = s;
+    // Home's canvas and the page share one scale rule (home/scale.ts, themeCss --gg-d), so the page's d unit is s; the
+    // page's own when the targets have it (the measured s is a float: 1.04165954 on the Ally docked, for 1500 / 1440).
+    const d = page.d ?? s;
     const out: Record<string, string> = {};
 
     // From the top-left origin, scaled by k: the title's bottom ends at y + h * k, which must be the page's bottom.
@@ -155,7 +156,7 @@ export function openMotion(home: HomeRects, page: PageTargets, look: PageLook, c
     // A Unifideck game's size column (right after Played), likewise.
     // Each in a layer at the page card that holds it, as the page's card is one (openTwins.TwinSpec.card), by its top-left.
     const inCard = (name: string, p: { x: number; y: number }) => {
-        const c = cardAround(page.shells, p);
+        const c = cardAround(page.cards ?? page.shells, p);
         if (!c) return;
         out[`--gho-x-${name}-cx`] = px(c.x - ox);
         out[`--gho-x-${name}-cy`] = px(c.y - oy);

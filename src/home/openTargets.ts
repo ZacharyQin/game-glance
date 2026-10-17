@@ -21,8 +21,15 @@ export interface PageTargets {
     circles: Box[];
     /** The store pill, right-aligned (its size is the given one). */
     store: Box;
-    /** Spotlight: [info card, HowLongToBeat card]; Clean: [panel]. */
+    /** Spotlight: [info card, HowLongToBeat card]; Clean: [panel]. On whole device px, as Chromium draws a card's edges. */
     shells: Box[];
+    /**
+     * The same cards where the page lays them out, unsnapped: each is a compositing layer on the page, and text inside one
+     * is snapped from its origin, so the open's layers for card text sit here (openTwins.TwinSpec.card). Absent: shells.
+     */
+    cards?: Box[];
+    /** The page's d unit (CSS px per handoff px), exactly as its --gg-d. Absent: Home's canvas scale. */
+    d?: number;
     /** Each stat's label and value; on Clean, the progress bar under a stat that has one. */
     stats: Partial<Record<StatKey, { label: Box; value: Box; bar?: Box }>>;
     /** Spotlight look, when asked for: the description and the rest of the HowLongToBeat card. */
@@ -125,6 +132,7 @@ export function pageTargets(
     };
 
     let shells: Box[];
+    let cards: Box[];
     let store: Box;
     let extras: PageExtras | undefined;
     if (look === 'spotlight') {
@@ -139,7 +147,8 @@ export function pageTargets(
         const info: Box = { x: side, y: top, w: Math.min((inner * a) / (a + b), infoMax * d - thinner), h: cardH };
         const hltbW = Math.min((inner * b) / (a + b), hltbMax * d) - thinner;
         const hltb: Box = { x: W - side - hltbW, y: top, w: hltbW, h: cardH };
-        shells = [snapBox(info), snapBox(hltb)];
+        cards = [info, hltb];
+        shells = cards.map(snapBox);
         const pad = (card: Box) => ({ x: card.x + BORDER + L.cards.padX * d, y: card.y + BORDER + L.cards.padY * d });
         const i0 = pad(info);
         row(stats.filter((s) => s.key !== 'hltb'), i0.x, i0.y, L.stats.colGapInfo * d);
@@ -182,10 +191,11 @@ export function pageTargets(
             s.value = { ...s.value, x: s.value.x + ox, y: s.value.y + oy };
             if (s.bar) s.bar = { ...s.bar, x: s.bar.x + ox, y: s.bar.y + oy };
         }
-        shells = [snapBox(panel)];
+        cards = [panel];
+        shells = cards.map(snapBox);
         store = { x: W - side - storeSize.w, y: playTop - L.clean.storeGap * d - storeSize.h, w: storeSize.w, h: storeSize.h };
     }
-    return { titleBottomLeft, eyebrowBottomLeft, play, circles, store, shells, stats: out, extras };
+    return { titleBottomLeft, eyebrowBottomLeft, play, circles, store, shells, cards, d, stats: out, extras };
 }
 
 /** The page card (`cards`: PageTargets.shells) that point `p` is in, edges included, or null. Pure. */

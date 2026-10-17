@@ -125,7 +125,9 @@ export function mountTwins(root: HTMLElement, specs: TwinSpec[]): () => void {
         const ox = t.card?.x ?? 0;
         const oy = t.card?.y ?? 0;
         el.style.setProperty('--t-x', `${Math.round((t.x - ox) * 10000) / 10000}px`);
-        el.style.setProperty('--t-y', `${Math.round((t.y - oy) * 10000) / 10000}px`);
+        el.style.setProperty('--t-y', `${Math.round((t.y - (t.lift ?? 0) - oy) * 10000) / 10000}px`);
+        // Placed by its top (TwinSpec.lift): no share of its own height to shift by.
+        if (t.lift !== undefined) el.style.setProperty('--t-shift', '0%');
         el.style.setProperty('--t-from', t.from);
         el.style.setProperty('--t-to', t.to);
         if (t.box) {
@@ -137,6 +139,36 @@ export function mountTwins(root: HTMLElement, specs: TwinSpec[]): () => void {
     }
     root.appendChild(layer);
     return () => layer.remove();
+}
+
+/**
+ * Twins whose text the extras layer also lays out, as the page does, inside the same card (by twin name: that text, which
+ * the extras keep hidden for the twin). Spotlight's HowLongToBeat time: Main's column in the card's tiers.
+ */
+const TWIN_REST: Record<string, string> = {
+    'value-hltb': '.gh-x-card[data-for="hltb"] .gh-x-stats > div:first-child .gh-x-value',
+};
+
+/**
+ * Once opening (the extras laid out): each twin in TWIN_REST rests where the extras lay its text out, measured from its
+ * card layer, instead of where openTargets predicts: inside a card layer the text is snapped from the card's origin, and
+ * a prediction 0.03 px off still drew the time a device px low (Ally, docked), while the extras' own columns, laid out as
+ * the page's, drew on the page's row. Placed by its top-left, so nothing shifts it by a share of its height.
+ */
+export function restTwinsOnExtras(root: HTMLElement) {
+    for (const [name, sel] of Object.entries(TWIN_REST)) {
+        const twin = root.querySelector(`.gh-twin[data-twin="${name}"]`) as HTMLElement | null;
+        const text = root.querySelector(sel);
+        const card = twin?.parentElement;
+        if (!twin || !text || !card) continue;
+        const at = text.getBoundingClientRect();
+        if (!(at.width > 0 && at.height > 0)) continue;
+        const from = card.getBoundingClientRect();
+        // Unrounded: layout positions are 1/64 px, which 4 decimals would move.
+        twin.style.setProperty('--t-x', `${at.left - from.left}px`);
+        twin.style.setProperty('--t-y', `${at.top - from.top}px`);
+        twin.style.setProperty('--t-shift', '0%');
+    }
 }
 
 /**
@@ -204,6 +236,13 @@ export function applyOpening(root: HTMLElement, variant: OpenVariant, vars: Moti
     }
     root.setAttribute('data-gh-opening', variant);
     root.setAttribute('data-gh-phase', 'from');
+    if (variant === 'morph' && twins.length > 0) {
+        try {
+            restTwinsOnExtras(root);
+        } catch (error) {
+            console.warn(`${LOG_PREFIX} Home: could not rest the text twins on the extras`, error);
+        }
+    }
     let live = true;
     const start = () => {
         if (live) root.setAttribute('data-gh-phase', 'to');

@@ -128,6 +128,18 @@ describe('pageTargets stats', () => {
         expect(noBar.bar).toBeUndefined();
         expect(noBar.caption.y).toBeCloseTo(withBar.bar!.y, 6);
     });
+    it("the cards as laid out, unsnapped (the twins' layers sit there, as the page's card layers do), and the page's d unit", () => {
+        const f = fixture('spotlight-1500x844');
+        // The Ally docked: the window's real height (the fixture's is rounded to 844).
+        const t = pageTargets('spotlight', { width: 1500, height: 844.53125, dpr: 1.28 }, pageStats('spotlight', f), measureFrom('spotlight', f), { w: f.rects.store.w, h: f.rects.store.h });
+        // The glass panels are on whole device px (759 / 1.28); the cards themselves are where the page lays them out.
+        expect(t.shells[1].y).toBe(759 / 1.28);
+        // Probed on the Ally docked (2026-10-17): the HowLongToBeat card at 985.9375, 593.1030.
+        expect(t.cards?.[1].y).toBeCloseTo(593.103, 1);
+        expect(t.cards?.[1].x).toBeCloseTo(985.9375, 3);
+        expect(t.cards?.[0].y).toBeCloseTo(f.rects.card0.y, 1);
+        expect(t.d).toBe(1500 / 1440);
+    });
     it('no extras asked for: none', () => {
         expect(pageTargets('spotlight', screen, [played, main], measure, store).extras).toBeUndefined();
     });

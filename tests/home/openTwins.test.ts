@@ -138,6 +138,16 @@ describe('twinSpecs', () => {
         expect(t['value-achievements'].card).toEqual({ x: 15, y: r(593.1 - 20) });
         for (const n of ['title', 'eyebrow', 'play']) expect(t[n].card, n).toBeUndefined();
     });
+    it("a stat's card is the card as laid out when the targets have it, not the glass panel snapped to device px", () => {
+        const p = { ...page(), shells: [box(25, 592.9688, 749.7, 185.4), box(793.4, 592.9688, 681.6, 185.4)], cards: [box(25, 593.103, 749.7, 185.4), box(793.4, 593.103, 681.6, 185.4)] };
+        expect(byName(twinSpecs(homeRects(), p, texts, stats, 'spotlight', true, s))['value-hltb'].card).toEqual({ x: 793.4, y: 593.103 });
+    });
+    it("a centre-line twin's box is placed by its top: lift is half the page's line box (a translate is applied after the text is snapped)", () => {
+        const t = byName(twinSpecs(homeRects(), page(), texts, stats, 'spotlight', true, s));
+        expect(t['value-hltb'].lift).toBe(37.5 / 2);
+        expect(t['label-played'].lift).toBe(17.2 / 2);
+        expect(t.title.lift).toBeUndefined();
+    });
     it('places to 4 decimals', () => {
         const p = { ...page(), stats: { ...page().stats, played: { label: box(50.8, 614.71234, 77.5, 17.2), value: box(50.8, 636.1, 77.5, 37.5) } } };
         expect(byName(twinSpecs(homeRects(), p, texts, stats, 'spotlight', true, s))['label-played'].y).toBe(Math.round((614.71234 + 8.6) * 10000) / 10000);

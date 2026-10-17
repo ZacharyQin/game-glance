@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { applyOpening, extrasFlags, extrasParts, measureHome, missingStats, mountTwins, readTwinTexts, settleTwins, viewportSize, openVariant, pageStatsFromChips, readExtrasAsked } from '../../src/home/openHome';
+import { applyOpening, extrasFlags, extrasParts, measureHome, missingStats, mountTwins, readTwinTexts, restTwinsOnExtras, settleTwins, viewportSize, openVariant, pageStatsFromChips, readExtrasAsked } from '../../src/home/openHome';
 import type { TwinSpec } from '../../src/home/openTwins';
 import { BRIDGE_FADE_EASE, mountOpenBridge } from '../../src/home/openBridge';
 
@@ -419,6 +419,35 @@ describe('text twins on Home', () => {
         expect(inside[0].vars).toMatchObject({ '--t-x': '6px', '--t-y': '15px' });
         expect(eyebrow.className).toBe('gh-twin');
         expect(eyebrow.vars).toMatchObject({ '--t-x': '10px', '--t-y': '20px' });
+    });
+    it('mountTwins places a lifted twin by its top, with no share of its height to shift by', () => {
+        const root = fakeEl();
+        root.ownerDocument = { createElement: () => fakeEl() };
+        mountTwins(root as unknown as HTMLElement, [{ ...spec('value-hltb'), y: 682.45, lift: 18.75, card: { x: 4, y: 593.1 } }]);
+        const t = ((root.children[0] as ReturnType<typeof fakeEl>).children[0] as ReturnType<typeof fakeEl>).children[0] as ReturnType<typeof fakeEl>;
+        expect(t.vars).toMatchObject({ '--t-y': `${Math.round((682.45 - 18.75 - 593.1) * 10000) / 10000}px`, '--t-shift': '0%' });
+    });
+    it("restTwinsOnExtras rests Spotlight's HowLongToBeat time twin on the extras' own (hidden) time, laid out as the page's, inside its card layer", () => {
+        const rect = (left: number, top: number) => ({ getBoundingClientRect: () => ({ left, top, width: 40, height: 37.5 }) });
+        const vars: Record<string, string> = {};
+        const twin = { ...rect(0, 0), parentElement: rect(985.9375, 593.1146), style: { setProperty: (n: string, v: string) => void (vars[n] = v) } };
+        const hidden = rect(1011.703125, 663.671875);
+        const asked: string[] = [];
+        const root = {
+            querySelector: (sel: string) => {
+                asked.push(sel);
+                return sel === '.gh-twin[data-twin="value-hltb"]' ? twin : sel === '.gh-x-card[data-for="hltb"] .gh-x-stats > div:first-child .gh-x-value' ? hidden : null;
+            },
+        };
+        restTwinsOnExtras(root as unknown as HTMLElement);
+        expect(vars).toEqual({ '--t-x': `${1011.703125 - 985.9375}px`, '--t-y': `${663.671875 - 593.1146}px`, '--t-shift': '0%' });
+    });
+    it('restTwinsOnExtras leaves a twin as it is when the extras have nothing laid out there', () => {
+        const vars: Record<string, string> = {};
+        const twin = { getBoundingClientRect: () => ({ left: 0, top: 0, width: 0, height: 0 }), parentElement: null, style: { setProperty: (n: string, v: string) => void (vars[n] = v) } };
+        const hidden = { getBoundingClientRect: () => ({ left: 0, top: 0, width: 0, height: 0 }) };
+        restTwinsOnExtras({ querySelector: (sel: string) => (sel.startsWith('.gh-twin') ? twin : hidden) } as unknown as HTMLElement);
+        expect(vars).toEqual({});
     });
     it('mountTwins gives a pill twin its box as variables', () => {
         const root = fakeEl();

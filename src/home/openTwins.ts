@@ -44,6 +44,12 @@ export interface TwinSpec {
      * text is snapped from there: the same text outside a layer at that place drew a device px lower (Ally, docked).
      */
     card?: { x: number; y: number };
+    /**
+     * A centre-line twin: how far its box's top sits above the origin point (half the page's line box), so its box is
+     * placed by layout, not by a translate of half its height: a translate applies after the text is snapped, and 18.75 px
+     * (24 device px) put the HowLongToBeat time a device px low (Ally, docked).
+     */
+    lift?: number;
 }
 
 // 4 decimals: at 2, the bridge sat 0.01 px off the page, which drew a row a whole device px off near a half pixel.
@@ -70,7 +76,7 @@ export function twinSpecs(home: HomeRects, page: PageTargets, texts: { title: st
     const out: TwinSpec[] = [];
     const add = (name: string, role: TypeRole, text: string, homeBox: Box, at: { x: number; y: number }, origin: TwinOrigin, homeFont: number, extra: Partial<TwinSpec> = {}) => {
         const where = { x: r2(at.x - ox), y: r2(at.y - oy) };
-        const around = cardAround(page.shells, at);
+        const around = cardAround(page.cards ?? page.shells, at);
         const card = around ? { card: { x: r2(around.x - ox), y: r2(around.y - oy) } } : {};
         out.push({ name, role, text, ...where, origin, from: twinFrom(local(homeBox), where, homeFont / PAGE_TYPE[role].size, origin), to: 'none', accent: false, ...card, ...extra });
     };
@@ -114,8 +120,8 @@ export function twinSpecs(home: HomeRects, page: PageTargets, texts: { title: st
         const st = words.get(key);
         if (!to || !st) continue;
         const spotlightHltb = look === 'spotlight' && key === 'hltb';
-        if (!spotlightHltb) add(`label-${key}`, 'label', st.label, chip.label, anchor(to.label, 'midline'), 'midline', HOME_CHIP_FONTS.label);
-        add(`value-${key}`, look === 'clean' ? 'cleanValue' : 'value', st.value, chip.value, anchor(to.value, 'midline'), 'midline', HOME_CHIP_FONTS.value, { accent: spotlightHltb });
+        if (!spotlightHltb) add(`label-${key}`, 'label', st.label, chip.label, anchor(to.label, 'midline'), 'midline', HOME_CHIP_FONTS.label, { lift: to.label.h / 2 });
+        add(`value-${key}`, look === 'clean' ? 'cleanValue' : 'value', st.value, chip.value, anchor(to.value, 'midline'), 'midline', HOME_CHIP_FONTS.value, { accent: spotlightHltb, lift: to.value.h / 2 });
     }
     return out;
 }

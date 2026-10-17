@@ -112,6 +112,20 @@ describe('openMotion', () => {
         expect(v['--gho-x-desc-cx']).toBeUndefined();
     });
 
+    it("the extras' sizes and card layers use the page's own d unit and cards as laid out, when the targets have them", () => {
+        const page: PageTargets = {
+            ...spotlight(),
+            cards: [box(25, 593.103, 749.7, 185.4), box(793.4, 593.103, 681.6, 185.4)],
+            d: 1500 / 1440,
+            extras: { desc: box(50.8, 686.1, 698.1, 70.3), hltbTitle: box(819.2, 614.7, 630, 17.2), columns: {}, caption: box(819.2, 728.2, 630, 22.7) },
+        };
+        // Home's canvas scale as measured on the Ally: a float, not exactly the page's 1500 / 1440.
+        const v = vars(openMotion(homeRects(), page, 'spotlight', 1.0416595458984375));
+        expect(v['--gho-x-d']).toBe(String(1500 / 1440));
+        expect(v['--gho-x-hltb-cy']).toBe('593.103px');
+        expect(v['--gho-x-played-font']).toBe(`${30 * (1500 / 1440)}px`);
+    });
+
     it("the Play time column's place and value size in the extras layer (a new game's), per look", () => {
         const v = vars(openMotion({ ...homeRects(), root: box(10, 20, 1500, 844) }, spotlight(), 'spotlight', s));
         expect([v['--gho-x-played-x'], v['--gho-x-played-y']]).toEqual([`${Math.round((50.8 - 10) * 10000) / 10000}px`, `${Math.round((614.7 - 20) * 10000) / 10000}px`]);
