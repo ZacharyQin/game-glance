@@ -32,3 +32,13 @@ export function cardZoneOf(el: Element | null, sel: { play: string | null; tabs:
     if (el.closest(sel.tabs)) return 'tabs';
     return null;
 }
+
+/**
+ * The element a routed press lands on: back on the Play row, the button Down left from (Steam's row remembers it, so
+ * landing on Play after Down from the Controller circle sent Right on from the Controller, to Settings); on the cards,
+ * the one last selected; otherwise (or when the remembered one is gone) the zone's first, as `first` finds it. Pure.
+ */
+export function landingFor<T>(to: CardZone, memory: { row: T | null; card: T | null }, first: (to: CardZone) => T | null, alive: (el: T) => boolean): T | null {
+    const kept = to === 'play' ? memory.row : to === 'cards' ? memory.card : null;
+    return kept !== null && alive(kept) ? kept : first(to);
+}

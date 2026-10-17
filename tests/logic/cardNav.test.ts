@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CARD_NAV, cardNavTarget, cardZoneOf, DPAD_DOWN, DPAD_UP } from '../../src/logic/cardNav';
+import { CARD_NAV, cardNavTarget, cardZoneOf, DPAD_DOWN, DPAD_UP, landingFor } from '../../src/logic/cardNav';
 
 describe('cardNavTarget', () => {
     it("Down from the Play row reaches the cards, below it on screen (Steam's tree has them before it: Up did)", () => {
@@ -34,5 +34,20 @@ describe('cardZoneOf', () => {
         expect(cardZoneOf(null, sel)).toBeNull();
         // Without Steam's classes there is no Play row to know.
         expect(cardZoneOf(el(['.menu']), { play: null, tabs: '[role="tab"]' })).toBeNull();
+    });
+});
+
+describe('landingFor', () => {
+    const live = (x: string) => !x.startsWith('gone');
+    const first = (to: string) => `first-${to}`;
+    it("Up from the cards returns to the Play row's button Down left from (Steam's row remembers it: Right went on from there)", () => {
+        expect(landingFor('play', { row: 'controller', card: null }, first, live)).toBe('controller');
+        expect(landingFor('play', { row: null, card: null }, first, live)).toBe('first-play');
+        expect(landingFor('play', { row: 'gone-controller', card: null }, first, live)).toBe('first-play');
+    });
+    it('the cards: the one last selected, else the first; the tabs: always found afresh', () => {
+        expect(landingFor('cards', { row: null, card: 'hltb' }, first, live)).toBe('hltb');
+        expect(landingFor('cards', { row: null, card: 'gone-hltb' }, first, live)).toBe('first-cards');
+        expect(landingFor('tabs', { row: 'controller', card: 'hltb' }, first, live)).toBe('first-tabs');
     });
 });

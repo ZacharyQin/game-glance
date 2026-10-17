@@ -1,15 +1,16 @@
 import { useEffect } from 'react';
 import { LOG_PREFIX } from '../constants';
 import { focusElement } from '../home/homeNav';
-import { CARD_NAV, cardNavTarget, cardZoneOf, CardZone } from '../logic/cardNav';
+import { CARD_NAV, cardNavTarget, cardZoneOf, CardZone, landingFor } from '../logic/cardNav';
+import { takeSteamFocus } from '../home/steamFocus';
 import { playRow } from '../styles/theme';
 
 /** The page's tabs (Steam's What's New, Game Info, ...): where Down from Play goes (probed on the Ally). */
 const TABS = '[role="tab"]';
 
-/** Where a routed press lands: the card last selected (or the first), the Play pill, the selected tab (or the first). */
-function landing(doc: Document, to: CardZone, play: string, lastCard: HTMLElement | null): HTMLElement | null {
-    if (to === 'cards') return lastCard?.isConnected ? lastCard : doc.querySelector<HTMLElement>(`.${CARD_NAV}`);
+/** Each zone's first landing: the first card, the Play pill, the selected tab (or the first). */
+function firstIn(doc: Document, to: CardZone, play: string): HTMLElement | null {
+    if (to === 'cards') return doc.querySelector<HTMLElement>(`.${CARD_NAV}`);
     if (to === 'play') return doc.querySelector<HTMLElement>(`${play.split(', ')[0]} [role="button"]`);
     return doc.querySelector<HTMLElement>(`${TABS}[aria-selected="true"]`) ?? doc.querySelector<HTMLElement>(TABS);
 }
@@ -34,22 +35,28 @@ export function useCardNav(doc: Document | null, active: boolean) {
     useEffect(() => {
         const play = playRow();
         if (!doc || !active || !play) return undefined;
-        let lastCard: HTMLElement | null = null;
+        const memory: { row: HTMLElement | null; card: HTMLElement | null } = { row: null, card: null };
         const onFocus = (e: Event) => {
             const card = (e.target as Element | null)?.closest?.(`.${CARD_NAV}`);
-            if (card) lastCard = card as HTMLElement;
+            if (card) memory.card = card as HTMLElement;
         };
         const onButton = (e: Event) => {
             try {
                 const button = Number((e as CustomEvent<{ button?: number }>).detail?.button);
                 const hasCards = !!doc.querySelector(`.${CARD_NAV}`);
-                const to = cardNavTarget(cardZoneOf(e.target as Element | null, { play, tabs: TABS }), button, hasCards);
+                const from = cardZoneOf(e.target as Element | null, { play, tabs: TABS });
+                const to = cardNavTarget(from, button, hasCards);
                 if (!to) return;
-                const el = landing(doc, to, play, lastCard);
+                const el = landingFor(to, memory, (zone) => firstIn(doc, zone, play), (x) => x.isConnected);
                 if (!el) return;
                 e.preventDefault();
                 e.stopPropagation();
+                // Down leaving the Play row: Up comes back to that button.
+                if (from === 'play' && e.target instanceof HTMLElement) memory.row = e.target;
                 focusElement(el, `the page's ${to}`);
+                // And Steam's focus tree takes it every time, so its rows remember where focus is (focusElement hands it
+                // over only when the highlight did not follow).
+                takeSteamFocus(el);
                 reveal(el);
             } catch (error) {
                 console.warn(`${LOG_PREFIX} game page: card navigation failed`, error);
