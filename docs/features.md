@@ -35,7 +35,7 @@ This is the full description of what Game Glance does. The [README](../README.md
   game, and new installs are picked up automatically.
 
 In Spotlight Home's look, tap the info card for Steam's Game Info tab, or the HowLongToBeat card for the game's page on
-howlongtobeat.com.
+howlongtobeat.com. With the controller, Down from the Play row selects the cards and A opens them.
 
 With Spotlight Home on (or the Clean look), the page takes Spotlight Home's look: the game's title or logo with "Last
 played" under it, just above a larger Play row in the game's colour, and the status bar at the top. With both off, the
