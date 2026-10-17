@@ -2,7 +2,7 @@ import { sourcePillIcon, sourcePillLook } from '../../src/styles/sourcePill';
 import { describe, expect, it } from 'vitest';
 import { arrivalSelectors, buildAccentCss, buildArrivingCss, buildCleanCss, buildSteamEnterOffCss, steamFooterSelector, buildDownloadCss, buildLaunchCss, buildRingCss, buildThemeCss, buildUnifideckCss, launchTargets, ThemeClasses } from '../../src/styles/themeCss';
 import { homeCanvas } from '../../src/home/scale';
-import { cardMaxWidths, PAGE_LAYOUT, PAGE_SCRIM_LAYERS, PAGE_SCRIMS, pageDUnit, pillFocusScale, playRowSelector, ringBoost, STEAM_LEGEND_PX } from '../../src/styles/themeCss';
+import { cardMaxWidths, PAGE_LAYOUT, PAGE_SCRIM_LAYERS, PAGE_SCRIMS, pageDUnit, PAGE_TYPE, pageType, pillFocusScale, playRowSelector, ringBoost, STEAM_LEGEND_PX } from '../../src/styles/themeCss';
 
 const full: ThemeClasses = {
     header: { TopCapsule: 'hd_Top', BoxSizer: 'hd_Box' },
@@ -554,6 +554,24 @@ describe('buildThemeCss restyle (Spotlight Home on)', () => {
     it("playRowSelector: Steam's Play row (the pill and its arrow, the circles, the cloud); null without its classes", () => {
         expect(playRowSelector(full)).toBe('.rt_PlayBtn, .ps_Menu, .ps_Cloud');
         expect(playRowSelector({ ...full, root: {}, play: {} })).toBeNull();
+    });
+    it("PAGE_TYPE drives the page's own text rules", () => {
+        const d = (n: number) => `calc(${n} * var(--gg-d))`;
+        expect(PAGE_TYPE.title).toEqual({ size: 64, weight: 800, letterSpacing: '-0.02em', lineHeight: '1', upper: false });
+        expect(PAGE_TYPE.eyebrow).toEqual({ size: 12, weight: 700, letterSpacing: '0.2em', lineHeight: '1.2', upper: true });
+        expect(PAGE_TYPE.label).toMatchObject({ size: 11, weight: 700, letterSpacing: '0.18em', upper: true });
+        expect(PAGE_TYPE.value).toMatchObject({ size: 30, weight: 700, lineHeight: '1.2', upper: false });
+        expect(PAGE_TYPE.cleanValue).toMatchObject({ size: PAGE_LAYOUT.cleanInfo.value, weight: 700, lineHeight: '1.2' });
+        expect(PAGE_TYPE.playLabel).toMatchObject({ size: 22, weight: 700, upper: false });
+        // Each rule carries its role's declarations (the play label's are !important there).
+        expect(restyled).toContain(`.gg-eyebrow { ${pageType('eyebrow', d)}`);
+        expect(restyled).toContain(`.gg-title { margin: calc(-1 * ${d(16)}); padding: ${d(16)}; ${pageType('title', d)}`);
+        expect(restyled).toContain(`.gg-label { ${pageType('label', d)}`);
+        expect(restyled).toContain(`.gg-value { ${pageType('value', d)}`);
+        expect(buildCleanCss(full)).toContain(`.gg-clean-info .gg-value { ${pageType('cleanValue', d)}`);
+        expect(rulesFor(restyled, '.rt_PlayBtn [role="button"] > div')).toContain(pageType('playLabel', d, true));
+        // Only what the page sets itself: nothing it inherits from Steam is declared.
+        expect(pageType('playLabel', d)).toBe('font-size: calc(22 * var(--gg-d)); font-weight: 700;');
     });
     it("the cloud's icon is centred in its circle, as on Home: Steam's icon box is as tall as the icon", () => {
         // (Its box kept the 1.1.1 theme's 16 u height under a 26 d unit icon, which hung out of its bottom: 1.65 px low docked.)

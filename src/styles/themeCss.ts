@@ -142,6 +142,34 @@ export function cardMaxWidths(aspect = 0): [number, number] {
     return [aspect >= equalFromAspect ? hltbW : infoW, hltbW];
 }
 
+/** The page's text roles (the open transition's text twins draw the same, home/openTwins). */
+export type TypeRole = 'title' | 'eyebrow' | 'label' | 'value' | 'cleanValue' | 'playLabel';
+
+/**
+ * The page's type per role, sizes in d units: one source for the page's rules and Home's text twins, so the open lands
+ * on text drawn exactly as the page draws it. What the page inherits from Steam is left out (undefined), never declared:
+ * the play label's spacing and line height, the values' spacing, the labels' line height (1.5).
+ */
+export const PAGE_TYPE: Record<TypeRole, { size: number; weight: number; letterSpacing?: string; lineHeight?: string; upper: boolean }> = {
+    title: { size: PAGE_LAYOUT.titleBlock.title, weight: 800, letterSpacing: '-0.02em', lineHeight: '1', upper: false },
+    eyebrow: { size: PAGE_LAYOUT.titleBlock.eyebrow, weight: 700, letterSpacing: '0.2em', lineHeight: '1.2', upper: true },
+    label: { size: PAGE_LAYOUT.stats.label, weight: 700, letterSpacing: '0.18em', upper: true },
+    value: { size: PAGE_LAYOUT.stats.value, weight: 700, lineHeight: '1.2', upper: false },
+    cleanValue: { size: PAGE_LAYOUT.cleanInfo.value, weight: 700, lineHeight: '1.2', upper: false },
+    playLabel: { size: PAGE_LAYOUT.pill.font, weight: 700, upper: false },
+};
+
+/** A role's declarations (PAGE_TYPE) with sizes in `unit`; `important` for rules that must beat Steam's. */
+export function pageType(role: TypeRole, unit: (n: number) => string, important = false): string {
+    const t = PAGE_TYPE[role];
+    const imp = important ? ' !important' : '';
+    const decls = [`font-size: ${unit(t.size)}`, `font-weight: ${t.weight}`];
+    if (t.letterSpacing) decls.push(`letter-spacing: ${t.letterSpacing}`);
+    if (t.lineHeight) decls.push(`line-height: ${t.lineHeight}`);
+    if (t.upper) decls.push('text-transform: uppercase');
+    return decls.map((x) => `${x}${imp};`).join(' ');
+}
+
 /** A card's max-width for its outer width `outer` (handoff px): the cards are content-box, so less the padding and the rings (1 d unit). */
 const cardContentMax = (outer: number) => d(outer - 2 * PAGE_LAYOUT.cards.padX - 2);
 /** A card's width filling its grid column, content-box as above: a plain 100% overflowed the column by the padding and borders. */
@@ -436,7 +464,7 @@ export function buildCleanCss({ header, details, root }: ThemeClasses): string {
             padding: ${d(PAGE_LAYOUT.cleanInfo.padY)} ${d(PAGE_LAYOUT.cleanInfo.padX)}; border-radius: ${d(16)}; border: ${d(1)} solid ${ring(0.12)}; background: rgba(12, 16, 22, 0.38);
             backdrop-filter: blur(${d(16)}); color: #fff; }`,
         `.gg-clean-info > div { display: flex; flex-direction: column; gap: ${d(PAGE_LAYOUT.stats.rowGap)}; }`,
-        `.gg-clean-info .gg-value { font-size: ${d(PAGE_LAYOUT.cleanInfo.value)}; line-height: 1.2; }`,
+        `.gg-clean-info .gg-value { ${pageType('cleanValue', d)} }`,
         `.gg-clean-info .gg-bar { width: ${d(PAGE_LAYOUT.cleanInfo.barW)}; height: ${d(PAGE_LAYOUT.cleanInfo.barH)}; margin-top: ${d(PAGE_LAYOUT.cleanInfo.barTop)}; }`,
         // The store pill above the row, at its right edge.
         `.gg-pill { top: auto; bottom: calc(100% + ${d(PAGE_LAYOUT.clean.storeGap)}); }`,
@@ -537,7 +565,7 @@ function restyleRules({ header, details, root, play, shared }: ThemeClasses, lay
         rule(playButton && `${playButton} > div:has(> [role="button"])`, ` min-width: 0 !important; `),
         rule(playButton && `${playButton} [role="button"]`, ` font-size: ${d(PAGE_LAYOUT.pill.font)} !important; font-weight: 700 !important; padding: ${d(8)} ${d(PAGE_LAYOUT.pill.padX)} !important; `),
         // The label bold like Home's (Steam's own class sets 500), so nothing changes at the open transition's hand-over.
-        rule(playButton && `${playButton} [role="button"] > div`, ` font-size: ${d(PAGE_LAYOUT.pill.font)} !important; font-weight: 700 !important; color: #ffffff !important; `),
+        rule(playButton && `${playButton} [role="button"] > div`, ` ${pageType('playLabel', d, true)} color: #ffffff !important; `),
         rule(playButton && `${playButton} [role="button"] svg`, ` width: ${d(PAGE_LAYOUT.pill.icon)} !important; height: ${d(PAGE_LAYOUT.pill.icon)} !important; margin-right: ${d(PAGE_LAYOUT.pill.iconGap)} !important; `),
         rule(playButton && `${playButton} [role="button"] + [role="button"]`, ` flex: 0 0 ${d(PAGE_LAYOUT.playArrow.w)} !important; width: ${d(PAGE_LAYOUT.playArrow.w)} !important; padding: 0 !important; `),
         rule(playButton && `${playButton} [role="button"] + [role="button"] svg`, ` width: ${d(PAGE_LAYOUT.playArrow.glyph)} !important; height: ${d(PAGE_LAYOUT.playArrow.glyph)} !important; `),
@@ -592,9 +620,9 @@ function restyleRules({ header, details, root, play, shared }: ThemeClasses, lay
         // Eyebrow ("Last played · Today", accent) and the 64px/800 title, at most two lines. Hidden unless the
         // full-screen layout applies (below): all-or-nothing, like the rest of the layout.
         `.gg-titleblock { display: none; flex-direction: column; gap: ${d(PAGE_LAYOUT.titleBlock.gap)}; max-width: ${d(640)}; margin: 1vh var(--gg-side); color: #fff; font-family: inherit; }`,
-        `.gg-eyebrow { font-size: ${d(PAGE_LAYOUT.titleBlock.eyebrow)}; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; line-height: 1.2; color: var(--glance-accent-text); }`,
+        `.gg-eyebrow { ${pageType('eyebrow', d)} color: var(--glance-accent-text); }`,
         // The clip gets a bleed for descenders and the shadow; equal negative margins keep the box at two lines.
-        `.gg-title { margin: calc(-1 * ${d(16)}); padding: ${d(16)}; font-size: ${d(PAGE_LAYOUT.titleBlock.title)}; line-height: 1; font-weight: 800; letter-spacing: -0.02em;
+        `.gg-title { margin: calc(-1 * ${d(16)}); padding: ${d(16)}; ${pageType('title', d)}
             text-wrap: balance; text-shadow: 0 ${d(4)} ${d(30)} rgba(0, 0, 0, 0.4); overflow-wrap: anywhere;
             display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }`,
 
@@ -634,8 +662,8 @@ function restyleRules({ header, details, root, play, shared }: ThemeClasses, lay
         rule(playSection && menuButton && [`${playSection}:has(${menuButton})`, `${playSection} :has(${menuButton})`], ' transform-style: preserve-3d !important; '),
         // (9/5: cards.equalFromAspect as a media query ratio.)
         `@media (min-aspect-ratio: 9/5) { .gg-card { max-width: ${cardContentMax(cardMaxWidths(PAGE_LAYOUT.cards.equalFromAspect)[0])}; } }`,
-        `.gg-label { font-size: ${d(PAGE_LAYOUT.stats.label)}; letter-spacing: 0.18em; color: rgba(255, 255, 255, 0.62); }`,
-        `.gg-value { font-size: ${d(PAGE_LAYOUT.stats.value)}; line-height: 1.2; }`,
+        `.gg-label { ${pageType('label', d)} color: rgba(255, 255, 255, 0.62); }`,
+        `.gg-value { ${pageType('value', d)} }`,
         `.gg-stats { gap: ${d(PAGE_LAYOUT.stats.colGapInfo)}; margin-top: 0; }`,
         `.gg-hltb .gg-stats { gap: ${d(PAGE_LAYOUT.stats.colGapHltb)}; }`,
         `.gg-stats > div { display: flex; flex-direction: column; gap: ${d(PAGE_LAYOUT.stats.rowGap)}; }`,
