@@ -405,6 +405,13 @@ describe('text twins on Home', () => {
         remove();
         expect(root.children).toHaveLength(0);
     });
+    it('mountTwins gives a pill twin its box as variables', () => {
+        const root = fakeEl();
+        root.ownerDocument = { createElement: () => fakeEl() };
+        mountTwins(root as unknown as HTMLElement, [{ ...spec('play'), role: 'playLabel', origin: 'pill', box: { w: 354.2, h: 62.5, inset: 60.42 } }]);
+        const t = (root.children[0] as ReturnType<typeof fakeEl>).children[0] as ReturnType<typeof fakeEl>;
+        expect(t.vars).toMatchObject({ '--t-w': '354.2px', '--t-h': '62.5px', '--t-inset': '60.42px' });
+    });
     it('mountTwins with no specs adds nothing', () => {
         const root = fakeEl();
         root.ownerDocument = { createElement: () => fakeEl() };

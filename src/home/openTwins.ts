@@ -10,8 +10,13 @@ import type { Box, PageLook, PageStat, PageTargets, StatKey } from './openTarget
  * the page draws it (Home's text scaled up never was: text does not scale linearly). Positions are root px. Pure.
  */
 
-/** The point of a twin that is placed and scaled about: top-left, bottom-left, or the left end of its centre line. */
-export type TwinOrigin = 'top' | 'base' | 'midline';
+/**
+ * The point of a twin that is placed and scaled about: top-left, bottom-left, the left end of its centre line, or (the
+ * Play label) `pill`: the twin is the page pill's box, its label centred on the line at the label's inset, transformed
+ * about its top-left, so its text sits where the page's does inside the page's scaled pill (a scale on the label itself
+ * put the text one device px lower in the bridge: text is snapped in its own local space before the transform).
+ */
+export type TwinOrigin = 'top' | 'base' | 'midline' | 'pill';
 
 export interface TwinSpec {
     name: string;
@@ -26,6 +31,8 @@ export interface TwinSpec {
     to: string;
     /** Drawn in the accent (Spotlight's HowLongToBeat time). */
     accent: boolean;
+    /** A `pill` twin's box (the page pill's size) and its label's left inset, px. */
+    box?: { w: number; h: number; inset: number };
 }
 
 const r2 = (n: number) => Math.round(n * 100) / 100;
@@ -57,20 +64,34 @@ export function twinSpecs(home: HomeRects, page: PageTargets, texts: { title: st
     if (texts.title !== null && home.titleText !== false) add('title', 'title', texts.title, home.titleSlot, page.titleBottomLeft, 'base', TITLE_BLOCK.titleSize);
     add('eyebrow', 'eyebrow', texts.eyebrow, home.eyebrow, page.eyebrowBottomLeft, 'base', PAGE_TYPE.eyebrow.size);
 
-    // The Play label: Home's sits after its border, inset and glyph, on the pill's centre line (as openMotion places it).
     // Home's canvas and the page share one scale (openMotion: d = s).
     const s = canvasScale;
-    const homeLabel: Box = { x: home.play.x + (HOME_PILL.border + HOME_PILL.padX + HOME_PILL.icon + HOME_PILL.gap) * s, y: home.play.y, w: 0, h: home.play.h };
+    // The Play label: the page pill's box, its label at the page's inset on the centre line; Home's label sits after its
+    // border, inset and glyph, on its pill's centre line (as openMotion places it). Transforms about the box's top-left.
     const pill = PAGE_LAYOUT.pill;
-    const playAt = { x: page.play.x + (pill.padX + pill.icon + pill.iconGap) * s, y: page.play.y + page.play.h / 2 };
+    const box = local(page.play);
+    const inset = r2((pill.padX + pill.icon + pill.iconGap) * s);
+    const k = HOME_PILL.font / PAGE_TYPE.playLabel.size;
+    const hx = home.play.x - ox + (HOME_PILL.border + HOME_PILL.padX + HOME_PILL.icon + HOME_PILL.gap) * s - box.x;
+    const hy = home.play.y - oy + home.play.h / 2 - box.y;
     let playTo = 'none';
     if (focused) {
-        // The focused pill grows about its centre: the label lands where the page's, inside it, does.
+        // The focused pill grows about its centre, as the page's does.
         const pf = pillFocusScale(PAGE_LAYOUT.playW, PAGE_LAYOUT.icon);
-        const cx = page.play.x + page.play.w / 2;
-        playTo = `translate(${r2((cx - playAt.x) * (1 - pf.x))}px, 0px) scale(${pf.x}, ${pf.y})`;
+        playTo = `translate(${r2((box.w / 2) * (1 - pf.x))}px, ${r2((box.h / 2) * (1 - pf.y))}px) scale(${pf.x}, ${pf.y})`;
     }
-    add('play', 'playLabel', texts.play, homeLabel, playAt, 'midline', HOME_PILL.font, { to: playTo });
+    out.push({
+        name: 'play',
+        role: 'playLabel',
+        text: texts.play,
+        x: r2(box.x),
+        y: r2(box.y),
+        origin: 'pill',
+        from: `translate(${r2(hx - k * inset)}px, ${r2(hy - k * (box.h / 2))}px) scale(${r4(k)})`,
+        to: playTo,
+        accent: false,
+        box: { w: box.w, h: box.h, inset },
+    });
 
     const words = new Map(stats.map((st) => [st.key, st]));
     for (const chip of home.chips) {

@@ -142,6 +142,9 @@ export function cardMaxWidths(aspect = 0): [number, number] {
     return [aspect >= equalFromAspect ? hltbW : infoW, hltbW];
 }
 
+/** Steam's own line height on the Play button's label, px whatever the screen (its class; probed on the Ally, docked). */
+export const STEAM_PLAY_LINE = 20;
+
 /** The page's text roles (the open transition's text twins draw the same, home/openTwins). */
 export type TypeRole = 'title' | 'eyebrow' | 'label' | 'value' | 'cleanValue' | 'playLabel';
 

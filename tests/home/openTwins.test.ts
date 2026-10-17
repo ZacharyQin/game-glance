@@ -87,19 +87,26 @@ describe('twinSpecs', () => {
     it('no title twin for a logo', () => {
         expect(byName(twinSpecs(homeRects(), page(), { ...texts, title: null }, stats, 'spotlight', true, s)).title).toBeUndefined();
     });
-    it('play twin: at the page label\'s inset on the centre line; ends unscaled when not focused, at the focus scale about the pill\'s centre when focused', () => {
+    it("play twin: a pill-sized box at the page pill's place, its label at the page's inset; the focus scale about the pill's centre when focused, none when not", () => {
         const p = page().play;
         const d = s;
         const inset = (PAGE_LAYOUT.pill.padX + PAGE_LAYOUT.pill.icon + PAGE_LAYOUT.pill.iconGap) * d;
         const off = byName(twinSpecs(homeRects(), page(), texts, stats, 'spotlight', false, s)).play;
-        expect(off).toMatchObject({ role: 'playLabel', text: 'Play', origin: 'midline', to: 'none' });
-        expect(off.x).toBeCloseTo(p.x + inset, 2);
-        expect(off.y).toBeCloseTo(p.y + p.h / 2, 2);
-        expect(parse(off.from).k).toBeCloseTo(HOME_PILL.font / PAGE_TYPE.playLabel.size, 4);
+        expect(off).toMatchObject({ role: 'playLabel', text: 'Play', origin: 'pill', x: p.x, y: p.y, to: 'none' });
+        expect(off.box).toEqual({ w: p.w, h: p.h, inset: Math.round(inset * 100) / 100 });
+        // From: the label's anchor in the box (its inset, the centre line) lands on Home's label, at Home's type size.
+        const k = HOME_PILL.font / PAGE_TYPE.playLabel.size;
+        const home = homeRects().play;
+        const hx = home.x + (HOME_PILL.border + HOME_PILL.padX + HOME_PILL.icon + HOME_PILL.gap) * s - p.x;
+        const hy = home.y + home.h / 2 - p.y;
+        const f = parse(off.from);
+        expect(f.k).toBeCloseTo(k, 4);
+        expect(f.tx).toBeCloseTo(hx - k * inset, 1);
+        expect(f.ty).toBeCloseTo(hy - k * (p.h / 2), 1);
         const on = byName(twinSpecs(homeRects(), page(), texts, stats, 'spotlight', true, s)).play;
         const pf = pillFocusScale(PAGE_LAYOUT.playW, PAGE_LAYOUT.icon);
-        const cx = p.x + p.w / 2;
-        expect(on.to).toBe(`translate(${Math.round((cx - on.x) * (1 - pf.x) * 100) / 100}px, 0px) scale(${pf.x}, ${pf.y})`);
+        const r = (n: number) => Math.round(n * 100) / 100;
+        expect(on.to).toBe(`translate(${r((p.w / 2) * (1 - pf.x))}px, ${r((p.h / 2) * (1 - pf.y))}px) scale(${pf.x}, ${pf.y})`);
     });
     it('hltb in spotlight: value twin only, accent', () => {
         const t = byName(twinSpecs(homeRects(), page(), texts, stats, 'spotlight', true, s));

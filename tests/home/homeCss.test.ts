@@ -5,7 +5,7 @@ import {
     FEED_SHEET, hexAlpha, homeCss, MAX_STACK_SHIFT, sourcePillTop, stackShift, TITLE_BLOCK, titleBlockBottom, titleBlockLayout,
 } from '../../src/home/homeCss';
 import { sourcePillLook } from '../../src/styles/sourcePill';
-import { PAGE_LAYOUT, PAGE_SCRIMS, pageType, pillFocusScale, STEAM_TOP_GRADIENT } from '../../src/styles/themeCss';
+import { PAGE_LAYOUT, PAGE_SCRIMS, pageType, pillFocusScale, STEAM_PLAY_LINE, STEAM_TOP_GRADIENT } from '../../src/styles/themeCss';
 import { ACCENT_MS, CAP_ART_FADE_MS, CAP_STATE_MS, HERO_FADE_MS, OPEN_TIMINGS, RETURN_TIMINGS, SHEET_MS, SLIDE_MS } from '../../src/home/motion';
 import { CARD_SCALE_DOCKED, CARD_SCALE_HANDHELD, recentsGeometry, recentsGlowTop } from '../../src/home/recentsLayout';
 
@@ -878,6 +878,13 @@ describe('homeCss open transition: text twins', () => {
         expect(body('.gh-twin[data-origin="base"]')).toContain('transform-origin: 0 100%');
         expect(body('.gh-twin[data-origin="base"]')).toContain('--t-shift: 100%');
         expect(body('.gh-twin[data-origin="midline"]')).toContain('--t-shift: 50%');
+        // The Play twin is a pill-sized box (the page pill's), its label centred on the line at the label's inset.
+        const pill = body('.gh-twin[data-origin="pill"]');
+        for (const decl of ['transform-origin: 0 0', '--t-shift: 0%', 'width: var(--t-w)', 'height: var(--t-h)', 'display: flex', 'align-items: center', 'padding: 0 0 0 var(--t-inset)', 'box-sizing: border-box']) expect(pill, decl).toContain(decl);
+        // The Play label takes Steam's fixed 20 px line height (its own rule, probed on the Ally): with the default the
+        // browser placed the twin's text 0.65 px lower than the page's in the same centred box, and it stepped up at the end.
+        expect(body('.gh-twin[data-role="playLabel"]')).toContain(`line-height: ${STEAM_PLAY_LINE}px`);
+        expect(STEAM_PLAY_LINE).toBe(20);
         // The page's labels inherit a 1.5 line height from Steam: the twins state it.
         expect(body('.gh-twin[data-role="label"]')).toContain('line-height: 1.5');
         expect(body('.gh-twin[data-accent]')).toContain('color: var(--glance-accent-text)');

@@ -111,6 +111,11 @@ export function mountTwins(root: HTMLElement, specs: TwinSpec[]): () => void {
         el.style.setProperty('--t-y', `${t.y}px`);
         el.style.setProperty('--t-from', t.from);
         el.style.setProperty('--t-to', t.to);
+        if (t.box) {
+            el.style.setProperty('--t-w', `${t.box.w}px`);
+            el.style.setProperty('--t-h', `${t.box.h}px`);
+            el.style.setProperty('--t-inset', `${t.box.inset}px`);
+        }
         layer.appendChild(el);
     }
     root.appendChild(layer);

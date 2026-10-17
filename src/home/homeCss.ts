@@ -8,7 +8,7 @@ import { FRIEND_COLOURS } from './friends';
 import { FEED_ROW2_HEADER } from './feedLayout';
 import { PERSONA_DOT, PERSONA_DOT_COLOURS, PersonaDot, STATUS_BAR, STATUS_FADE_MS } from './statusItems';
 import { ACCENT_MS, CAP_ART_FADE_MS, CAP_STATE_MS, FEED_ART_FADE_MS, FEED_SCROLL, HERO_FADE_MS, MORPH_EASE, OPEN_TIMINGS, RETURN_TIMINGS, SETTLE_WIDEN_MS, SHEET, SHEET_MS, SLIDE, SLIDE_EASE } from './motion';
-import { PAGE_LAYOUT, PAGE_SCRIMS, pageType, pillFocusScale, STEAM_TOP_GRADIENT } from '../styles/themeCss';
+import { PAGE_LAYOUT, PAGE_SCRIMS, pageType, pillFocusScale, STEAM_PLAY_LINE, STEAM_TOP_GRADIENT } from '../styles/themeCss';
 import { PAGE_LINES } from './openTargets';
 import { CARD_SCALE_HANDHELD, GLOW as CAP_GLOW, RECENTS_BOTTOM, recentsGeometry } from './recentsLayout';
 import { PILL_INSET, ROW_OFFSET, SIDE_INSET } from './insets';
@@ -716,6 +716,8 @@ export function openingRules(): string[] {
         soft('.gh-twin[data-origin="top"]', '--t-origin: 0 0; --t-shift: 0%'),
         soft('.gh-twin[data-origin="base"]', 'transform-origin: 0 100%; --t-shift: 100%'),
         soft('.gh-twin[data-origin="midline"]', 'transform-origin: 0 50%; --t-shift: 50%'),
+        // The Play label's twin: the page pill's box with its label centred on the line at the label's inset (openTwins 'pill').
+        soft('.gh-twin[data-origin="pill"]', 'transform-origin: 0 0; --t-shift: 0%; width: var(--t-w); height: var(--t-h); display: flex; align-items: center; padding: 0 0 0 var(--t-inset); box-sizing: border-box'),
         soft(`${MT} .gh-twin`, `transform: var(--t-to); transition: ${move}; animation: gh-twin-in ${T.morph}ms linear both`),
         soft('.gh-twin[data-role="title"]', `${pageType('title', dd)} max-width: ${dd(640)}; white-space: normal; text-wrap: balance; overflow-wrap: anywhere; text-shadow: 0 ${dd(4)} ${dd(30)} rgba(0,0,0,.4)`),
         soft('.gh-twin[data-role="eyebrow"]', `${pageType('eyebrow', dd)} color: var(--glance-accent-text)`),
@@ -723,7 +725,9 @@ export function openingRules(): string[] {
         soft('.gh-twin[data-role="label"]', `${pageType('label', dd)} line-height: 1.5; color: rgba(255,255,255,.62)`),
         soft('.gh-twin[data-role="value"]', pageType('value', dd)),
         soft('.gh-twin[data-role="cleanValue"]', pageType('cleanValue', dd)),
-        soft('.gh-twin[data-role="playLabel"]', pageType('playLabel', dd)),
+        // Steam's fixed line height on the Play label (STEAM_PLAY_LINE): the browser places text in a 20 px line box a little
+        // higher than in a default one, so the twin's text landed 0.65 px low and stepped up at the end (Ally, docked).
+        soft('.gh-twin[data-role="playLabel"]', `${pageType('playLabel', dd)} line-height: ${STEAM_PLAY_LINE}px`),
         soft('.gh-twin[data-accent]', 'color: var(--glance-accent-text)'),
         ...twinOut.map(([name, sel]) => soft(`${MT}[data-gh-twins~="${name}"] ${sel}`, `animation: gh-twin-out ${T.morph}ms linear both`)),
         // The bridge (nothing animates in it): the twins at their end, Home's twinned text hidden, stated above the live rules.
