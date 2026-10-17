@@ -522,10 +522,19 @@ describe('buildThemeCss restyle (Spotlight Home on)', () => {
         // rule of the pill, the circles and the cloud sits behind :where(html:not([data-gg-mouse])).
         const gate = ':where(html:not([data-gg-mouse]))';
         const focusRules = (restyled.match(/[^{}]*\{[^}]*\}/g) ?? []).map((r) => r.slice(0, r.indexOf('{')).trim())
-            .filter((s) => /\.(rt_PlayBtn|ps_Menu|ps_Cloud)/.test(s) && /(\.gpfocus|:focus)(?![\w-])/.test(s) && !s.split(gate).join('').includes(':not('));
+            .filter((s) => /\.(rt_PlayBtn|ps_Menu|ps_Cloud)/.test(s) && /(\.gpfocus|:focus)(?![\w-])/.test(s) && !s.split(gate).join('').includes(':not(') && !s.startsWith('html[data-gg-mouse]'));
         expect(focusRules.length).toBeGreaterThanOrEqual(8);
         for (const sel of focusRules) for (const part of sel.split(',')) expect(part.trim(), sel).toMatch(/^:where\(html:not\(\[data-gg-mouse\]\)\)/);
         expect(rulesFor(restyled, `${gate} .ps_Menu.gpfocus`)).toContain('background: #ffffff !important;');
+        // Steam's own focus rule darkens a focused circle's icon (meant for its white focus look): in mouse mode it stays
+        // the white of a circle at rest, or it showed black on the dark glass after coming back to the page.
+        // (Steam darkens the icon's svg, whose paths fill with currentColor: the button and its svg both.)
+        expect(rulesFor(restyled, 'html[data-gg-mouse] .ps_Menu:is(.gpfocus, :focus)')).toContain('color: #ffffff !important;');
+        expect(rulesFor(restyled, 'html[data-gg-mouse] .ps_Menu:is(.gpfocus, :focus) svg')).toContain('color: #ffffff !important;');
+        // And Steam's own focus fill on Play and its arrow (blue, green for some games: our transparent focus rules hid it).
+        const play = rulesFor(restyled, 'html[data-gg-mouse] .rt_PlayBtn [role="button"]:is(.gpfocus, :focus)');
+        expect(play).toContain('background: transparent !important;');
+        expect(play).toContain('color: #ffffff !important;');
         // The cards (info, HowLongToBeat) lift as Home's feed cards do; a press still gives.
         const card = rulesFor(restyled, 'html[data-gg-mouse] .gg-card-tap:hover');
         expect(card).toContain(ring);

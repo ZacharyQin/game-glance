@@ -576,6 +576,12 @@ function restyleRules({ header, details, root, play, shared }: ThemeClasses, lay
         rule(playButton && `${HOVER} ${playButton} > div:has(> [role="button"]):hover`, ` box-shadow: ${hoverRing(d(2))} !important; `),
         rule(menuButton && `${HOVER} ${menuButton}:hover`, ` box-shadow: ${hoverRing(d(2))} !important; `),
         rule(cloud && `${HOVER} ${cloud}:hover`, ` box-shadow: ${hoverRing(d(2))} !important; `),
+        // With the focus looks off, Steam's own show through on a focused button: its fill on Play and the arrow (blue, green
+        // for some games) and a dark icon on the circles, meant for its white focus look (black on the glass after coming
+        // back to the page, Michael on the Ally). In mouse mode a focused button keeps its look at rest instead.
+        rule(playButton && `${HOVER} ${playButton} [role="button"]:is(.gpfocus, :focus)`, ` background: transparent !important; color: #ffffff !important; `),
+        rule(menuButton && `${HOVER} ${menuButton}:is(.gpfocus, :focus)`, ` color: #ffffff !important; `),
+        rule(menuButton && `${HOVER} ${menuButton}:is(.gpfocus, :focus) svg`, ` color: #ffffff !important; `),
 
         // Eyebrow ("Last played · Today", accent) and the 64px/800 title, at most two lines. Hidden unless the
         // full-screen layout applies (below): all-or-nothing, like the rest of the layout.
