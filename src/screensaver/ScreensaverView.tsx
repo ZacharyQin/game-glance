@@ -5,14 +5,14 @@ import { attempt } from '../data/attempt';
 import { cache, overrides } from '../data/cache';
 import { hltbCacheKey, HltbResult } from '../data/hltb';
 import { settings, useSettings } from '../data/settings';
-import { peekSteamLanguage } from '../data/steam';
+import { peekSteamLanguage, playedMinutesOf } from '../data/steam';
 import { Art, resolveArt } from '../home/HeroBackground';
 import { statusCss } from '../home/homeCss';
 import { StatusBar } from '../home/StatusBar';
 import { readRowGames } from '../home/useHomeData';
 import { steamLanguageToLocale } from '../logic/format';
 import type { HltbTimes } from '../logic/progress';
-import { memoAchievements } from '../home/detailsMemo';
+import { memoAchievements, memoPlaytime } from '../home/detailsMemo';
 import type { ScreensaverOptions } from './options';
 import { cardScale, CROSSFADE_MS, ScreensaverCanvas, screensaverCanvas, screensaverCss, shuffled, SLIDE_MS } from './screensaverCss';
 import { EMPTY_STACK, firstSettled, nextIndexes, nextSlides, PICK_AHEAD, PRELOAD_AHEAD, settledSlides, slideLayers, SlidePhase, SlideStack } from './slideStack';
@@ -40,6 +40,15 @@ function useWindowSize(win: Window | null): { width: number; height: number } {
 
 interface AppOverview { display_name?: string; minutes_playtime_forever?: number | string }
 const appStore = () => (globalThis as unknown as { appStore?: { GetAppOverviewByAppID?(id: number): AppOverview | null } }).appStore;
+
+/** Steam's local play time from its details store, when it has the game's details loaded (no request); else undefined. */
+function detailsPlaytime(appId: number): unknown {
+    try {
+        return (globalThis as { appDetailsStore?: { GetAppDetails?(id: number): { nPlaytimeForever?: unknown } | null | undefined } }).appDetailsStore?.GetAppDetails?.(appId)?.nPlaytimeForever;
+    } catch {
+        return undefined;
+    }
+}
 
 function overviewOf(appId: number): AppOverview | null {
     try {
@@ -73,7 +82,8 @@ function StatsCard({ appId, locale, scale }: { appId: number; locale: string; sc
         };
     }, [appId]);
     if (!known) return null;
-    const played = Number(overviewOf(appId)?.minutes_playtime_forever ?? 0);
+    // A shortcut's play time is only in its details (#52): the ones Home kept, or Steam's store when it has them loaded.
+    const played = playedMinutesOf(overviewOf(appId)?.minutes_playtime_forever, memoPlaytime(appId) ?? detailsPlaytime(appId));
     const stats = screensaverStats(known.times, played, known.achievements, locale);
     return (
         <div className="ggs-card" style={{ '--ggs-card-k': String(cardScale(scale)) } as CSSProperties}>

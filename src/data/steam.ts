@@ -18,12 +18,25 @@ const FIRST_SHORTCUT_APP_ID = 0x80000000;
 
 type AnyRecord = Record<string, unknown> | undefined | null;
 
+/**
+ * Minutes played: the larger of the app overview's (`minutes_playtime_forever`, Steam's servers' count) and the app
+ * details' (`nPlaytimeForever`). A non-Steam shortcut's play time is only ever local (localconfig.vdf's Playtime under its
+ * signed app id), which Steam loads into its details; its overview's stays 0 (#52: EmulationStationDE on the Deck read 0
+ * here and 21 on Steam's own page). Junk counts as 0. Pure.
+ */
+export function playedMinutesOf(overviewMinutes: unknown, detailsMinutes: unknown): number {
+    const minutes = (v: unknown) => {
+        const n = Number(v ?? 0);
+        return Number.isFinite(n) && n > 0 ? n : 0;
+    };
+    return Math.max(minutes(overviewMinutes), minutes(detailsMinutes));
+}
+
 export function readGameInfo(overview: unknown, details: unknown): GameInfo {
     const o = overview as AnyRecord;
     const d = details as AnyRecord;
     const appId = Number(o?.appid ?? 0) || 0;
     const isShortcut = o?.app_type === SHORTCUT_APP_TYPE || appId >= FIRST_SHORTCUT_APP_ID;
-    const minutes = Number(o?.minutes_playtime_forever ?? 0);
     const a = d?.achievements as AnyRecord;
     const total = Number(a?.nTotal ?? 0);
     const achievements = !isShortcut && Number.isFinite(total) && total > 0
@@ -33,7 +46,7 @@ export function readGameInfo(overview: unknown, details: unknown): GameInfo {
         appId,
         name: typeof o?.display_name === 'string' ? o.display_name : '',
         isShortcut,
-        playedMinutes: Number.isFinite(minutes) && minutes > 0 ? minutes : 0,
+        playedMinutes: playedMinutesOf(o?.minutes_playtime_forever, d?.nPlaytimeForever),
         achievements,
         heroic: isShortcut ? parseHeroicLaunch(d?.strShortcutLaunchOptions as string | undefined) : null,
     };
