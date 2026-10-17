@@ -35,7 +35,8 @@ export interface TwinSpec {
     box?: { w: number; h: number; inset: number };
 }
 
-const r2 = (n: number) => Math.round(n * 100) / 100;
+// 4 decimals: at 2, the bridge sat 0.01 px off the page, which drew a row a whole device px off near a half pixel.
+const r2 = (n: number) => Math.round(n * 10000) / 10000;
 const r4 = (n: number) => Math.round(n * 10000) / 10000;
 const anchor = (b: Box, origin: TwinOrigin) => ({ x: b.x, y: origin === 'top' ? b.y : origin === 'base' ? b.y + b.h : b.y + b.h / 2 });
 
@@ -106,10 +107,13 @@ export function twinSpecs(home: HomeRects, page: PageTargets, texts: { title: st
     return out;
 }
 
-/** Settle guards (spec): the same text is within 2% of its size; a difference over 6 px is another element; under 0.25 px is nothing. */
+/**
+ * Settle guards: the same text is within 2% of its size; a difference over 6 px is another element; under 0.005 px is
+ * nothing (the spec's 0.25 was too coarse: on the Ally a 0.01 px offset drew a number a whole device px off).
+ */
 const SIZE_TOLERANCE = 0.02;
 const MAX_GLIDE_PX = 6;
-const MIN_GLIDE_PX = 0.25;
+const MIN_GLIDE_PX = 0.005;
 
 /**
  * How far a twin glides at the hand-over: from where it landed (`predicted`) to the page's text as measured, or null

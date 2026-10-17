@@ -94,15 +94,15 @@ describe('openMotion', () => {
 
     it("the Play time column's place and value size in the extras layer (a new game's), per look", () => {
         const v = vars(openMotion({ ...homeRects(), root: box(10, 20, 1500, 844) }, spotlight(), 'spotlight', s));
-        expect([v['--gho-x-played-x'], v['--gho-x-played-y']]).toEqual([`${Math.round((50.8 - 10) * 100) / 100}px`, `${Math.round((614.7 - 20) * 100) / 100}px`]);
-        expect(v['--gho-x-played-font']).toBe(`${Math.round(30 * s * 100) / 100}px`);
+        expect([v['--gho-x-played-x'], v['--gho-x-played-y']]).toEqual([`${Math.round((50.8 - 10) * 10000) / 10000}px`, `${Math.round((614.7 - 20) * 10000) / 10000}px`]);
+        expect(v['--gho-x-played-font']).toBe(`${Math.round(30 * s * 10000) / 10000}px`);
         const clean = vars(openMotion(homeRects(), { ...spotlight(), shells: [box(900, 480, 500, 90)] }, 'clean', s));
-        expect(clean['--gho-x-played-font']).toBe(`${Math.round(22 * s * 100) / 100}px`);
+        expect(clean['--gho-x-played-font']).toBe(`${Math.round(22 * s * 10000) / 10000}px`);
     });
 
     it("the store pill's place in the extras layer, for both looks: its right edge and top on the page, in the root's px", () => {
         const v = vars(openMotion({ ...homeRects(), root: box(10, 20, 1500, 844) }, spotlight(), 'spotlight', s));
-        expect([v['--gho-x-pill-x'], v['--gho-x-pill-y']]).toEqual([`${Math.round((1372.1 + 102.9 - 10) * 100) / 100}px`, `${Math.round((507.7 - 20) * 100) / 100}px`]);
+        expect([v['--gho-x-pill-x'], v['--gho-x-pill-y']]).toEqual([`${Math.round((1372.1 + 102.9 - 10) * 10000) / 10000}px`, `${Math.round((507.7 - 20) * 10000) / 10000}px`]);
         expect(v['--gho-x-d']).toBe(String(Math.round(s * 10000) / 10000));
     });
 

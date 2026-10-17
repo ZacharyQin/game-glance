@@ -37,7 +37,8 @@ export const HOME_CHIP_FONTS = { label: 10, value: 20 } as const;
 const HOME_LABEL_LINE = 1.2;
 const PAGE_LABEL_LINE = 1.5;
 
-const px = (n: number) => `${Math.round(n * 100) / 100}px`;
+// 4 decimals: placements rounded to 0.01 px put the bridge's text a whole device px off near a half pixel (Ally, docked).
+const px = (n: number) => `${Math.round(n * 10000) / 10000}px`;
 const k = (n: number) => `${Math.round(n * 10000) / 10000}`;
 const translate = (x: number, y: number) => `translate(${px(x)}, ${px(y)})`;
 /** Maps box `from` onto box `to` (origin 0 0), in canvas px. */

@@ -75,7 +75,7 @@ describe('twinSpecs', () => {
         expect(t.title).toMatchObject({ role: 'title', text: 'Cronos', origin: 'base', x: 25, y: 426, to: 'none' });
         expect(parse(t.title.from).k).toBeCloseTo(TITLE_BLOCK.titleSize / PAGE_TYPE.title.size, 4);
         expect(t.eyebrow).toMatchObject({ role: 'eyebrow', origin: 'base', x: 25, y: 455.6 });
-        expect(t['label-played']).toMatchObject({ role: 'label', text: 'Played', origin: 'midline', x: 50.8, y: Math.round((614.7 + 17.2 / 2) * 100) / 100 });
+        expect(t['label-played']).toMatchObject({ role: 'label', text: 'Played', origin: 'midline', x: 50.8, y: Math.round((614.7 + 17.2 / 2) * 10000) / 10000 });
         expect(parse(t['label-played'].from).k).toBeCloseTo(HOME_CHIP_FONTS.label / PAGE_TYPE.label.size, 4);
         expect(t['value-played']).toMatchObject({ role: 'value', text: '12 h', accent: false });
         expect(parse(t['value-played'].from).k).toBeCloseTo(HOME_CHIP_FONTS.value / PAGE_TYPE.value.size, 4);
@@ -93,7 +93,7 @@ describe('twinSpecs', () => {
         const inset = (PAGE_LAYOUT.pill.padX + PAGE_LAYOUT.pill.icon + PAGE_LAYOUT.pill.iconGap) * d;
         const off = byName(twinSpecs(homeRects(), page(), texts, stats, 'spotlight', false, s)).play;
         expect(off).toMatchObject({ role: 'playLabel', text: 'Play', origin: 'pill', x: p.x, y: p.y, to: 'none' });
-        expect(off.box).toEqual({ w: p.w, h: p.h, inset: Math.round(inset * 100) / 100 });
+        expect(off.box).toEqual({ w: p.w, h: p.h, inset: Math.round(inset * 10000) / 10000 });
         // From: the label's anchor in the box (its inset, the centre line) lands on Home's label, at Home's type size.
         const k = HOME_PILL.font / PAGE_TYPE.playLabel.size;
         const home = homeRects().play;
@@ -105,7 +105,7 @@ describe('twinSpecs', () => {
         expect(f.ty).toBeCloseTo(hy - k * (p.h / 2), 1);
         const on = byName(twinSpecs(homeRects(), page(), texts, stats, 'spotlight', true, s)).play;
         const pf = pillFocusScale(PAGE_LAYOUT.playW, PAGE_LAYOUT.icon);
-        const r = (n: number) => Math.round(n * 100) / 100;
+        const r = (n: number) => Math.round(n * 10000) / 10000;
         expect(on.to).toBe(`translate(${r((p.w / 2) * (1 - pf.x))}px, ${r((p.h / 2) * (1 - pf.y))}px) scale(${pf.x}, ${pf.y})`);
     });
     it('hltb in spotlight: value twin only, accent', () => {
@@ -128,6 +128,10 @@ describe('twinSpecs', () => {
         const b = byName(twinSpecs(homeRects(), page(), texts, stats, 'spotlight', false, s)).play;
         expect(a.x).toBeCloseTo(b.x, 5);
         expect(a.from).toBe(b.from);
+    });
+    it('places to 4 decimals', () => {
+        const p = { ...page(), stats: { ...page().stats, played: { label: box(50.8, 614.71234, 77.5, 17.2), value: box(50.8, 636.1, 77.5, 37.5) } } };
+        expect(byName(twinSpecs(homeRects(), p, texts, stats, 'spotlight', true, s))['label-played'].y).toBe(Math.round((614.71234 + 8.6) * 10000) / 10000);
     });
     it("in the root's px: Home's root offset is taken off", () => {
         const home = { ...homeRects(), root: box(10, 20, 1500, 844) };
@@ -155,10 +159,15 @@ describe('settleDelta', () => {
         expect(settleDelta(at, box(107, 200, 80, 20))).toBeNull();
         expect(settleDelta(at, box(100, 193.5, 80, 20))).toBeNull();
     });
-    it('under 0.25 px on both axes: none (nothing to glide)', () => {
-        expect(settleDelta(at, box(100.1, 200.2, 80, 20))).toBeNull();
+    it('any difference from 0.005 px glides (0.01 px drew a number a whole device px off on the Ally); under it, none', () => {
+        expect(settleDelta(at, box(100, 200.01, 80, 20))).toEqual({ dx: 0, dy: 0.01 });
+        expect(settleDelta(at, box(100.002, 200.003, 80, 20))).toBeNull();
+    });
+    it('keeps 4 decimals (2 put the bridge 0.01 px off the page, a whole device px near a half pixel)', () => {
+        expect(settleDelta(at, box(100.1234, 200.5678, 80, 20))).toEqual({ dx: 0.1234, dy: 0.5678 });
     });
     it('an ordinary difference: the glide', () => {
         expect(settleDelta(at, box(101.5, 199.25, 80.5, 20))).toEqual({ dx: 1.5, dy: -0.75 });
+        expect(settleDelta(at, box(100.1, 200.2, 80, 20))).toEqual({ dx: 0.1, dy: 0.2 });
     });
 });
