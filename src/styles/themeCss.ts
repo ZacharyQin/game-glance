@@ -45,6 +45,27 @@ function rule(selectors: Array<string | null> | string | null, body: string): st
 
 const present = (list: Array<string | null>) => list.filter((s): s is string => s !== null);
 
+/** The band under the Play row where `.gg-hero` is pinned. Tabs normally start below it. */
+const CARD_BAND = 'calc(100vh - var(--gg-play-top) - var(--gg-row-h))';
+/**
+ * Steam inserts in-flow rows between the Play section and the tabs (Deck compatibility feedback).
+ * The overview is pulled up onto the art and only the tabs are pushed down, so those rows land on
+ * the cards and, in a z-index 1 column, paint over them. The cloud row is absolute, so it is not
+ * one of them. The first in-flow row takes the band; later rows and the tabs follow it, without a
+ * second spacer. Nothing is emitted when the cloud class is unknown: that absolute row would match
+ * `*` and cancel the tabs' own spacer.
+ */
+function cardBandClearance(playSection: string | null, tabs: string | null, cloud: string | null): string[] {
+    if (!playSection || !tabs || !cloud) return [];
+    const gap = `${playSection} ~ *:not(${cloud}):not(${tabs})`;
+    return [
+        rule(gap, ` margin-top: ${CARD_BAND} !important; `),
+        rule(`${gap} ~ *:not(${cloud}):not(${tabs})`, ` margin-top: 0 !important; `),
+        rule(`${gap} ~ ${tabs}`, ` margin-top: 0 !important; `),
+    ];
+}
+
+
 /** A size in the theme's scale unit: `n` px on the handheld's 828×466 layout, larger on a TV (60% of the screen's growth; screenScale.ts). */
 const u = (n: number) => `calc(${n} * var(--gg-u))`;
 
@@ -159,7 +180,9 @@ export interface ThemeOptions {
  *
  * Layout (all-or-nothing): Steam's header becomes screen-tall, Steam's overview block (Play row + tabs)
  * is pulled up onto the art, our cards are overlaid under the Play row, and the tabs start on the next
- * screen. Nothing in Steam's page structure moves, so controller navigation and scrolling stay Steam's.
+ * screen. A row Steam inserts between the Play section and the tabs takes that spacer instead, so it
+ * does not sit on the cards. Nothing in Steam's page structure moves, so controller navigation and
+ * scrolling stay Steam's.
  * If any class the layout needs is missing, none of the layout applies and the page stays stacked.
  * Without `restyle` the output is exactly 1.1.1's (pinned by a snapshot test); `restyle` appends restyleRules().
  */
@@ -294,7 +317,8 @@ export function buildThemeCss(classes: ThemeClasses, options: ThemeOptions = {})
             rule(overviewPanel, ` margin-top: calc(var(--gg-play-top) - 100vh) !important; position: relative; `),
             rule(backdrop, ` display: none !important; `),
             rule(appRoot, ` background: transparent !important; `),
-            rule(tabs, ` margin-top: calc(100vh - var(--gg-play-top) - var(--gg-row-h)) !important; background: rgba(14, 20, 27, 0.9) !important; `),
+            rule(tabs, ` margin-top: ${CARD_BAND} !important; background: rgba(14, 20, 27, 0.9) !important; `),
+            ...cardBandClearance(playSection, tabs, cloud),
             rule(`${inner} > .gg-hero`, ` position: absolute !important; top: calc(var(--gg-play-top) + var(--gg-row-h)) !important;
                 left: var(--gg-side) !important; right: var(--gg-side) !important; height: calc(100vh - var(--gg-play-top) - var(--gg-row-h)) !important;
                 margin: 0 !important; `),

@@ -46,6 +46,22 @@ describe('buildThemeCss full-screen layout', () => {
         expect(ruleFor(css, '.ov_Backdrop {')).toContain('display: none');
         expect(ruleFor(css, '.hd_Box {')).toContain('top:');
     });
+    it('moves an in-flow row between Play and the tabs below the cards, without stacking the spacer', () => {
+        const css = buildThemeCss(full);
+        const band = 'calc(100vh - var(--gg-play-top) - var(--gg-row-h))';
+        const gap = '.rt_Play ~ *:not(.ps_Cloud):not(.rt_Tabs)';
+        expect(ruleFor(css, `${gap} {`)).toContain(`margin-top: ${band}`);
+        expect(ruleFor(css, `${gap} ~ *:not(.ps_Cloud):not(.rt_Tabs) {`)).toContain('margin-top: 0');
+        expect(ruleFor(css, `${gap} ~ .rt_Tabs {`)).toContain('margin-top: 0');
+        // No such row: the tabs still clear the band themselves.
+        expect(ruleFor(css, '.rt_Tabs {')).toContain(`margin-top: ${band}`);
+    });
+    it('does not emit that clearance when the cloud class is unknown', () => {
+        const css = buildThemeCss({ ...full, play: { ...full.play, CloudStatusRow: undefined } });
+        expect(css).not.toContain('.rt_Play ~ *');
+        expect(ruleFor(css, '.rt_Tabs {')).toContain('margin-top: calc(100vh - var(--gg-play-top) - var(--gg-row-h))');
+    });
+
     it('is all-or-nothing: one missing piece keeps the stacked stock layout', () => {
         for (const drop of ['header', 'details', 'root'] as const) {
             const key = { header: 'TopCapsule', details: 'AppDetailsOverviewPanel', root: 'AppDetailsContainer' }[drop];
@@ -391,6 +407,9 @@ describe('buildThemeCss 1.1.1 baseline', () => {
           .ov_Backdrop { display: none !important; }
           .rt_Root { background: transparent !important; }
           .rt_Tabs { margin-top: calc(100vh - var(--gg-play-top) - var(--gg-row-h)) !important; background: rgba(14, 20, 27, 0.9) !important; }
+          .rt_Play ~ *:not(.ps_Cloud):not(.rt_Tabs) { margin-top: calc(100vh - var(--gg-play-top) - var(--gg-row-h)) !important; }
+          .rt_Play ~ *:not(.ps_Cloud):not(.rt_Tabs) ~ *:not(.ps_Cloud):not(.rt_Tabs) { margin-top: 0 !important; }
+          .rt_Play ~ *:not(.ps_Cloud):not(.rt_Tabs) ~ .rt_Tabs { margin-top: 0 !important; }
           .ad_Inner > .gg-hero { position: absolute !important; top: calc(var(--gg-play-top) + var(--gg-row-h)) !important;
                           left: var(--gg-side) !important; right: var(--gg-side) !important; height: calc(100vh - var(--gg-play-top) - var(--gg-row-h)) !important;
                           margin: 0 !important; }"
