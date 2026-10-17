@@ -587,8 +587,9 @@ export function openingRules(): string[] {
         rule('.gh-hero-open', 'position: absolute; inset: 0; pointer-events: none; background-image: var(--gho-hero, none); background-size: cover; background-position: center 30%; background-repeat: no-repeat; opacity: 0'),
         // The glass: the page's cards and Clean panel, their tint, border and blur, so the page's arrive as they are (Michael,
         // on the Ally: moving blurred felt more seamless than a blur growing in after the hand-over). 16 canvas px is the page's
-        // 16 d units. (Its ring is the page cards' as drawn, openMotion's --gho-x-border: 1 device px on the Ally, 0.431 CSS px.)
-        rule('.gh-open-shell', 'display: none; position: absolute; left: 0; top: 0; margin: 0; padding: 0; pointer-events: none; transform-origin: 0 0; border-radius: 16px; background: rgba(12,16,22,.38); border: calc(var(--gho-x-border, 1px) / var(--gho-x-d, 1)) solid rgba(255,255,255,.12); backdrop-filter: blur(16px)'),
+        // 16 d units. Its ring is Home's 1px, so it looks like the chips' all the way: Chromium snaps a border to whole device px
+        // in the canvas's own units, before the scale, so the page's 1 device px drawn in here came out half as bright on the Ally.
+        rule('.gh-open-shell', 'display: none; position: absolute; left: 0; top: 0; margin: 0; padding: 0; pointer-events: none; transform-origin: 0 0; border-radius: 16px; background: rgba(12,16,22,.38); border: 1px solid rgba(255,255,255,.12); backdrop-filter: blur(16px)'),
         rule(O, 'pointer-events: none'),
         // The bridge (openBridge): a frozen copy of Home in its final state; nothing inside it may animate again.
         rule('.gh-root.gh-bridge, .gh-root.gh-bridge *', 'animation: none; transition: none'),

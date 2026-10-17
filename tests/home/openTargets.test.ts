@@ -220,7 +220,6 @@ describe('pageTargets at a fractional pixel ratio', () => {
                 expect(Math.abs(mine - page), `shell ${i} edge ${mine} vs ${page}`).toBeLessThanOrEqual(0.5 / screen.dpr + 1e-6);
             }
         });
-        expect(t.border).toBeCloseTo(now, 6);
     });
     it('the ring the cards draw: 1 d unit on whole device px, at least one; the d unit itself when the ratio is not known', () => {
         expect(cardBorder(2.32, 0.575)).toBeCloseTo(1 / 2.32, 6);

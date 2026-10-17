@@ -27,8 +27,6 @@ export interface PageTargets {
     stats: Partial<Record<StatKey, { label: Box; value: Box; bar?: Box }>>;
     /** Spotlight look, when asked for: the description and the rest of the HowLongToBeat card. */
     extras?: PageExtras;
-    /** The cards' and the Clean panel's ring as drawn (cardBorder), CSS px; 1 when not given. */
-    border?: number;
 }
 /** One of the HowLongToBeat card's columns after Main (Spotlight look), with the texts it shows. */
 export interface ExtraColumn { key: 'mainExtras' | 'completionist'; label: string; value: string }
@@ -187,5 +185,5 @@ export function pageTargets(
         shells = [snapBox(panel)];
         store = { x: W - side - storeSize.w, y: playTop - L.clean.storeGap * d - storeSize.h, w: storeSize.w, h: storeSize.h };
     }
-    return { titleBottomLeft, eyebrowBottomLeft, play, circles, store, shells, stats: out, extras, border: BORDER };
+    return { titleBottomLeft, eyebrowBottomLeft, play, circles, store, shells, stats: out, extras };
 }

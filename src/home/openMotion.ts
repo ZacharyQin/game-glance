@@ -136,8 +136,6 @@ export function openMotion(home: HomeRects, page: PageTargets, look: PageLook, c
         out[`--gho-shell-${i}-o0`] = from ? '1' : '0';
     });
     out['--gho-shell-count'] = String(page.shells.length);
-    // Their border as the page's cards draw theirs (whole device px), in CSS px; homeCss turns it into the canvas's.
-    out['--gho-x-border'] = `${k(page.border ?? 1)}px`;
 
     // The extras layer: the page's parts drawn at the page's size in the root's px (outside the scaled canvas), laid out
     // as the page lays them out, from the d unit: the store pill (by its right edge and top, both looks) and, Spotlight,

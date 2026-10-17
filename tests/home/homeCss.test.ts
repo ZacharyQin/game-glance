@@ -120,8 +120,11 @@ describe('homeCss', () => {
     });
     it('the open transition lands on the page\'s exact edges: the glass panels\' 1px border and the Play pill\'s outer size', () => {
         const css = homeCss(CARD_SCALE_HANDHELD);
-        // The panels are drawn in the scaled canvas: their border is the page cards' 1 CSS px, not 1 canvas px (0.5 px on the Ally).
-        expect(css).toMatch(/\.gh-open-shell \{[^}]*border: calc\(var\(--gho-x-border, 1px\) \/ var\(--gho-x-d, 1\)\) solid rgba\(255,255,255,\.12\)/);
+        // The panels are drawn in the scaled canvas with Home's own 1px ring, so it looks the same as the chips' all the way.
+        // (Chromium snaps a border to whole device px in the canvas's own units before the scale: the page's 1 device px,
+        // 0.75 canvas px on the Ally, became 1 device px there and 0.575 on screen, half as bright as both ends.)
+        expect(css).toMatch(/\.gh-open-shell \{[^}]*border: 1px solid rgba\(255,255,255,\.12\)/);
+        expect(css).not.toContain('--gho-x-border');
         // The pill's layers that grow into the page pill start at its outer edge (its 1px border), as openMotion's scales assume.
         expect(css).toMatch(/\.gh-btn\[data-action="play"\]::before \{[^}]*left: -1px[^}]*top: -1px[^}]*width: calc\(100% \+ 2px\)[^}]*height: calc\(100% \+ 2px\)/);
         expect(css).toMatch(/\.gh-btn\[data-action="play"\]::after \{[^}]*left: -1px[^}]*top: calc\(var\(--gho-play-dy\) - 1px\)[^}]*width: calc\(\(100% \+ 2px\) \* var\(--gho-play-sx\)\)[^}]*height: calc\(\(100% \+ 2px\) \* var\(--gho-play-sy\)\)/);

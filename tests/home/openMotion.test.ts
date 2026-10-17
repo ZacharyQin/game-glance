@@ -112,9 +112,8 @@ describe('openMotion', () => {
         expect(vars(openMotion(homeRects(), page, 'spotlight', s))['--gho-x-desc-x']).toBe('50px');
     });
 
-    it("the panels' border is the page cards' as drawn (whole device px), 1 px when the page targets have none", () => {
-        expect(vars(openMotion(homeRects(), { ...spotlight(), border: 2 / 2.32 }, 'spotlight', s))['--gho-x-border']).toBe('0.8621px');
-        expect(vars(openMotion(homeRects(), spotlight(), 'spotlight', s))['--gho-x-border']).toBe('1px');
+    it("no border variable: the panels keep Home's ring (homeCss), whatever the page's", () => {
+        expect(vars(openMotion(homeRects(), { ...spotlight(), border: 2 / 2.32 }, 'spotlight', s))['--gho-x-border']).toBeUndefined();
     });
 
     it('one shell per card, placed at the card and scaled down onto the chips that merge into it', () => {
