@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import type { HomeRects } from '../../src/home/openMotion';
 import { HOME_CHIP_FONTS } from '../../src/home/openMotion';
 import type { Box, PageStat, PageTargets } from '../../src/home/openTargets';
-import { twinFrom, twinSpecs } from '../../src/home/openTwins';
+import { settleDelta, twinFrom, twinSpecs } from '../../src/home/openTwins';
 import { OPEN_TIMINGS } from '../../src/home/motion';
 import { HOME_PILL, TITLE_BLOCK } from '../../src/home/homeCss';
 import { PAGE_LAYOUT, PAGE_TYPE, pillFocusScale } from '../../src/styles/themeCss';
@@ -132,5 +132,26 @@ describe('twinSpecs', () => {
         expect(OPEN_TIMINGS.twinFade).toBe(180);
         expect(OPEN_TIMINGS.twinFade / OPEN_TIMINGS.morph).toBeCloseTo(0.4, 5);
         expect(OPEN_TIMINGS.settleGlide).toBe(150);
+    });
+});
+
+describe('settleDelta', () => {
+    const at = box(100, 200, 80, 20);
+    it('no counterpart: none', () => {
+        expect(settleDelta(at, null)).toBeNull();
+    });
+    it('a size more than 2% off: none (not the same text)', () => {
+        expect(settleDelta(at, box(101, 200, 80 * 1.03, 20))).toBeNull();
+        expect(settleDelta(at, box(101, 200, 80, 20 * 0.97))).toBeNull();
+    });
+    it('more than 6 px off on either axis: none (the wrong element)', () => {
+        expect(settleDelta(at, box(107, 200, 80, 20))).toBeNull();
+        expect(settleDelta(at, box(100, 193.5, 80, 20))).toBeNull();
+    });
+    it('under 0.25 px on both axes: none (nothing to glide)', () => {
+        expect(settleDelta(at, box(100.1, 200.2, 80, 20))).toBeNull();
+    });
+    it('an ordinary difference: the glide', () => {
+        expect(settleDelta(at, box(101.5, 199.25, 80.5, 20))).toEqual({ dx: 1.5, dy: -0.75 });
     });
 });

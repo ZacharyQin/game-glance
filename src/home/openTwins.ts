@@ -84,3 +84,23 @@ export function twinSpecs(home: HomeRects, page: PageTargets, texts: { title: st
     }
     return out;
 }
+
+/** Settle guards (spec): the same text is within 2% of its size; a difference over 6 px is another element; under 0.25 px is nothing. */
+const SIZE_TOLERANCE = 0.02;
+const MAX_GLIDE_PX = 6;
+const MIN_GLIDE_PX = 0.25;
+
+/**
+ * How far a twin glides at the hand-over: from where it landed (`predicted`) to the page's text as measured, or null
+ * when it should stay (no counterpart, not the same size, too far to be the same element, or already there). Pure.
+ */
+export function settleDelta(predicted: Box, measured: Box | null): { dx: number; dy: number } | null {
+    if (!measured) return null;
+    const off = (a: number, b: number) => Math.abs(b - a) > SIZE_TOLERANCE * Math.max(Math.abs(a), 1);
+    if (off(predicted.w, measured.w) || off(predicted.h, measured.h)) return null;
+    const dx = r2(measured.x - predicted.x);
+    const dy = r2(measured.y - predicted.y);
+    if (Math.abs(dx) > MAX_GLIDE_PX || Math.abs(dy) > MAX_GLIDE_PX) return null;
+    if (Math.abs(dx) < MIN_GLIDE_PX && Math.abs(dy) < MIN_GLIDE_PX) return null;
+    return { dx, dy };
+}
