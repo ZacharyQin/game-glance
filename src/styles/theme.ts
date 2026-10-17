@@ -1,6 +1,6 @@
 import { appDetailsClasses, appDetailsHeaderClasses, findClassModule, playSectionClasses } from '@decky/ui';
 import { LOG_PREFIX } from '../constants';
-import { arrivalSelectors, buildAccentCss, steamFooterSelector, buildArrivingCss, buildSteamEnterOffCss, buildCleanCss, buildDownloadCss, buildLaunchCss, buildRingCss, buildThemeCss, buildUnifideckCss, ClassMap, launchTargets, playRowSelector, ringBoost, ThemeClasses, ThemeOptions } from './themeCss';
+import { arrivalSelectors, buildAccentCss, steamFooterSelector, buildArrivingCss, buildSteamEnterOffCss, buildCleanCss, buildDownloadCss, buildLaunchCss, buildRingCss, buildThemeCss, buildUnifideckCss, ClassMap, launchTargets, playRowSelector, ringBoost, ThemeClasses, ThemeOptions, twinTargets } from './themeCss';
 import { viewportSize } from '../home/openHome';
 import type { ReadySelectors } from './pageReady';
 
@@ -96,4 +96,9 @@ export function steamFooter(): string | null {
 /** Steam's Play row on the game page (themeCss.playRowSelector), for logic/cardNav; null without its classes. */
 export function playRow(): string | null {
     return playRowSelector(themeClasses());
+}
+
+/** Each open-transition text twin's counterpart on the page (themeCss.twinTargets). */
+export function pageTwinTargets(look: 'spotlight' | 'clean' | 'steam'): Record<string, string> {
+    return twinTargets(themeClasses(), look);
 }

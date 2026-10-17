@@ -476,6 +476,22 @@ export function buildCleanCss({ header, details, root }: ThemeClasses): string {
 /** How long the page takes to fade away under Steam's launch overlay (and back if the launch is cancelled). */
 const LAUNCH_FADE_MS = 200;
 
+/**
+ * Each text twin's counterpart on the page (home/openTwins names): where the open's twins glide to at the hand-over
+ * (openHome.settleTwins). The Play label's is left out without Steam's class.
+ */
+export function twinTargets({ root }: ThemeClasses, look: 'spotlight' | 'clean' | 'steam'): Record<string, string> {
+    const out: Record<string, string> = { title: '.gg-title', eyebrow: '.gg-eyebrow' };
+    const playButton = cls(root, 'ActionButtonAndStatusPanel');
+    if (playButton) out.play = `${playButton} [role="button"] > div`;
+    const scope = look === 'clean' ? '.gg-clean-info' : '.gg-hero';
+    for (const k of ['size', 'played', 'achievements', 'hltb']) {
+        out[`label-${k}`] = `${scope} [data-stat="${k}"] .gg-label`;
+        out[`value-${k}`] = `${scope} [data-stat="${k}"] .gg-value`;
+    }
+    return out;
+}
+
 /** Steam's Play row on the game page (the Play pill with its arrow, the circles, the cloud): logic/cardNav's `play`; null without its classes. */
 export function playRowSelector({ root, play }: ThemeClasses): string | null {
     const list = [cls(root, 'ActionButtonAndStatusPanel'), cls(play, 'MenuButton'), cls(play, 'CloudStatusRow')];

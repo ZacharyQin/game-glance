@@ -2,7 +2,7 @@ import { sourcePillIcon, sourcePillLook } from '../../src/styles/sourcePill';
 import { describe, expect, it } from 'vitest';
 import { arrivalSelectors, buildAccentCss, buildArrivingCss, buildCleanCss, buildSteamEnterOffCss, steamFooterSelector, buildDownloadCss, buildLaunchCss, buildRingCss, buildThemeCss, buildUnifideckCss, launchTargets, ThemeClasses } from '../../src/styles/themeCss';
 import { homeCanvas } from '../../src/home/scale';
-import { cardMaxWidths, PAGE_LAYOUT, PAGE_SCRIM_LAYERS, PAGE_SCRIMS, pageDUnit, PAGE_TYPE, pageType, pillFocusScale, playRowSelector, ringBoost, STEAM_LEGEND_PX } from '../../src/styles/themeCss';
+import { cardMaxWidths, PAGE_LAYOUT, PAGE_SCRIM_LAYERS, PAGE_SCRIMS, pageDUnit, PAGE_TYPE, pageType, pillFocusScale, playRowSelector, ringBoost, STEAM_LEGEND_PX, twinTargets } from '../../src/styles/themeCss';
 
 const full: ThemeClasses = {
     header: { TopCapsule: 'hd_Top', BoxSizer: 'hd_Box' },
@@ -572,6 +572,16 @@ describe('buildThemeCss restyle (Spotlight Home on)', () => {
         expect(rulesFor(restyled, '.rt_PlayBtn [role="button"] > div')).toContain(pageType('playLabel', d, true));
         // Only what the page sets itself: nothing it inherits from Steam is declared.
         expect(pageType('playLabel', d)).toBe('font-size: calc(22 * var(--gg-d)); font-weight: 700;');
+    });
+    it("twinTargets: each twin's text on the page, in each look", () => {
+        const sp = twinTargets(full, 'spotlight');
+        expect(sp.title).toBe('.gg-title');
+        expect(sp.eyebrow).toBe('.gg-eyebrow');
+        expect(sp.play).toBe('.rt_PlayBtn [role="button"] > div');
+        expect(sp['label-played']).toBe('.gg-hero [data-stat="played"] .gg-label');
+        expect(sp['value-hltb']).toBe('.gg-hero [data-stat="hltb"] .gg-value');
+        expect(twinTargets(full, 'clean')['value-size']).toBe('.gg-clean-info [data-stat="size"] .gg-value');
+        expect(twinTargets({ ...full, root: {} }, 'spotlight').play).toBeUndefined();
     });
     it("the cloud's icon is centred in its circle, as on Home: Steam's icon box is as tall as the icon", () => {
         // (Its box kept the 1.1.1 theme's 16 u height under a 26 d unit icon, which hung out of its bottom: 1.65 px low docked.)

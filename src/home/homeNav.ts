@@ -5,7 +5,7 @@ import { markLeaving } from './homeMemory';
 import { playNavSound } from './navSound';
 import { takeSteamFocus } from './steamFocus';
 import { createOpenTransition, OpenTransition } from './openTransition';
-import { applyOpening, canvasMeasure, extrasFlags, missingStats, OpenVariant, openVariant, pageStatsFromChips, readChipTexts, readExtrasAsked, readExtrasSize, readTwinTexts, measureHome, viewportSize } from './openHome';
+import { applyOpening, canvasMeasure, extrasFlags, missingStats, OpenVariant, openVariant, pageStatsFromChips, readChipTexts, readExtrasAsked, readExtrasSize, readTwinTexts, measureHome, settleTwins, viewportSize } from './openHome';
 import { TwinSpec, twinSpecs } from './openTwins';
 import { openMotion } from './openMotion';
 import { pageTargets, PageLook } from './openTargets';
@@ -14,7 +14,7 @@ import { heroArtFor, heroShownApp } from './HeroBackground';
 import { homeMode } from './mode';
 import { settings } from '../data/settings';
 import { clearOpen, markOpen, onOpenReady, OpenIntent } from '../data/openIntent';
-import { pageArrivalSelectors, steamEnterOffCss, steamFooter } from '../styles/theme';
+import { pageArrivalSelectors, pageTwinTargets, steamEnterOffCss, steamFooter } from '../styles/theme';
 import { MOUSE_ATTR } from './mouseMode';
 import { clearSteamBarCover } from './useHideSteamBar';
 
@@ -238,7 +238,9 @@ function controller(): OpenTransition {
             const footer = steamFooter();
             const extras = [...doc.querySelectorAll('.gg-status-host'), ...(footer ? [...doc.querySelectorAll(footer)] : [])];
             // Home's game row, tabs and feed have left (or faded with the rest) by the hand-over: the copy goes without them.
-            const bridge = mountOpenBridge(c.root, steamEnterOffCss(), extras, ['.gh-recents', '.gh-tabs', '.gh-feed']);
+            // At the page's ready the copy's text twins glide onto the page's text as measured (openHome.settleTwins).
+            const look = c.intent.look;
+            const bridge = mountOpenBridge(c.root, steamEnterOffCss(), extras, ['.gh-recents', '.gh-tabs', '.gh-feed'], (copy) => settleTwins(copy, doc, pageTwinTargets(look)));
             if (c.intent.look !== 'steam') return bridge;
             // Steam's own page draws no status bar of ours: give Steam's top bar back once the bridge is gone.
             return { fadeIn: (ms: number) => bridge.fadeIn(ms), fadeOut: (ms: number) => bridge.fadeOut(ms), remove: () => { bridge.remove(); clearSteamBarCover(doc); } };

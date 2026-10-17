@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { applyOpening, extrasFlags, extrasParts, measureHome, missingStats, mountTwins, readTwinTexts, viewportSize, openVariant, pageStatsFromChips, readExtrasAsked } from '../../src/home/openHome';
+import { applyOpening, extrasFlags, extrasParts, measureHome, missingStats, mountTwins, readTwinTexts, settleTwins, viewportSize, openVariant, pageStatsFromChips, readExtrasAsked } from '../../src/home/openHome';
 import type { TwinSpec } from '../../src/home/openTwins';
 import { BRIDGE_FADE_EASE, mountOpenBridge } from '../../src/home/openBridge';
 
@@ -415,5 +415,24 @@ describe('text twins on Home', () => {
         const q = (map: Record<string, string | null>) => ({ querySelector: (sel: string) => (map[sel] == null ? null : { textContent: map[sel] }) }) as unknown as Element;
         expect(readTwinTexts(q({ '.gh-title-slot .gh-title': 'Cronos', '.gh-eyebrow': 'Last played', '.gh-btn[data-action="play"] .gh-btn-label': 'Play' }))).toEqual({ title: 'Cronos', eyebrow: 'Last played', play: 'Play' });
         expect(readTwinTexts(q({ '.gh-eyebrow': 'Last played', '.gh-btn[data-action="play"] .gh-btn-label': 'Play' })).title).toBeNull();
+    });
+});
+
+describe('settleTwins', () => {
+    const rect = (x: number, y: number, w = 50, h = 10) => ({ getBoundingClientRect: () => ({ left: x, top: y, width: w, height: h }) });
+    it("glides each twin onto its page text as measured, within the guards; leaves the others", () => {
+        const vars: Record<string, Record<string, string>> = {};
+        const twin = (name: string, x: number, y: number) => ({
+            ...rect(x, y),
+            getAttribute: () => name,
+            style: { setProperty: (n: string, v: string) => ((vars[name] ??= {})[n] = v) },
+        });
+        const copy = { querySelectorAll: () => [twin('title', 10, 20), twin('eyebrow', 10, 40), twin('play', 10, 60)] } as unknown as HTMLElement;
+        const page = { title: rect(11.5, 19.5), eyebrow: rect(30, 40), play: null } as Record<string, unknown>;
+        const doc = { querySelector: (sel: string) => page[sel] ?? null } as unknown as Document;
+        settleTwins(copy, doc, { title: 'title', eyebrow: 'eyebrow', play: 'play' });
+        expect(vars.title).toEqual({ '--t-dx': '1.5px', '--t-dy': '-0.5px' });
+        expect(vars.eyebrow).toBeUndefined();
+        expect(vars.play).toBeUndefined();
     });
 });

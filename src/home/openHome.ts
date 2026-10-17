@@ -1,7 +1,7 @@
 import type { HomeRects, MotionVar } from './openMotion';
 import type { Box, ExtraColumn, ExtrasAsked, Measure, PageLook, PageStat, StatKey } from './openTargets';
 import type { HltbResult } from '../data/hltb';
-import type { TwinSpec } from './openTwins';
+import { settleDelta, TwinSpec } from './openTwins';
 import { tr } from '../i18n/steamText';
 import { LOG_PREFIX } from '../constants';
 
@@ -115,6 +115,26 @@ export function mountTwins(root: HTMLElement, specs: TwinSpec[]): () => void {
     }
     root.appendChild(layer);
     return () => layer.remove();
+}
+
+/**
+ * At the page's ready, in the bridge `copy`: each text twin glides onto its counterpart on the page (`targets`, by twin
+ * name: themeCss.twinTargets) as measured in the page's `doc`, within openTwins.settleDelta's guards (homeCss: the copy's
+ * twins transition their translate by --t-dx/--t-dy). A twin without a counterpart, or one too far off, stays.
+ */
+export function settleTwins(copy: HTMLElement, doc: Document, targets: Record<string, string>) {
+    const box = (el: { getBoundingClientRect(): { left: number; top: number; width: number; height: number } }) => {
+        const r = el.getBoundingClientRect();
+        return { x: r.left, y: r.top, w: r.width, h: r.height };
+    };
+    for (const twin of copy.querySelectorAll<HTMLElement>('.gh-twin')) {
+        const sel = targets[twin.getAttribute('data-twin') ?? ''];
+        const page = sel ? doc.querySelector<HTMLElement>(sel) : null;
+        const glide = settleDelta(box(twin), page ? box(page) : null);
+        if (!glide) continue;
+        twin.style.setProperty('--t-dx', `${glide.dx}px`);
+        twin.style.setProperty('--t-dy', `${glide.dy}px`);
+    }
 }
 
 /** The texts the twins draw, as Home shows them: the title (null for a logo), the eyebrow, the Play label. */

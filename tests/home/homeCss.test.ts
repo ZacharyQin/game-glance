@@ -462,7 +462,8 @@ describe('homeCss open transition', () => {
         for (const [sel, body] of opening) {
             for (const m of body.matchAll(/transition:\s*([^;]+)/g)) {
                 const props = m[1].split(/,(?![^(]*\))/).map((p) => p.trim().split(/\s+/)[0]);
-                for (const p of props) expect(['transform', 'opacity', 'none'], `${sel}: ${m[1]}`).toContain(p);
+                // (translate: the individual transform property, composited as transform is; the twins' glide in the bridge.)
+                for (const p of props) expect(['transform', 'translate', 'opacity', 'none'], `${sel}: ${m[1]}`).toContain(p);
             }
         }
     });
@@ -904,6 +905,8 @@ describe('homeCss open transition: text twins', () => {
         expect(twin).toContain('opacity: 1');
         expect(twin).toContain('animation: none');
         expect(twin).toContain('transform: var(--t-to)');
+        // The glide onto the page as measured (openHome.settleTwins sets --t-dx/--t-dy), above the copy's transition: none.
+        expect(twin).toContain(`transition: translate ${OPEN_TIMINGS.settleGlide}ms ease-out !important`);
         const hide = body(`${B}[data-gh-twins~="label-played"] .gh-chip[data-chip="played"] .gh-chip-label`);
         expect(hide).toContain('opacity: 0');
         expect(hide).toContain('animation: none');
