@@ -50,7 +50,13 @@ describe('buildThemeCss full-screen layout', () => {
         const css = buildThemeCss(full);
         const band = 'calc(100vh - var(--gg-play-top) - var(--gg-row-h))';
         const gap = '.rt_Play ~ *:not(.ps_Cloud):not(.rt_Tabs)';
-        expect(ruleFor(css, `${gap} {`)).toContain(`margin-top: ${band}`);
+        const row = ruleFor(css, `${gap} {`);
+        expect(row).toContain(`margin-top: ${band}`);
+        expect(row).toContain('padding: var(--gg-side)');
+        const card = ruleFor(css, `${gap} > .Panel {`);
+        expect(card).toContain('margin: 0');
+        expect(card).toContain('rgba(12, 16, 22, 0.38)');
+        expect(card).toContain('border-radius: calc(16 * var(--gg-d, 1))');
         expect(ruleFor(css, `${gap} ~ *:not(.ps_Cloud):not(.rt_Tabs) {`)).toContain('margin-top: 0');
         expect(ruleFor(css, `${gap} ~ .rt_Tabs {`)).toContain('margin-top: 0');
         // No such row: the tabs still clear the band themselves.
@@ -407,7 +413,8 @@ describe('buildThemeCss 1.1.1 baseline', () => {
           .ov_Backdrop { display: none !important; }
           .rt_Root { background: transparent !important; }
           .rt_Tabs { margin-top: calc(100vh - var(--gg-play-top) - var(--gg-row-h)) !important; background: rgba(14, 20, 27, 0.9) !important; }
-          .rt_Play ~ *:not(.ps_Cloud):not(.rt_Tabs) { margin-top: calc(100vh - var(--gg-play-top) - var(--gg-row-h)) !important; }
+          .rt_Play ~ *:not(.ps_Cloud):not(.rt_Tabs) { margin-top: calc(100vh - var(--gg-play-top) - var(--gg-row-h)) !important; padding: var(--gg-side) !important; box-sizing: border-box !important; }
+          .rt_Play ~ *:not(.ps_Cloud):not(.rt_Tabs) > .Panel { margin: 0 !important; width: auto !important; max-width: none !important; box-sizing: border-box !important; background: rgba(12, 16, 22, 0.38) !important; border: 1px solid rgba(255, 255, 255, 0.12) !important; border-radius: calc(16 * var(--gg-d, 1)) !important; backdrop-filter: blur(calc(16 * var(--gg-d, 1))) !important; }
           .rt_Play ~ *:not(.ps_Cloud):not(.rt_Tabs) ~ *:not(.ps_Cloud):not(.rt_Tabs) { margin-top: 0 !important; }
           .rt_Play ~ *:not(.ps_Cloud):not(.rt_Tabs) ~ .rt_Tabs { margin-top: 0 !important; }
           .ad_Inner > .gg-hero { position: absolute !important; top: calc(var(--gg-play-top) + var(--gg-row-h)) !important;

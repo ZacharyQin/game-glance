@@ -52,14 +52,17 @@ const CARD_BAND = 'calc(100vh - var(--gg-play-top) - var(--gg-row-h))';
  * The overview is pulled up onto the art and only the tabs are pushed down, so those rows land on
  * the cards and, in a z-index 1 column, paint over them. The cloud row is absolute, so it is not
  * one of them. The first in-flow row takes the band; later rows and the tabs follow it, without a
- * second spacer. Nothing is emitted when the cloud class is unknown: that absolute row would match
- * `*` and cancel the tabs' own spacer.
+ * second spacer. That row is then a Glance card: the same side inset as the Play row (--gg-side,
+ * also above it, so its top margin does not collapse away) and the cards' glass. Nothing is emitted
+ * when the cloud class is unknown: that absolute row would match `*` and cancel the tabs' spacer.
  */
 function cardBandClearance(playSection: string | null, tabs: string | null, cloud: string | null): string[] {
     if (!playSection || !tabs || !cloud) return [];
     const gap = `${playSection} ~ *:not(${cloud}):not(${tabs})`;
+    const card = `${gap} > .Panel`;
     return [
-        rule(gap, ` margin-top: ${CARD_BAND} !important; `),
+        rule(gap, ` margin-top: ${CARD_BAND} !important; padding: var(--gg-side) !important; box-sizing: border-box !important; `),
+        rule(card, ` margin: 0 !important; width: auto !important; max-width: none !important; box-sizing: border-box !important; background: rgba(12, 16, 22, 0.38) !important; border: 1px solid rgba(255, 255, 255, 0.12) !important; border-radius: calc(16 * var(--gg-d, 1)) !important; backdrop-filter: blur(calc(16 * var(--gg-d, 1))) !important; `),
         rule(`${gap} ~ *:not(${cloud}):not(${tabs})`, ` margin-top: 0 !important; `),
         rule(`${gap} ~ ${tabs}`, ` margin-top: 0 !important; `),
     ];
