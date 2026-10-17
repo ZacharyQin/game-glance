@@ -54,7 +54,15 @@ describe('formatLastPlayed', () => {
         expect(formatLastPlayed(now - 60, now, 'en')).toBe('Today');
         expect(formatLastPlayed(now - DAY, now, 'en')).toBe('Yesterday');
         expect(formatLastPlayed(now - 3 * DAY, now, 'en')).toBe('3 days ago');
-        expect(formatLastPlayed(now - 40 * DAY, now, 'en')).toBe(new Date((now - 40 * DAY) * 1000).toLocaleDateString('en'));
+        expect(formatLastPlayed(now - 40 * DAY, now, 'en-US')).toBe('Aug 24');
+    });
+    it("a date names its month, in the language's own order, so it can't be misread (#57: 10/12 is October to some, 12 December to others)", () => {
+        expect(formatLastPlayed(now - 40 * DAY, now, 'en-GB')).toBe('24 Aug');
+        expect(formatLastPlayed(now - 40 * DAY, now, 'de-DE')).toBe('24. Aug.');
+        for (const locale of ['en-US', 'en-GB', 'es-ES', 'fr-FR', 'de-DE']) expect(formatLastPlayed(now - 40 * DAY, now, locale), locale).not.toMatch(/^[\d\s./-]+$/);
+    });
+    it('a date from an earlier year has the year', () => {
+        expect(formatLastPlayed(now - 400 * DAY, now, 'en-US')).toBe('Aug 29, 2025');
     });
 });
 
