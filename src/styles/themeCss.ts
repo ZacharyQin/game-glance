@@ -52,17 +52,18 @@ const CARD_BAND = 'calc(100vh - var(--gg-play-top) - var(--gg-row-h))';
  * Steam inserts in-flow rows between the Play section and the tabs (Deck compatibility feedback).
  * The overview is pulled up onto the art and only the tabs are pushed down, so those rows land on
  * the cards and, in a z-index 1 column, paint over them. The cloud row is absolute, so it is not
- * one of them. The first in-flow row takes the band; later rows and the tabs follow it, without a
- * second spacer. That row is then a Glance card. Every side uses half the Play inset: the full
- * inset was too much, and leaving only the left and right at the full inset looked uneven. Nothing is emitted
- * when the cloud class is unknown: that absolute row would match `*` and cancel the tabs' spacer.
+ * one of them. The Play section already ends below that band, so the inserted row must not add the
+ * band again as margin-top: that made its top gap larger than the left, right and bottom insets.
+ * Every side is half the Play inset. Later rows and the tabs follow it, without a second spacer.
+ * That row is then a Glance card. Nothing is emitted when the cloud class is unknown: that absolute
+ * row would match `*` and cancel the tabs' spacer.
  */
 function cardBandClearance(playSection: string | null, tabs: string | null, cloud: string | null): string[] {
     if (!playSection || !tabs || !cloud) return [];
     const gap = `${playSection} ~ *:not(${cloud}):not(${tabs})`;
     const card = `${gap} > .Panel`;
     return [
-        rule(gap, ` margin-top: ${CARD_BAND} !important; padding: calc(var(--gg-side) / 2) !important; box-sizing: border-box !important; `),
+        rule(gap, ` margin-top: 0 !important; padding: calc(var(--gg-side) / 2) !important; box-sizing: border-box !important; `),
         rule(card, ` margin: 0 !important; width: auto !important; max-width: none !important; box-sizing: border-box !important; background: rgba(12, 16, 22, 0.38) !important; border: 1px solid rgba(255, 255, 255, 0.12) !important; border-radius: calc(16 * var(--gg-d, 1)) !important; backdrop-filter: blur(calc(16 * var(--gg-d, 1))) !important; `),
         rule(`${gap} ~ *:not(${cloud}):not(${tabs})`, ` margin-top: 0 !important; `),
         rule(`${gap} ~ ${tabs}`, ` margin-top: 0 !important; `),

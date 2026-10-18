@@ -56,13 +56,14 @@ describe('buildThemeCss full-screen layout', () => {
         expect(css).toContain('.gg-hero { z-index: 2; pointer-events: none; }');
         expect(css).toContain('.gg-hero .gg-card-tap { pointer-events: auto; }');
     });
-    it('moves an in-flow row between Play and the tabs below the cards, without stacking the spacer', () => {
+    it('gives an in-flow row between Play and the tabs the same inset on every side, without stacking the spacer', () => {
         const css = buildThemeCss(full);
         const band = 'calc(100vh - var(--gg-play-top) - var(--gg-row-h))';
         const gap = '.rt_Play ~ *:not(.ps_Cloud):not(.rt_Tabs)';
         const row = ruleFor(css, `${gap} {`);
-        expect(row).toContain(`margin-top: ${band}`);
+        expect(row).toContain('margin-top: 0 !important');
         expect(row).toContain('padding: calc(var(--gg-side) / 2) !important');
+        expect(row).not.toContain(`margin-top: ${band}`);
         const card = ruleFor(css, `${gap} > .Panel {`);
         expect(card).toContain('margin: 0');
         expect(card).toContain('rgba(12, 16, 22, 0.38)');
@@ -424,7 +425,7 @@ describe('buildThemeCss 1.1.1 baseline', () => {
           .ov_Backdrop { display: none !important; }
           .rt_Root { background: transparent !important; }
           .rt_Tabs { margin-top: calc(100vh - var(--gg-play-top) - var(--gg-row-h)) !important; background: rgba(14, 20, 27, 0.9) !important; }
-          .rt_Play ~ *:not(.ps_Cloud):not(.rt_Tabs) { margin-top: calc(100vh - var(--gg-play-top) - var(--gg-row-h)) !important; padding: calc(var(--gg-side) / 2) !important; box-sizing: border-box !important; }
+          .rt_Play ~ *:not(.ps_Cloud):not(.rt_Tabs) { margin-top: 0 !important; padding: calc(var(--gg-side) / 2) !important; box-sizing: border-box !important; }
           .rt_Play ~ *:not(.ps_Cloud):not(.rt_Tabs) > .Panel { margin: 0 !important; width: auto !important; max-width: none !important; box-sizing: border-box !important; background: rgba(12, 16, 22, 0.38) !important; border: 1px solid rgba(255, 255, 255, 0.12) !important; border-radius: calc(16 * var(--gg-d, 1)) !important; backdrop-filter: blur(calc(16 * var(--gg-d, 1))) !important; }
           .rt_Play ~ *:not(.ps_Cloud):not(.rt_Tabs) ~ *:not(.ps_Cloud):not(.rt_Tabs) { margin-top: 0 !important; }
           .rt_Play ~ *:not(.ps_Cloud):not(.rt_Tabs) ~ .rt_Tabs { margin-top: 0 !important; }
