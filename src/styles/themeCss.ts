@@ -46,6 +46,30 @@ function rule(selectors: Array<string | null> | string | null, body: string): st
 
 const present = (list: Array<string | null>) => list.filter((s): s is string => s !== null);
 
+/** The band under the Play row where `.gg-hero` is pinned. Tabs normally start below it. */
+const CARD_BAND = 'calc(100vh - var(--gg-play-top) - var(--gg-row-h))';
+/**
+ * Steam inserts in-flow rows between the Play section and the tabs (Deck compatibility feedback).
+ * The overview is pulled up onto the art and only the tabs are pushed down, so those rows land on
+ * the cards and, in a z-index 1 column, paint over them. The cloud row is absolute, so it is not
+ * one of them. The first in-flow row takes the band; later rows and the tabs follow it, without a
+ * second spacer. That row is then a Glance card. Every side uses half the Play inset: the full
+ * inset was too much, and leaving only the left and right at the full inset looked uneven. Nothing is emitted
+ * when the cloud class is unknown: that absolute row would match `*` and cancel the tabs' spacer.
+ */
+function cardBandClearance(playSection: string | null, tabs: string | null, cloud: string | null): string[] {
+    if (!playSection || !tabs || !cloud) return [];
+    const gap = `${playSection} ~ *:not(${cloud}):not(${tabs})`;
+    const card = `${gap} > .Panel`;
+    return [
+        rule(gap, ` margin-top: ${CARD_BAND} !important; padding: calc(var(--gg-side) / 2) !important; box-sizing: border-box !important; `),
+        rule(card, ` margin: 0 !important; width: auto !important; max-width: none !important; box-sizing: border-box !important; background: rgba(12, 16, 22, 0.38) !important; border: 1px solid rgba(255, 255, 255, 0.12) !important; border-radius: calc(16 * var(--gg-d, 1)) !important; backdrop-filter: blur(calc(16 * var(--gg-d, 1))) !important; `),
+        rule(`${gap} ~ *:not(${cloud}):not(${tabs})`, ` margin-top: 0 !important; `),
+        rule(`${gap} ~ ${tabs}`, ` margin-top: 0 !important; `),
+    ];
+}
+
+
 /** A size in the theme's scale unit: `n` px on the handheld's 828×466 layout, larger on a TV (60% of the screen's growth; screenScale.ts). */
 const u = (n: number) => `calc(${n} * var(--gg-u))`;
 
@@ -216,7 +240,9 @@ export interface ThemeOptions {
  *
  * Layout (all-or-nothing): Steam's header becomes screen-tall, Steam's overview block (Play row + tabs)
  * is pulled up onto the art, our cards are overlaid under the Play row, and the tabs start on the next
- * screen. Nothing in Steam's page structure moves, so controller navigation and scrolling stay Steam's.
+ * screen. A row Steam inserts between the Play section and the tabs takes that spacer instead, so it
+ * does not sit on the cards. Nothing in Steam's page structure moves, so controller navigation and
+ * scrolling stay Steam's.
  * If any class the layout needs is missing, none of the layout applies and the page stays stacked.
  * Without `restyle` the output is exactly 1.1.1's (pinned by a snapshot test); `restyle` appends restyleRules().
  */
@@ -351,7 +377,8 @@ export function buildThemeCss(classes: ThemeClasses, options: ThemeOptions = {})
             rule(overviewPanel, ` margin-top: calc(var(--gg-play-top) - 100vh) !important; position: relative; `),
             rule(backdrop, ` display: none !important; `),
             rule(appRoot, ` background: transparent !important; `),
-            rule(tabs, ` margin-top: calc(100vh - var(--gg-play-top) - var(--gg-row-h)) !important; background: rgba(14, 20, 27, 0.9) !important; `),
+            rule(tabs, ` margin-top: ${CARD_BAND} !important; background: rgba(14, 20, 27, 0.9) !important; `),
+            ...cardBandClearance(playSection, tabs, cloud),
             rule(`${inner} > .gg-hero`, ` position: absolute !important; top: calc(var(--gg-play-top) + var(--gg-row-h)) !important;
                 left: var(--gg-side) !important; right: var(--gg-side) !important; height: calc(100vh - var(--gg-play-top) - var(--gg-row-h)) !important;
                 margin: 0 !important; `),
@@ -568,6 +595,9 @@ export function buildLaunchCss(classes: ThemeClasses): string {
  * The eyebrow/title block is shown only with the full-screen layout, where the logo was; otherwise (a renamed Steam
  * class) it stays hidden and Steam's logo is left alone, so the page never shows two titles.
  */
+/** Stacked pages for the preferred-version control. Same filled weight as Steam's circle icons; a branch mark turned to mush at this size. */
+const VERSION_ICON = `url("data:image/svg+xml,${encodeURIComponent("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'><path fill='black' fill-rule='evenodd' d='M13 7h15a2 2 0 0 1 2 2v13h-4V11H13V7zm-6 6h15a2 2 0 0 1 2 2v15a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V15a2 2 0 0 1 2-2z'/></svg>")}")`;
+
 function restyleRules({ header, details, root, play, shared }: ThemeClasses, layout: boolean): string[] {
     // Play focused, as Home's: a white ring and accent glow, grown by the focus scale (by the controller or DOM focus).
     const pillFocused = ` box-shadow: 0 0 0 ${d(2)} rgba(255, 255, 255, 0.9), 0 ${d(14)} ${d(40)} calc(-1 * ${d(8)}) var(--glance-accent) !important; transform: scale(${PILL_FOCUS.x}, ${PILL_FOCUS.y}) !important; `;
@@ -580,6 +610,9 @@ function restyleRules({ header, details, root, play, shared }: ThemeClasses, lay
     const menuButton = cls(play, 'MenuButton');
     const cloud = cls(play, 'CloudStatusRow');
     const cloudIcon = cls(play, 'CloudStatusIcon');
+    const appButtons = cls(root, 'AppButtons');
+    const versionRow = cls(shared, 'SharedLibrary');
+    const versionLink = versionRow && `${versionRow} a[role="button"]`;
 
     const rules: string[] = [
         // Steam's thin download bar under the Play pill is never shown (the pill itself fills, buildDownloadCss), so it
@@ -724,10 +757,22 @@ function restyleRules({ header, details, root, play, shared }: ThemeClasses, lay
         `.gg-more { display: none; }`,
         `.gg-pill { top: calc(-1 * ${d(PAGE_LAYOUT.storePillTop)}); ${sourcePillLook(d)} }`,
         `.gg-pill-icon { ${sourcePillIcon(d)} }`,
-        // A game from the family library: Steam's line under Play ("From your Steam Family's library") has no room between
-        // the row and the cards; the family pill (data/family) says it beside the store pill instead, drawn like it. It sits
-        // inside the store pill, just to its left, so it follows the pill wherever the layout puts it.
-        rule(cls(shared, 'SharedLibrary'), ` display: none !important; `),
+        // "From your Steam library" has no room under Play. When its "change preferred version" link is on the page,
+        // the sentence collapses and the link becomes the circle just before settings (controller, this, settings, then
+        // cloud). A game without that link keeps settings and cloud in their own slots. display:none would leave the
+        // link in the controller focus order at 0,0. Steam still steps the row in DOM order, so PlayRowNav moves
+        // Left/Right by the circles' positions.
+        rule(versionRow, ` display: block !important; position: static !important; height: 0 !important; margin: 0 !important; padding: 0 !important; overflow: visible !important; font-size: 0 !important; line-height: 0 !important; pointer-events: none !important; `),
+        rule(versionLink, ` position: absolute !important; z-index: 2 !important; top: 0 !important; pointer-events: auto !important;
+            left: calc(var(--gg-side) + var(--gg-play-w) + var(--gg-gap) + 1 * (var(--gg-icon) + var(--gg-gap))) !important;
+            width: var(--gg-icon) !important; height: var(--gg-icon) !important; margin: 0 !important; padding: 0 !important; box-sizing: border-box !important;
+            display: inline-flex !important; align-items: center !important; justify-content: center !important; border-radius: 50% !important;
+            font-size: 0 !important; color: #fff !important; background: rgba(12, 16, 22, 0.4) !important; border: 1px solid rgba(255, 255, 255, 0.18) !important;
+            backdrop-filter: blur(${d(12)}) !important; `),
+        rule(versionLink && `${versionLink}::before`, ` content: '' !important; width: ${d(PAGE_LAYOUT.circleIcon)} !important; height: ${d(PAGE_LAYOUT.circleIcon)} !important; background: currentColor !important; -webkit-mask: ${VERSION_ICON} center / contain no-repeat !important; mask: ${VERSION_ICON} center / contain no-repeat !important; `),
+        rule(versionLink && `${versionLink}.gpfocus`, ` background: #ffffff !important; color: #0b0f14 !important; `),
+        rule(playSection && appButtons && versionLink && `${playSection}:has(${versionLink}) ${appButtons} > :nth-child(2)`, ` margin-left: calc(var(--gg-icon) + var(--gg-gap)) !important; `),
+        rule(playSection && cloud && versionLink && `${playSection}:has(${versionLink}) ~ ${cloud}`, ` left: calc(var(--gg-side) + var(--gg-play-w) + var(--gg-gap) + (var(--gg-buttons, 2) + 1) * (var(--gg-icon) + var(--gg-gap))) !important; `),
         `.gg-family { position: absolute; right: calc(100% + ${d(10)}); top: 50%; transform: translateY(-50%); display: inline-flex; align-items: center;
             margin: 0; border-radius: 999px; border: 1px solid; color: #fff; line-height: 1; white-space: nowrap; ${sourcePillLook(d)} }`,
         `.gg-family-icon { flex: 0 0 auto; ${sourcePillIcon(d)} }`,

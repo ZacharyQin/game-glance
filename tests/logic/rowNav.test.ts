@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { needsVisualNav, visualNeighbour } from '../../src/logic/rowNav';
+import { focusRingClass, needsVisualNav, visualNeighbour } from '../../src/logic/rowNav';
 
 // Unifideck's installed row in DOM order: Play, cloud, controller, settings, Uninstall; cloud shown after settings.
 const xs = [58, 581, 427, 504, 658];
@@ -23,5 +23,12 @@ describe('rowNav', () => {
         expect(visualNeighbour(xs, 4, 'right')).toBeNull();
         expect(visualNeighbour(xs, 0, 'left')).toBeNull();
         expect(visualNeighbour(xs, 9, 'right')).toBeNull();
+    });
+    it("recognises Steam's focus-ring rule and ignores the dialog rule that hides it", () => {
+        const ring = '._1wPpl { position: absolute; pointer-events: none; outline-offset: 2px; outline: rgba(255, 255, 255, 0.6) solid 2px; }';
+        const hidden = 'body:has(._dlg) ._1wPpl { outline: none !important; visibility: hidden !important; }';
+        expect(focusRingClass(ring)).toBe('_1wPpl');
+        expect(focusRingClass(hidden)).toBeNull();
+        expect(focusRingClass('')).toBeNull();
     });
 });

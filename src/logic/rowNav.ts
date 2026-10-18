@@ -18,3 +18,19 @@ export function visualNeighbour(xs: number[], from: number, dir: 'left' | 'right
     const next = byX[dir === 'right' ? at + 1 : at - 1];
     return next ? next.i : null;
 }
+
+/**
+ * Steam's gamepad focus ring is one absolutely positioned node with an outline. Its class hash changes between Steam
+ * builds, so it is recognised from the rule text. The other circles replace that ring with a white fill; the
+ * preferred-version link would otherwise keep the square.
+ */
+export function focusRingClass(cssText: string): string | null {
+    const rules = cssText.matchAll(/\.([\w-]+)\s*\{([^{}]*)\}/g);
+    for (const match of rules) {
+        const body = match[2];
+        if (body.includes('position') && body.includes('absolute') && body.includes('pointer-events') && body.includes('outline-offset')) {
+            return match[1];
+        }
+    }
+    return null;
+}

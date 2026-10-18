@@ -102,3 +102,20 @@ export function playRow(): string | null {
 export function pageTwinTargets(look: 'spotlight' | 'clean' | 'steam'): Record<string, string> {
     return twinTargets(themeClasses(), look);
 }
+
+/** Play, its circles, the cloud button, and the preferred-version link. Steam steps these in DOM order. */
+export function playRowControlSelector(): string | null {
+    const t = themeClasses();
+    const parts = [
+        t.root?.PlaySection ? `.${t.root.PlaySection} [role="button"]` : '',
+        t.play?.CloudStatusRow ? `.${t.play.CloudStatusRow}` : '',
+        t.shared?.SharedLibrary ? `.${t.shared.SharedLibrary} a[role="button"]` : '',
+    ].filter((s) => s.length > 0);
+    return parts.length > 0 ? parts.join(', ') : null;
+}
+
+/** The preferred-version link, once Steam's library-line class is known. */
+export function versionLinkSelector(): string | null {
+    const row = themeClasses().shared?.SharedLibrary;
+    return row ? `.${row} a[role="button"]` : null;
+}
